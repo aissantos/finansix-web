@@ -19,6 +19,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug repository
+        run: |
+          echo "PWD: $(pwd)"
+          echo "Listing repo root"
+          ls -la
+          echo "Listing parent dir"
+          ls -la ..
+          echo "Show workflow files"
+          ls -la .github/workflows || true
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
@@ -45,6 +55,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Debug repository
+        run: |
+          echo "PWD: $(pwd)"
+          echo "Listing repo root"
+          ls -la
+          echo "Listing parent dir"
+          ls -la ..
+          echo "Show workflow files"
+          ls -la .github/workflows || true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -77,6 +97,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Debug repository
+        run: |
+          echo "PWD: $(pwd)"
+          echo "Listing repo root"
+          ls -la
+          echo "Listing parent dir"
+          ls -la ..
+          echo "Show workflow files"
+          ls -la .github/workflows || true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
