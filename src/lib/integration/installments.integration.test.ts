@@ -8,7 +8,11 @@ const LOCAL_SUPABASE_ANON = process.env.TEST_SUPABASE_ANON_KEY ?? process.env.VI
 // Connection to local Postgres as superuser for setup/cleanup
 const PG_CONN = process.env.TEST_PG_CONN ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
 
-describe.skipIf(!process.env.CI && false)('Integration: installments trigger + RLS', () => {
+// Only run these integration tests when an explicit TEST_SUPABASE_URL is provided (e.g., locally or in special CI job)
+const RUN_INTEG = Boolean(process.env.TEST_SUPABASE_URL);
+const describeInteg = RUN_INTEG ? describe : describe.skip;
+
+describeInteg('Integration: installments trigger + RLS', () => {
   let pg: PgClient;
   let supabase: SupabaseClient;
   let userClient: SupabaseClient;
