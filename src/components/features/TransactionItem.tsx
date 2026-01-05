@@ -30,16 +30,16 @@ const iconMap: Record<string, keyof typeof Icons> = {
 function getIcon(iconName?: string) {
   if (!iconName) return Icons.Receipt;
   const lucideIconName = iconMap[iconName] || 'Receipt';
-  return Icons[lucideIconName] || Icons.Receipt;
+  return (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[lucideIconName] || Icons.Receipt;
 }
 
 export const TransactionItem = memo(function TransactionItem({
   transaction,
   onClick,
 }: TransactionItemProps) {
-  const Icon = getIcon(transaction.category?.icon);
+  const Icon = getIcon(transaction.category?.icon || 'default');
   const isIncome = transaction.type === 'income';
-  const hasInstallments = transaction.is_installment && transaction.total_installments > 1;
+  const hasInstallments = transaction.is_installment && (transaction.total_installments ?? 0) > 1;
 
   const categoryColor = transaction.category?.color || (isIncome ? '#22c55e' : '#ef4444');
 

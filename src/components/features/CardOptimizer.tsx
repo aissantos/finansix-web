@@ -1,4 +1,4 @@
-import { CreditCard, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useBestCard } from '@/hooks';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';

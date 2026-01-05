@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calculator, ClipboardCheck, TrendingUp } from 'lucide-react';
+import { Plus, Calculator, TrendingUp } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { CreditCardItem } from '@/components/features';
 import { Card } from '@/components/ui/card';
@@ -261,7 +261,7 @@ function AccountsTab() {
                   Saldo
                 </span>
                 <p className="text-lg font-black text-slate-900 dark:text-white">
-                  {formatCurrency(acc.current_balance)}
+                  {formatCurrency(acc.current_balance ?? 0)}
                 </p>
               </div>
             </div>

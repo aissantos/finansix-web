@@ -20,12 +20,6 @@ interface TransactionPayload {
   total_installments: number
 }
 
-interface CreditCard {
-  id: string
-  closing_day: number
-  due_day: number
-}
-
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {

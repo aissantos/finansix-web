@@ -76,5 +76,5 @@ export async function getTotalBalance(householdId: string): Promise<number> {
     .is('deleted_at', null);
 
   if (error) handleSupabaseError(error);
-  return (data ?? []).reduce((sum, a) => sum + a.current_balance, 0);
+  return (data ?? []).reduce((sum, a) => sum + (a.current_balance ?? 0), 0);
 }

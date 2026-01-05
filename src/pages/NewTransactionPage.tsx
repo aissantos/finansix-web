@@ -312,7 +312,7 @@ export default function NewTransactionPage() {
                         <p className="text-sm font-bold text-slate-900 dark:text-white">
                           {acc.name}
                         </p>
-                        <p className="text-xs text-slate-500">{formatCurrency(acc.current_balance)}</p>
+                        <p className="text-xs text-slate-500">{formatCurrency(acc.current_balance ?? 0)}</p>
                       </button>
                     );
                   })}

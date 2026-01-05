@@ -23,6 +23,27 @@ export function useAuth() {
   const navigate = useNavigate();
   const setHouseholdId = useAppStore((s) => s.setHouseholdId);
 
+  const initializeUserHousehold = useCallback(async (userId: string, email?: string) => {
+    try {
+      const name = email?.split('@')[0];
+      const householdId = await getOrCreateHousehold(userId, name);
+      setHouseholdId(householdId);
+
+      // Check if categories exist, if not seed them
+      const { data: categories } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('household_id', householdId)
+        .limit(1);
+
+      if (!categories?.length) {
+        await seedDefaultCategories(householdId);
+      }
+    } catch (error) {
+      console.error('Failed to initialize household:', error);
+    }
+  }, [setHouseholdId]);
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -61,28 +82,7 @@ export function useAuth() {
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate, setHouseholdId]);
-
-  const initializeUserHousehold = async (userId: string, email?: string) => {
-    try {
-      const name = email?.split('@')[0];
-      const householdId = await getOrCreateHousehold(userId, name);
-      setHouseholdId(householdId);
-
-      // Check if categories exist, if not seed them
-      const { data: categories } = await supabase
-        .from('categories')
-        .select('id')
-        .eq('household_id', householdId)
-        .limit(1);
-
-      if (!categories?.length) {
-        await seedDefaultCategories(householdId);
-      }
-    } catch (error) {
-      console.error('Failed to initialize household:', error);
-    }
-  };
+  }, [navigate, setHouseholdId, initializeUserHousehold]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {

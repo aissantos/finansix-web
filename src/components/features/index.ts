@@ -4,7 +4,6 @@ export { ReliefChart } from './ReliefChart';
 export { TransactionItem } from './TransactionItem';
 export { TransactionList } from './TransactionList';
 export { CreditCardItem } from './CreditCardItem';
-export { QuickActions } from './QuickActions';
 
 // Skeleton loading states
 export {

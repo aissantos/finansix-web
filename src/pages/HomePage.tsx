@@ -5,7 +5,6 @@ import {
   CardOptimizer,
   ReliefChart,
   TransactionList,
-  QuickActions,
   DashboardSkeleton,
 } from '@/components/features';
 import { useFreeBalance, useRecentTransactions, useCreditCards } from '@/hooks';
@@ -31,7 +30,6 @@ export default function HomePage() {
             <BalanceHero />
             <CardOptimizer />
             <ReliefChart />
-            <QuickActions />
             <TransactionList
               limit={5}
               onViewAll={() => navigate('/analysis')}

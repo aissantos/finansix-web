@@ -132,7 +132,7 @@ export async function calculateFreeBalance(
     .is('deleted_at', null);
 
   const currentBalance = (accounts || []).reduce(
-    (sum, a) => sum + a.current_balance,
+    (sum, a) => sum + (a.current_balance ?? 0),
     0
   );
 
@@ -179,7 +179,7 @@ export async function calculateFreeBalance(
       .or(`end_date.is.null,end_date.gte.${format(today, 'yyyy-MM-dd')}`);
 
     for (const exp of expectations || []) {
-      const projectedAmount = exp.amount * (exp.confidence_percent / 100);
+      const projectedAmount = exp.amount * ((exp.confidence_percent ?? 0) / 100);
 
       if (exp.type === 'income') {
         expectedIncome += projectedAmount;

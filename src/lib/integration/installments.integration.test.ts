@@ -1,6 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { InsertTables } from '@/types';
 import { Client as PgClient } from 'pg';
+
+declare global {
+  var __integ: {
+    pg: PgClient;
+    householdId: string;
+    cardId: string;
+  };
+}
 
 const LOCAL_SUPABASE_URL = process.env.TEST_SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const LOCAL_SUPABASE_ANON = process.env.TEST_SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NDc0MDEsImV4cCI6MjA4MzEyMzQwMX0.AME1Yqp4QjONriAVZYelzcAmi78r_PZfVJtAiqALheM';
@@ -30,7 +40,7 @@ describeInteg('Integration: installments trigger + RLS', () => {
     testUserEmail = `integ-${Date.now()}@example.com`;
     testUserPassword = 'Password123!';
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email: testUserEmail, password: testUserPassword });
+    const { data: _signUpData, error: signUpError } = await supabase.auth.signUp({ email: testUserEmail, password: testUserPassword });
     if (signUpError) throw signUpError;
 
     // sign in
@@ -41,7 +51,10 @@ describeInteg('Integration: installments trigger + RLS', () => {
       global: { headers: { Authorization: `Bearer ${signInData.session?.access_token}` } },
     });
 
-    userId = signInData.user?.id!;
+    if (!signInData.user?.id) {
+      throw new Error('User ID not found after sign in');
+    }
+    userId = signInData.user.id;
 
     // create household, credit_card using superuser so we don't rely on extra policies
     const resHouse = await pg.query(`INSERT INTO households (name) VALUES ($1) RETURNING id`, ['integ-house-' + Date.now()]);
@@ -53,12 +66,12 @@ describeInteg('Integration: installments trigger + RLS', () => {
     const cardId = resCard.rows[0].id;
 
     // store on supabase client for tests via pg inserted data
-    (global as any).__integ = { pg, householdId, cardId };
+    global.__integ = { pg, householdId, cardId };
   });
 
   afterAll(async () => {
     try {
-      const s = (global as any).__integ;
+      const s = global.__integ;
       if (s?.householdId) {
         await pg.query(`DELETE FROM installments WHERE household_id = $1`, [s.householdId]);
         await pg.query(`DELETE FROM transactions WHERE household_id = $1`, [s.householdId]);
@@ -77,7 +90,7 @@ describeInteg('Integration: installments trigger + RLS', () => {
   });
 
   it('should create installments when inserting an installment transaction as the user', async () => {
-    const { pg: p, householdId, cardId } = (global as any).__integ;
+    const { pg: p, householdId, cardId } = global.__integ;
 
     // Insert transaction as the authenticated user via userClient
     const txPayload = {
@@ -89,7 +102,7 @@ describeInteg('Integration: installments trigger + RLS', () => {
       transaction_date: new Date().toISOString().slice(0, 10),
       description: 'integ-test-installment',
       type: 'expense',
-    } as any;
+    } as InsertTables<'transactions'>;
 
     const { data: txData, error: txError } = await userClient.from('transactions').insert(txPayload).select().single();
     expect(txError).toBeNull();
@@ -101,7 +114,7 @@ describeInteg('Integration: installments trigger + RLS', () => {
     const maxMs = 5000;
     const intervalMs = 200;
     let elapsed = 0;
-    let instRows: any[] = [];
+    let instRows: Array<{ id: string; installment_number: number; amount: number }> = [];
     while (elapsed < maxMs) {
       const res = await p.query(`SELECT id, installment_number, amount FROM installments WHERE transaction_id = $1 ORDER BY installment_number`, [txId]);
       instRows = res.rows;

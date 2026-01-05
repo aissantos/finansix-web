@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { 
   formatCurrency, 
   formatDate, 
-  formatDateRelative,
   formatCardNumber,
   formatMonthShort,
 } from '@/lib/utils/format';

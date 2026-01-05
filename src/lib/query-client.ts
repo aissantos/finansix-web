@@ -44,8 +44,8 @@ if (typeof window !== 'undefined' && 'localStorage' in window) {
       storage: window.localStorage,
       key: 'finansix-query-cache',
       throttleTime: 1000, // Don't save more than once per second
-      serialize: (data) => JSON.stringify(data),
-      deserialize: (data) => JSON.parse(data),
+      serialize: (data: unknown) => JSON.stringify(data),
+      deserialize: (data: string) => JSON.parse(data),
     });
 
     persistQueryClient({
