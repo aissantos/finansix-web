@@ -58,94 +58,115 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center px-6 py-12 bg-slate-50 dark:bg-slate-900">
-      <div className="mx-auto w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="h-16 w-16 rounded-2xl bg-primary mx-auto flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-primary/30 mb-4">
-            F
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
+      {/* Header */}
+      <header className="w-full px-6 py-4 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
+        <div className="max-w-7xl mx-auto flex items-center">
+          <Link to="/" className="flex items-center gap-3">
+            <img 
+              src="/icons/icon-72x72.png" 
+              alt="Finansix Logo" 
+              className="h-10 w-10 rounded-xl shadow-sm"
+            />
+            <span className="text-xl font-bold text-slate-900 dark:text-white">
+              Finansix
+            </span>
+          </Link>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col justify-center px-6 py-12">
+        <div className="mx-auto w-full max-w-sm">
+          {/* Logo */}
+          <div className="text-center mb-10">
+            <img 
+              src="/icons/icon-144x144.png" 
+              alt="Finansix Logo" 
+              className="h-20 w-20 mx-auto rounded-2xl shadow-lg shadow-primary/20 mb-4"
+            />
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Criar conta
+            </h1>
+            <p className="text-slate-500 text-sm mt-2">
+              Comece a organizar suas finanças
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Criar conta
-          </h1>
-          <p className="text-slate-500 text-sm mt-2">
-            Comece a organizar suas finanças
+
+          {/* Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Input
+                {...register('name')}
+                type="text"
+                placeholder="Seu nome"
+                icon={<User className="h-5 w-5" />}
+                error={errors.name?.message}
+              />
+            </div>
+
+            <div>
+              <Input
+                {...register('email')}
+                type="email"
+                placeholder="Seu email"
+                icon={<Mail className="h-5 w-5" />}
+                error={errors.email?.message}
+              />
+            </div>
+
+            <div className="relative">
+              <Input
+                {...register('password')}
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Criar senha"
+                icon={<Lock className="h-5 w-5" />}
+                error={errors.password?.message}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+
+            <div>
+              <Input
+                {...register('confirmPassword')}
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Confirmar senha"
+                icon={<Lock className="h-5 w-5" />}
+                error={errors.confirmPassword?.message}
+              />
+            </div>
+
+            <Button type="submit" size="lg" className="w-full" isLoading={isLoading}>
+              Criar conta
+            </Button>
+          </form>
+
+          {/* Terms */}
+          <p className="text-center text-xs text-slate-400 mt-6">
+            Ao criar uma conta, você concorda com nossos{' '}
+            <Link to="/terms" className="text-primary hover:underline">
+              Termos de Uso
+            </Link>{' '}
+            e{' '}
+            <Link to="/privacy" className="text-primary hover:underline">
+              Política de Privacidade
+            </Link>
+          </p>
+
+          {/* Sign in link */}
+          <p className="text-center text-sm text-slate-500 mt-8">
+            Já tem uma conta?{' '}
+            <Link to="/auth/login" className="font-semibold text-primary hover:underline">
+              Entrar
+            </Link>
           </p>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Input
-              {...register('name')}
-              type="text"
-              placeholder="Seu nome"
-              icon={<User className="h-5 w-5" />}
-              error={errors.name?.message}
-            />
-          </div>
-
-          <div>
-            <Input
-              {...register('email')}
-              type="email"
-              placeholder="Seu email"
-              icon={<Mail className="h-5 w-5" />}
-              error={errors.email?.message}
-            />
-          </div>
-
-          <div className="relative">
-            <Input
-              {...register('password')}
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Criar senha"
-              icon={<Lock className="h-5 w-5" />}
-              error={errors.password?.message}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-            >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </button>
-          </div>
-
-          <div>
-            <Input
-              {...register('confirmPassword')}
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Confirmar senha"
-              icon={<Lock className="h-5 w-5" />}
-              error={errors.confirmPassword?.message}
-            />
-          </div>
-
-          <Button type="submit" size="lg" className="w-full" isLoading={isLoading}>
-            Criar conta
-          </Button>
-        </form>
-
-        {/* Terms */}
-        <p className="text-center text-xs text-slate-400 mt-6">
-          Ao criar uma conta, você concorda com nossos{' '}
-          <Link to="/terms" className="text-primary hover:underline">
-            Termos de Uso
-          </Link>{' '}
-          e{' '}
-          <Link to="/privacy" className="text-primary hover:underline">
-            Política de Privacidade
-          </Link>
-        </p>
-
-        {/* Sign in link */}
-        <p className="text-center text-sm text-slate-500 mt-8">
-          Já tem uma conta?{' '}
-          <Link to="/auth/login" className="font-semibold text-primary hover:underline">
-            Entrar
-          </Link>
-        </p>
       </div>
     </div>
   );

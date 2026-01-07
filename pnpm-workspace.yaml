@@ -1,4 +1,2 @@
-ignoredBuiltDependencies:
-  - dbus
-  - esbuild
-  - supabase
+packages:
+  - '.'
