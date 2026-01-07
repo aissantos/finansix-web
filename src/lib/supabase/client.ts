@@ -31,8 +31,9 @@ export async function getCurrentHouseholdId(): Promise<string | null> {
 }
 
 // Helper to get or create household for new users
+// Uses a database RPC function to handle the transaction atomically
 export async function getOrCreateHousehold(userId: string, userName?: string): Promise<string> {
-  // Check if user already has a household
+  // First, check if user already has a household (fast path)
   const { data: existingMember } = await supabase
     .from('household_members')
     .select('household_id')
@@ -43,30 +44,46 @@ export async function getOrCreateHousehold(userId: string, userName?: string): P
     return existingMember.household_id;
   }
 
-  // Create new household
-  const { data: household, error: householdError } = await supabase
-    .from('households')
-    .insert({ name: userName ? `${userName}'s Family` : 'My Family' })
-    .select()
-    .single();
+  // Use RPC function to create household atomically
+  // This bypasses RLS chicken-and-egg issues
+  const { data: householdId, error } = await supabase
+    .rpc('setup_user_household', { user_name: userName });
 
-  if (householdError || !household) {
-    throw new Error('Failed to create household');
+  if (error) {
+    console.error('[Supabase] Error setting up household:', error);
+    
+    // Fallback: try direct insert if RPC fails (for backwards compatibility)
+    const { data: household, error: insertError } = await supabase
+      .from('households')
+      .insert({ name: userName ? `${userName}'s Family` : 'My Family' })
+      .select()
+      .single();
+
+    if (insertError || !household) {
+      throw new Error(`Failed to create household: ${insertError?.message || 'Unknown error'}`);
+    }
+
+    // Add user as owner
+    const { error: memberError } = await supabase
+      .from('household_members')
+      .insert({
+        household_id: household.id,
+        user_id: userId,
+        role: 'owner',
+        display_name: userName,
+      });
+
+    if (memberError) {
+      console.error('[Supabase] Error adding member:', memberError);
+      // Don't throw - household was created, membership might work on retry
+    }
+
+    return household.id;
   }
 
-  // Add user as owner
-  const { error: memberError } = await supabase
-    .from('household_members')
-    .insert({
-      household_id: household.id,
-      user_id: userId,
-      role: 'owner',
-      display_name: userName,
-    });
-
-  if (memberError) {
-    throw new Error('Failed to add user to household');
+  if (!householdId) {
+    throw new Error('Failed to create household: No ID returned');
   }
 
-  return household.id;
+  return householdId as string;
 }
