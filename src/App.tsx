@@ -9,6 +9,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QueryErrorBoundary } from '@/components/QueryErrorBoundary';
 import { PWAInstallBanner } from '@/components/features';
 import { useAuth } from '@/hooks/useAuth';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 // Lazy load pages for better initial bundle size
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -143,20 +144,27 @@ function AppRoutes() {
   );
 }
 
+// ... outros imports
+
 export default function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <QueryErrorBoundary>
-          <BrowserRouter>
-            <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
-              <AppRoutes />
-              <PWAInstallBanner />
-              <Toaster />
-            </div>
-          </BrowserRouter>
+          {/* ADICIONE O AuthProvider AQUI */}
+          <AuthProvider>
+            <BrowserRouter>
+              <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
+                <AppRoutes />
+                <PWAInstallBanner />
+                <Toaster />
+              </div>
+            </BrowserRouter>
+          </AuthProvider>
+          {/* FIM DO AuthProvider */}
         </QueryErrorBoundary>
-        {process.env.NODE_ENV === 'development' && (
+        
+        {import.meta.env.DEV && (
           <ReactQueryDevtools initialIsOpen={false} position="bottom" />
         )}
       </QueryClientProvider>
