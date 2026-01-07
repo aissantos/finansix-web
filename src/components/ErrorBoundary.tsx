@@ -27,12 +27,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo });
     
-    // Log to error tracking service (Sentry)
-    if (typeof window !== 'undefined' && (window as unknown as { Sentry?: { captureException: (e: Error) => void } }).Sentry) {
-      (window as unknown as { Sentry: { captureException: (e: Error) => void } }).Sentry.captureException(error);
-    }
-    
-    // Log to console in development
     console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
@@ -63,10 +57,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </h1>
             
             <p className="text-slate-500 mb-6">
-              Ocorreu um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver.
+              Ocorreu um erro inesperado. Tente recarregar a página.
             </p>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {/* CORREÇÃO AQUI: import.meta.env.DEV em vez de process.env */}
+            {import.meta.env.DEV && this.state.error && (
               <details className="mb-6 text-left bg-slate-100 dark:bg-slate-800 rounded-xl p-4">
                 <summary className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
                   Detalhes do erro (dev only)
@@ -79,9 +74,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={this.handleReset} variant="default">
+              <Button onClick={() => window.location.reload()} variant="default">
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Tentar novamente
+                Recarregar Página
               </Button>
               <Button onClick={this.handleGoHome} variant="outline">
                 <Home className="h-4 w-4 mr-2" />
@@ -97,7 +92,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 }
 
-// Hook-based error boundary wrapper for functional components
 export function withErrorBoundary<P extends object>(
   WrappedComponent: React.ComponentType<P>,
   fallback?: ReactNode
