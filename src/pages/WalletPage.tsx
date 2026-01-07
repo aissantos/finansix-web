@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calculator, TrendingUp } from 'lucide-react';
+import { Plus, Calculator, TrendingUp, Calendar, Repeat, AlertCircle } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { CreditCardItem } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { useCreditCards, useCreditUsage, useAccounts, useTotalBalance } from '@/hooks';
+import { useCreditCards, useCreditUsage, useAccounts, useTotalBalance, useSubscriptions } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 
 type TabType = 'cards' | 'accounts' | 'subscriptions';
@@ -282,15 +282,40 @@ function AccountsTab() {
 
 function SubscriptionsTab() {
   const navigate = useNavigate();
-  
-  // Mock subscriptions for preview - real data on full page
-  const subscriptions = [
-    { name: 'Netflix Premium', price: 55.90, card: 'Nubank ••8832', date: 'Vence em 2 dias', icon: '🎬', warning: true },
-    { name: 'Spotify Duo', price: 21.90, card: 'Nubank ••8832', date: 'Próx: 20 Jan', icon: '🎵' },
-    { name: 'Smart Fit Black', price: 119.90, card: 'Visa ••4002', date: 'Próx: 01 Fev', icon: '💪' },
-  ];
+  const { data: subscriptions, isLoading } = useSubscriptions();
+  const { data: cards } = useCreditCards();
 
-  const totalMonthly = subscriptions.reduce((sum, s) => sum + s.price, 0);
+  const activeSubscriptions = subscriptions?.filter(s => s.is_active) ?? [];
+  const totalMonthly = activeSubscriptions.reduce((sum, s) => sum + s.amount, 0);
+
+  // Calculate days until billing for each subscription
+  const getSubscriptionStatus = (billingDay: number) => {
+    const today = new Date().getDate();
+    const daysUntil = billingDay >= today
+      ? billingDay - today
+      : 30 - today + billingDay;
+    
+    return {
+      daysUntil,
+      isUpcoming: daysUntil <= 3,
+      label: daysUntil === 0 
+        ? 'Vence hoje' 
+        : daysUntil <= 3 
+          ? `Vence em ${daysUntil} dia${daysUntil > 1 ? 's' : ''}`
+          : `Dia ${billingDay}`,
+    };
+  };
+
+  if (isLoading) {
+    return (
+      <section className="space-y-4">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-20 w-full rounded-3xl" />
+        <Skeleton className="h-20 w-full rounded-3xl" />
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-4">
@@ -324,43 +349,77 @@ function SubscriptionsTab() {
         </div>
       </div>
 
-      <div className="grid gap-3">
-        {subscriptions.map((sub, i) => (
-          <div
-            key={i}
-            onClick={() => navigate('/subscriptions')}
-            className="bg-white dark:bg-slate-800 rounded-3xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 transition-all hover:shadow-md active:scale-[0.99] cursor-pointer"
-          >
-            <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-2xl relative flex-shrink-0">
-              {sub.icon}
-              {sub.warning && (
-                <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
-              )}
-            </div>
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="flex justify-between items-start">
-                <h4 className="font-bold text-sm text-slate-900 dark:text-white">{sub.name}</h4>
-                <p className="font-bold text-sm text-slate-900 dark:text-white">
-                  {formatCurrency(sub.price)}
-                </p>
-              </div>
-              <p className="text-[10px] font-medium text-slate-400 mt-0.5">{sub.card}</p>
-              <div className="flex items-center justify-between mt-2">
-                <span
-                  className={cn(
-                    'text-[10px] font-bold px-2 py-0.5 rounded-full',
-                    sub.warning
-                      ? 'bg-red-50 text-red-500 dark:bg-red-900/20'
-                      : 'bg-slate-50 text-slate-500 dark:bg-slate-700'
-                  )}
-                >
-                  {sub.date}
-                </span>
-              </div>
-            </div>
+      {activeSubscriptions.length === 0 ? (
+        <Card className="p-8 text-center">
+          <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+            <Repeat className="h-7 w-7 text-slate-400" />
           </div>
-        ))}
-      </div>
+          <p className="text-slate-500 text-sm mb-3">Nenhuma assinatura cadastrada</p>
+          <Button onClick={() => navigate('/subscriptions')} size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Adicionar primeira
+          </Button>
+        </Card>
+      ) : (
+        <div className="grid gap-3">
+          {activeSubscriptions.slice(0, 5).map((sub) => {
+            const status = getSubscriptionStatus(sub.billing_day);
+            const card = cards?.find(c => c.id === sub.credit_card_id);
+
+            return (
+              <div
+                key={sub.id}
+                onClick={() => navigate('/subscriptions')}
+                className="bg-white dark:bg-slate-800 rounded-3xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 transition-all hover:shadow-md active:scale-[0.99] cursor-pointer"
+              >
+                <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-2xl relative flex-shrink-0">
+                  {sub.icon || '📦'}
+                  {status.isUpcoming && (
+                    <div className="absolute -top-1 -right-1 h-4 w-4 bg-amber-500 rounded-full border-2 border-white flex items-center justify-center">
+                      <AlertCircle className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 flex flex-col justify-center">
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">{sub.name}</h4>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white">
+                      {formatCurrency(sub.amount)}
+                    </p>
+                  </div>
+                  {card && (
+                    <p className="text-[10px] font-medium text-slate-400 mt-0.5">
+                      {card.name} ••{card.last_four_digits}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between mt-2">
+                    <span
+                      className={cn(
+                        'text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1',
+                        status.isUpcoming
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                          : 'bg-slate-100 text-slate-500 dark:bg-slate-700'
+                      )}
+                    >
+                      <Calendar className="h-3 w-3" />
+                      {status.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          
+          {activeSubscriptions.length > 5 && (
+            <button
+              onClick={() => navigate('/subscriptions')}
+              className="text-center text-xs font-bold text-primary py-2 hover:underline"
+            >
+              Ver todas as {activeSubscriptions.length} assinaturas →
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }
