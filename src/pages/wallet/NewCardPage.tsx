@@ -1,15 +1,23 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, CreditCard, Check, Palette } from 'lucide-react';
+import { X, CreditCard, Check, Palette, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useCreateCreditCard, useAccounts } from '@/hooks';
 import { toast } from '@/hooks/useToast';
 import { cn, formatCurrency } from '@/lib/utils';
+import { 
+  BANK_PRESETS, 
+  CARD_BRAND_PRESETS, 
+  CARD_COLORS_BY_BANK,
+  searchBanks,
+  getBanksByType,
+  type BankPreset 
+} from '@/lib/presets';
 
 const cardSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -24,31 +32,13 @@ const cardSchema = z.object({
 
 type CardForm = z.infer<typeof cardSchema>;
 
-const CARD_BRANDS = [
-  { id: 'visa', name: 'Visa', color: '#1A1F71' },
-  { id: 'mastercard', name: 'Mastercard', color: '#EB001B' },
-  { id: 'elo', name: 'Elo', color: '#00A4E0' },
-  { id: 'amex', name: 'Amex', color: '#006FCF' },
-  { id: 'hipercard', name: 'Hipercard', color: '#B3131B' },
-];
-
-const CARD_COLORS = [
-  '#820AD1', // Nubank purple
-  '#1A1F71', // Visa blue
-  '#EB001B', // Red
-  '#00A4E0', // Cyan
-  '#6366F1', // Indigo
-  '#10B981', // Emerald
-  '#F59E0B', // Amber
-  '#EC4899', // Pink
-  '#1E293B', // Slate dark
-  '#0EA5E9', // Sky
-];
-
 export default function NewCardPage() {
   const navigate = useNavigate();
+  const [step, setStep] = useState<'bank' | 'form'>('bank');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBank, setSelectedBank] = useState<BankPreset | null>(null);
   const [limitDisplay, setLimitDisplay] = useState('');
-  const [selectedColor, setSelectedColor] = useState(CARD_COLORS[0]);
+  const [selectedColor, setSelectedColor] = useState(CARD_COLORS_BY_BANK.default[0]);
   
   const { mutate: createCard, isPending } = useCreateCreditCard();
   const { data: accounts } = useAccounts();
@@ -68,7 +58,7 @@ export default function NewCardPage() {
       credit_limit: 0,
       closing_day: 1,
       due_day: 10,
-      color: CARD_COLORS[0],
+      color: CARD_COLORS_BY_BANK.default[0],
     },
   });
 
@@ -77,6 +67,30 @@ export default function NewCardPage() {
   const brand = watch('brand');
   const closingDay = watch('closing_day');
   const dueDay = watch('due_day');
+
+  // Bancos filtrados
+  const filteredBanks = useMemo(() => {
+    if (searchQuery) {
+      return searchBanks(searchQuery);
+    }
+    return [];
+  }, [searchQuery]);
+
+  // Cores disponíveis baseadas no banco selecionado
+  const availableColors = useMemo(() => {
+    if (selectedBank) {
+      return CARD_COLORS_BY_BANK[selectedBank.id] || CARD_COLORS_BY_BANK.default;
+    }
+    return CARD_COLORS_BY_BANK.default;
+  }, [selectedBank]);
+
+  const handleBankSelect = (bank: BankPreset) => {
+    setSelectedBank(bank);
+    setValue('name', bank.name);
+    const bankColors = CARD_COLORS_BY_BANK[bank.id] || CARD_COLORS_BY_BANK.default;
+    setSelectedColor(bankColors[0]);
+    setStep('form');
+  };
 
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
@@ -112,18 +126,134 @@ export default function NewCardPage() {
     );
   };
 
+  // ============================================================================
+  // STEP 1: Seleção de Banco
+  // ============================================================================
+  if (step === 'bank') {
+    const digitalBanks = getBanksByType('digital');
+    const traditionalBanks = getBanksByType('traditional');
+    const investmentBanks = getBanksByType('investment');
+
+    return (
+      <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
+        {/* Header */}
+        <header className="px-4 py-4 flex items-center justify-between sticky top-0 bg-slate-50 dark:bg-slate-900 z-20">
+          <button
+            onClick={() => navigate(-1)}
+            className="h-10 w-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 transition-colors shadow-sm"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h1 className="text-base font-bold text-slate-900 dark:text-white">
+              Novo Cartão
+            </h1>
+          </div>
+          <div className="w-10" />
+        </header>
+
+        <div className="flex-1 px-4 pb-8">
+          {/* Search */}
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar banco..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+
+          {/* Search Results */}
+          {searchQuery ? (
+            <div className="space-y-2">
+              {filteredBanks.length > 0 ? (
+                filteredBanks.map((bank) => (
+                  <BankButton key={bank.id} bank={bank} onClick={() => handleBankSelect(bank)} />
+                ))
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-4">
+                  Nenhum banco encontrado.
+                  <button 
+                    onClick={() => { setSearchQuery(''); setStep('form'); }}
+                    className="text-primary font-medium ml-1"
+                  >
+                    Cadastrar manualmente
+                  </button>
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Bancos Digitais */}
+              <div className="mb-6">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-3">
+                  🏦 Bancos Digitais
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {digitalBanks.slice(0, 6).map((bank) => (
+                    <BankButton key={bank.id} bank={bank} onClick={() => handleBankSelect(bank)} compact />
+                  ))}
+                </div>
+              </div>
+
+              {/* Bancos Tradicionais */}
+              <div className="mb-6">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-3">
+                  🏛️ Bancos Tradicionais
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {traditionalBanks.slice(0, 6).map((bank) => (
+                    <BankButton key={bank.id} bank={bank} onClick={() => handleBankSelect(bank)} compact />
+                  ))}
+                </div>
+              </div>
+
+              {/* Corretoras */}
+              <div className="mb-6">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-3">
+                  📈 Corretoras
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {investmentBanks.slice(0, 4).map((bank) => (
+                    <BankButton key={bank.id} bank={bank} onClick={() => handleBankSelect(bank)} compact />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Manual Entry */}
+          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+            <button
+              onClick={() => setStep('form')}
+              className="w-full py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors"
+            >
+              Ou cadastre manualmente →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================================
+  // STEP 2: Formulário
+  // ============================================================================
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Header */}
       <header className="px-4 py-4 flex items-center justify-between sticky top-0 bg-slate-50 dark:bg-slate-900 z-20">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => setStep('bank')}
           className="h-10 w-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 transition-colors shadow-sm"
         >
           <X className="h-5 w-5" />
         </button>
         <h1 className="text-base font-bold text-slate-900 dark:text-white">
-          Novo Cartão
+          {selectedBank ? selectedBank.name : 'Novo Cartão'}
         </h1>
         <div className="w-10" />
       </header>
@@ -191,7 +321,7 @@ export default function NewCardPage() {
             Bandeira
           </label>
           <div className="flex flex-wrap gap-2">
-            {CARD_BRANDS.map((b) => {
+            {CARD_BRAND_PRESETS.map((b) => {
               const isSelected = brand === b.id;
               return (
                 <button
@@ -285,7 +415,7 @@ export default function NewCardPage() {
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
-            {CARD_COLORS.map((color) => (
+            {availableColors.map((color) => (
               <button
                 key={color}
                 type="button"
@@ -354,5 +484,52 @@ export default function NewCardPage() {
         </Button>
       </form>
     </div>
+  );
+}
+
+// ============================================================================
+// Bank Button Component
+// ============================================================================
+
+function BankButton({ 
+  bank, 
+  onClick,
+  compact = false 
+}: { 
+  bank: BankPreset; 
+  onClick: () => void;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary/50 transition-all text-left group",
+        compact ? "p-3" : "p-4"
+      )}
+    >
+      <div 
+        className={cn(
+          "rounded-xl flex items-center justify-center text-white font-bold",
+          compact ? "h-8 w-8 text-xs" : "h-10 w-10 text-sm"
+        )}
+        style={{ backgroundColor: bank.color }}
+      >
+        {bank.name.charAt(0)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={cn(
+          "font-medium text-slate-900 dark:text-white truncate",
+          compact ? "text-xs" : "text-sm"
+        )}>
+          {bank.name}
+        </p>
+        {!compact && (
+          <p className="text-xs text-slate-500 capitalize">
+            {bank.type === 'digital' ? 'Digital' : bank.type === 'traditional' ? 'Tradicional' : 'Corretora'}
+          </p>
+        )}
+      </div>
+    </button>
   );
 }

@@ -1,14 +1,20 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Check } from 'lucide-react';
+import { X, Check, Search, Sparkles, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useCreateSubscription, useUpdateSubscription } from '@/hooks/useSubscriptions';
 import { toast } from '@/hooks/useToast';
 import { cn, formatCurrency } from '@/lib/utils';
+import { 
+  SUBSCRIPTION_PRESETS, 
+  SUBSCRIPTION_CATEGORIES,
+  searchSubscriptions,
+  type SubscriptionPreset 
+} from '@/lib/presets';
 import type { Tables } from '@/types/database';
 
 const subscriptionSchema = z.object({
@@ -23,19 +29,6 @@ const subscriptionSchema = z.object({
 
 type SubscriptionFormValues = z.infer<typeof subscriptionSchema>;
 
-const SUBSCRIPTION_ICONS = [
-  { id: 'streaming', icon: '🎬', name: 'Streaming' },
-  { id: 'music', icon: '🎵', name: 'Música' },
-  { id: 'gaming', icon: '🎮', name: 'Jogos' },
-  { id: 'fitness', icon: '💪', name: 'Fitness' },
-  { id: 'cloud', icon: '☁️', name: 'Cloud' },
-  { id: 'news', icon: '📰', name: 'Notícias' },
-  { id: 'education', icon: '📚', name: 'Educação' },
-  { id: 'software', icon: '💻', name: 'Software' },
-  { id: 'food', icon: '🍔', name: 'Delivery' },
-  { id: 'other', icon: '📦', name: 'Outro' },
-];
-
 interface SubscriptionFormProps {
   cards?: Tables<'credit_cards'>[];
   initialData?: Partial<SubscriptionFormValues> & { id?: string };
@@ -43,10 +36,13 @@ interface SubscriptionFormProps {
 }
 
 export function SubscriptionForm({ cards, initialData, onClose }: SubscriptionFormProps) {
+  const [step, setStep] = useState<'presets' | 'form'>(initialData?.id ? 'form' : 'presets');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [amountDisplay, setAmountDisplay] = useState(
     initialData?.amount ? formatCurrency(initialData.amount).replace('R$', '').trim() : ''
   );
-  const [selectedIcon, setSelectedIcon] = useState(initialData?.icon || SUBSCRIPTION_ICONS[0].icon);
+  const [selectedIcon, setSelectedIcon] = useState(initialData?.icon || '📦');
   
   const { mutate: createSubscription, isPending: isCreating } = useCreateSubscription();
   const { mutate: updateSubscription, isPending: isUpdating } = useUpdateSubscription();
@@ -58,6 +54,7 @@ export function SubscriptionForm({ cards, initialData, onClose }: SubscriptionFo
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<SubscriptionFormValues>({
     resolver: zodResolver(subscriptionSchema),
@@ -66,10 +63,45 @@ export function SubscriptionForm({ cards, initialData, onClose }: SubscriptionFo
       amount: initialData?.amount || 0,
       billing_day: initialData?.billing_day || 1,
       credit_card_id: initialData?.credit_card_id || null,
+      category: initialData?.category || null,
       is_active: initialData?.is_active ?? true,
-      icon: initialData?.icon || SUBSCRIPTION_ICONS[0].icon,
+      icon: initialData?.icon || '📦',
     },
   });
+
+  // Presets filtrados
+  const filteredPresets = useMemo(() => {
+    if (searchQuery) {
+      return searchSubscriptions(searchQuery);
+    }
+    if (selectedCategory) {
+      return SUBSCRIPTION_PRESETS[selectedCategory] || [];
+    }
+    return [];
+  }, [searchQuery, selectedCategory]);
+
+  // Popular presets para mostrar inicialmente
+  const popularPresets = useMemo(() => {
+    return [
+      ...SUBSCRIPTION_PRESETS.streaming.slice(0, 3),
+      ...SUBSCRIPTION_PRESETS.music.slice(0, 2),
+      ...SUBSCRIPTION_PRESETS.ai.slice(0, 3),
+    ];
+  }, []);
+
+  const handlePresetSelect = (preset: SubscriptionPreset) => {
+    reset({
+      name: preset.name,
+      amount: preset.defaultAmount,
+      billing_day: 1,
+      credit_card_id: null,
+      category: preset.category,
+      is_active: true,
+    });
+    setSelectedIcon(preset.icon);
+    setAmountDisplay(formatCurrency(preset.defaultAmount).replace('R$', '').trim());
+    setStep('form');
+  };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
@@ -102,45 +134,183 @@ export function SubscriptionForm({ cards, initialData, onClose }: SubscriptionFo
     };
 
     if (initialData?.id) {
-        updateSubscription({ id: initialData.id, ...payload }, { onSuccess, onError });
+      updateSubscription({ id: initialData.id, ...payload }, { onSuccess, onError });
     } else {
-        createSubscription(payload, { onSuccess, onError });
+      createSubscription(payload, { onSuccess, onError });
     }
   };
 
+  // ============================================================================
+  // STEP 1: Seleção de Presets
+  // ============================================================================
+  if (step === 'presets') {
+    return (
+      <Card className="p-4 mb-6 border-2 border-primary/20">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h3 className="font-bold text-slate-900 dark:text-white">Nova Assinatura</h3>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Buscar serviço..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setSelectedCategory(null);
+            }}
+            className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none text-sm focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+
+        {/* Search Results */}
+        {searchQuery && (
+          <div className="mb-4">
+            {filteredPresets.length > 0 ? (
+              <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
+                {filteredPresets.map((preset) => (
+                  <PresetButton
+                    key={preset.name}
+                    preset={preset}
+                    onClick={() => handlePresetSelect(preset)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 text-center py-4">
+                Nenhum serviço encontrado. 
+                <button 
+                  onClick={() => { setSearchQuery(''); setStep('form'); }}
+                  className="text-primary font-medium ml-1"
+                >
+                  Cadastrar manualmente
+                </button>
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Categories */}
+        {!searchQuery && !selectedCategory && (
+          <>
+            {/* Popular */}
+            <div className="mb-4">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+                Populares
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {popularPresets.map((preset) => (
+                  <PresetButton
+                    key={preset.name}
+                    preset={preset}
+                    onClick={() => handlePresetSelect(preset)}
+                    compact
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+                Categorias
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {SUBSCRIPTION_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left"
+                  >
+                    <span className="text-lg">{cat.icon}</span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex-1">
+                      {cat.name}
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Category Presets */}
+        {!searchQuery && selectedCategory && (
+          <div>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="flex items-center gap-1 text-sm text-primary mb-3"
+            >
+              ← Voltar
+            </button>
+            <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
+              {filteredPresets.map((preset) => (
+                <PresetButton
+                  key={preset.name}
+                  preset={preset}
+                  onClick={() => handlePresetSelect(preset)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Manual Entry */}
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <button
+            onClick={() => setStep('form')}
+            className="w-full py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors"
+          >
+            Ou cadastre manualmente →
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  // ============================================================================
+  // STEP 2: Formulário
+  // ============================================================================
   return (
     <Card className="p-4 mb-6 border-2 border-primary/20">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-slate-900 dark:text-white">
-          {initialData?.id ? 'Editar Assinatura' : 'Nova Assinatura'}
-        </h3>
+        <div className="flex items-center gap-2">
+          {!initialData?.id && (
+            <button
+              onClick={() => setStep('presets')}
+              className="text-slate-400 hover:text-slate-600"
+            >
+              ←
+            </button>
+          )}
+          <h3 className="font-bold text-slate-900 dark:text-white">
+            {initialData?.id ? 'Editar Assinatura' : 'Detalhes'}
+          </h3>
+        </div>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
           <X className="h-5 w-5" />
         </button>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Icon Selection */}
-        <div>
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
-            Ícone
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {SUBSCRIPTION_ICONS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedIcon(item.icon)}
-                className={cn(
-                  'h-10 w-10 rounded-xl text-lg transition-all',
-                  selectedIcon === item.icon
-                    ? 'bg-primary/10 ring-2 ring-primary'
-                    : 'bg-slate-100 dark:bg-slate-700'
-                )}
-              >
-                {item.icon}
-              </button>
-            ))}
+        {/* Preview */}
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+          <span className="text-3xl">{selectedIcon}</span>
+          <div className="flex-1">
+            <p className="font-bold text-slate-900 dark:text-white">
+              {watch('name') || 'Nome da assinatura'}
+            </p>
+            <p className="text-sm text-slate-500">
+              {amountDisplay ? `R$ ${amountDisplay}/mês` : 'R$ 0,00/mês'}
+            </p>
           </div>
         </div>
 
@@ -197,6 +367,18 @@ export function SubscriptionForm({ cards, initialData, onClose }: SubscriptionFo
               Cartão de Cobrança
             </label>
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setValue('credit_card_id', null)}
+                className={cn(
+                  'px-3 py-2 rounded-xl text-xs font-bold transition-all',
+                  !watch('credit_card_id')
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600'
+                )}
+              >
+                Nenhum
+              </button>
               {cards.map((card) => (
                 <button
                   key={card.id}
@@ -209,7 +391,7 @@ export function SubscriptionForm({ cards, initialData, onClose }: SubscriptionFo
                       : 'bg-slate-100 dark:bg-slate-700 text-slate-600'
                   )}
                 >
-                  {card.name} ••{card.last_four_digits}
+                  {card.name} {card.last_four_digits && `••${card.last_four_digits}`}
                 </button>
               ))}
             </div>
@@ -228,5 +410,51 @@ export function SubscriptionForm({ cards, initialData, onClose }: SubscriptionFo
         </div>
       </form>
     </Card>
+  );
+}
+
+// ============================================================================
+// Preset Button Component
+// ============================================================================
+
+function PresetButton({ 
+  preset, 
+  onClick,
+  compact = false 
+}: { 
+  preset: SubscriptionPreset; 
+  onClick: () => void;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-left group",
+        compact ? "p-2" : "p-3"
+      )}
+    >
+      <span className={cn("flex-shrink-0", compact ? "text-xl" : "text-2xl")}>
+        {preset.icon}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className={cn(
+          "font-medium text-slate-900 dark:text-white truncate",
+          compact ? "text-xs" : "text-sm"
+        )}>
+          {preset.name}
+        </p>
+        {!compact && (
+          <p className="text-xs text-slate-500">
+            {formatCurrency(preset.defaultAmount)}/mês
+          </p>
+        )}
+      </div>
+      {compact && (
+        <span className="text-[10px] text-slate-400 font-medium">
+          {formatCurrency(preset.defaultAmount)}
+        </span>
+      )}
+    </button>
   );
 }
