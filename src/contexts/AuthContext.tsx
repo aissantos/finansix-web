@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client'; // Ajuste o import conforme seu projeto
-import { getOrCreateHousehold } from '@/lib/supabase'; // Ajuste imports de helpers
+import { supabase, getOrCreateHousehold } from '@/lib/supabase';
 import { useAppStore } from '@/stores';
 import { seedDefaultCategories } from '@/lib/supabase/categories';
 
@@ -31,14 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setHouseholdId = useAppStore((s) => s.setHouseholdId);
 
-  // Função auxiliar para inicializar dados
+  // Inicializa dados do utilizador (Household, etc) em background
   const initializeUserData = async (userId: string, email?: string) => {
     try {
       const name = email?.split('@')[0];
       const householdId = await getOrCreateHousehold(userId, name);
       setHouseholdId(householdId);
 
-      // Seed categories se necessário
       const { data: categories } = await supabase
         .from('categories')
         .select('id')
@@ -56,9 +54,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // 1. Timeout de Segurança (CRÍTICO: Destrava a tela após 3s se a rede falhar)
+    const safetyTimeout = setTimeout(() => {
+      if (mounted && state.isLoading) {
+        console.warn('[Auth] Timeout de conexão. Forçando liberação da tela.');
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
+    }, 3000);
+
+    // 2. Verificar sessão inicial
     const initSession = async () => {
       try {
-        // Tenta recuperar sessão existente
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) throw error;
@@ -67,26 +73,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setState({
             user: session?.user ?? null,
             session: session,
-            isLoading: false,
+            isLoading: false, // Libera a tela
             isAuthenticated: !!session,
           });
 
           if (session?.user) {
-            // Background init (não bloqueia UI)
             initializeUserData(session.user.id, session.user.email);
           }
         }
       } catch (error) {
-        console.error('[Auth] Session check failed:', error);
+        console.error('[Auth] Error checking session:', error);
+        // Mesmo com erro, liberamos a tela para o usuário tentar login novamente
         if (mounted) {
-          setState(prev => ({ ...prev, isLoading: false }));
+          setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
         }
       }
     };
 
     initSession();
 
-    // Escuta mudanças em tempo real
+    // 3. Escutar mudanças em tempo real
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
@@ -106,9 +112,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
-  }, [setHouseholdId]);
+  }, [setHouseholdId]); // Dependências estáveis
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -131,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/auth/reset-password',
+      redirectTo: `${window.location.origin}/auth/reset-password`,
     });
     if (error) throw error;
   };
@@ -143,7 +150,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Hook para consumir o contexto
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
