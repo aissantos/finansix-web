@@ -45,43 +45,66 @@ export function useAuth() {
   }, [setHouseholdId]);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setState({
-        user: session?.user ?? null,
-        session,
-        isLoading: false,
-        isAuthenticated: !!session,
-      });
+    let mounted = true;
 
-      if (session?.user) {
-        initializeUserHousehold(session.user.id, session.user.email);
+    // Função segura para buscar sessão inicial
+    const getInitialSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) throw error;
+
+        if (mounted) {
+          setState({
+            user: data.session?.user ?? null,
+            session: data.session,
+            isLoading: false, // Libera o loading mesmo se não tiver sessão
+            isAuthenticated: !!data.session,
+          });
+
+          if (data.session?.user) {
+            initializeUserHousehold(data.session.user.id, data.session.user.email);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar sessão:', error);
+        // Garante que o loading termina mesmo com erro
+        if (mounted) {
+          setState(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    });
+    };
+
+    getInitialSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setState({
-          user: session?.user ?? null,
-          session,
-          isLoading: false,
-          isAuthenticated: !!session,
-        });
+        if (mounted) {
+          setState({
+            user: session?.user ?? null,
+            session,
+            isLoading: false,
+            isAuthenticated: !!session,
+          });
 
-        if (event === 'SIGNED_IN' && session?.user) {
-          await initializeUserHousehold(session.user.id, session.user.email);
-          navigate('/');
-        }
+          if (event === 'SIGNED_IN' && session?.user) {
+            await initializeUserHousehold(session.user.id, session.user.email);
+            navigate('/');
+          }
 
-        if (event === 'SIGNED_OUT') {
-          setHouseholdId(null);
-          navigate('/auth/login');
+          if (event === 'SIGNED_OUT') {
+            setHouseholdId(null);
+            navigate('/auth/login');
+          }
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate, setHouseholdId, initializeUserHousehold]);
 
   const signIn = useCallback(
