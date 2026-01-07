@@ -18,8 +18,8 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Estado local de loading do form
-  const { signIn } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signIn } = useAuth(); // Já não precisamos do navigate aqui
 
   const {
     register,
@@ -33,21 +33,21 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await signIn(data.email, data.password);
-      // Não navegamos manualmente! O PublicRoute fará isso quando isAuthenticated mudar.
+      // Sucesso!
+      // NÃO navegamos manualmente. O App.tsx detetará a mudança de auth e redirecionará.
       toast({
         title: 'Sucesso',
         description: 'A entrar...',
         variant: 'success',
       });
     } catch (error: unknown) {
-      console.error(error);
       const message = error instanceof Error ? error.message : 'Erro ao fazer login';
       toast({
         title: 'Erro no login',
         description: message,
         variant: 'destructive',
       });
-      setIsSubmitting(false); // Só paramos o loading se der erro
+      setIsSubmitting(false); // Paramos o loading apenas em caso de erro
     }
   };
 

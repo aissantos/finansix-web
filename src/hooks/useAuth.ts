@@ -19,6 +19,7 @@ export function useAuth() {
     isAuthenticated: false,
   });
 
+  // Removemos o useNavigate daqui! O hook não deve navegar.
   const setHouseholdId = useAppStore((s) => s.setHouseholdId);
 
   const initializeUserHousehold = useCallback(async (userId: string, email?: string) => {
@@ -83,7 +84,6 @@ export function useAuth() {
       async (event, session) => {
         if (!mounted) return;
 
-        // Atualiza estado imediatamente
         setState({
           user: session?.user ?? null,
           session,
@@ -91,7 +91,7 @@ export function useAuth() {
           isAuthenticated: !!session,
         });
 
-        // Tarefas de background (sem navegação aqui!)
+        // Apenas tarefas de background. SEM navigate aqui.
         if (event === 'SIGNED_IN' && session?.user) {
           initializeUserHousehold(session.user.id, session.user.email);
         }
