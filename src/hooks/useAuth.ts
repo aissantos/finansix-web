@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase, getOrCreateHousehold } from '@/lib/supabase';
 import { useAppStore } from '@/stores';
@@ -20,7 +19,6 @@ export function useAuth() {
     isAuthenticated: false,
   });
 
-  const navigate = useNavigate();
   const setHouseholdId = useAppStore((s) => s.setHouseholdId);
 
   const initializeUserHousehold = useCallback(async (userId: string, email?: string) => {
@@ -46,11 +44,9 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
-    // Função de inicialização robusta
     const initSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
-        
         if (error) throw error;
 
         if (mounted) {
@@ -66,18 +62,17 @@ export function useAuth() {
           }
         }
       } catch (error) {
-        console.error('[Auth] Erro ao verificar sessão:', error);
-        // CRÍTICO: Libera o loading mesmo com erro para exibir o Login
+        console.error('[Auth] Erro inicial:', error);
         if (mounted) {
           setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
         }
       }
     };
 
-    // Timeout de segurança: Se o Supabase não responder em 3s, libera a tela
+    // Timeout de segurança (3s) para não travar a tela de loading
     const safetyTimeout = setTimeout(() => {
       if (mounted && state.isLoading) {
-        console.warn('[Auth] Timeout de conexão. Liberando tela.');
+        console.warn('[Auth] Timeout. Forçando exibição.');
         setState(prev => ({ ...prev, isLoading: false }));
       }
     }, 3000);
@@ -88,6 +83,7 @@ export function useAuth() {
       async (event, session) => {
         if (!mounted) return;
 
+        // Atualiza estado imediatamente
         setState({
           user: session?.user ?? null,
           session,
@@ -95,14 +91,13 @@ export function useAuth() {
           isAuthenticated: !!session,
         });
 
+        // Tarefas de background (sem navegação aqui!)
         if (event === 'SIGNED_IN' && session?.user) {
-          await initializeUserHousehold(session.user.id, session.user.email);
-          navigate('/');
+          initializeUserHousehold(session.user.id, session.user.email);
         }
 
         if (event === 'SIGNED_OUT') {
           setHouseholdId(null);
-          navigate('/auth/login');
         }
       }
     );
@@ -112,32 +107,21 @@ export function useAuth() {
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
-  }, [navigate, setHouseholdId, initializeUserHousehold]);
+  }, [setHouseholdId, initializeUserHousehold]);
 
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-    },
-    []
-  );
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }, []);
 
-  const signUp = useCallback(
-    async (email: string, password: string, name?: string) => {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { display_name: name },
-        },
-      });
-      if (error) throw error;
-    },
-    []
-  );
+  const signUp = useCallback(async (email: string, password: string, name?: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: name } },
+    });
+    if (error) throw error;
+  }, []);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
@@ -151,11 +135,5 @@ export function useAuth() {
     if (error) throw error;
   }, []);
 
-  return {
-    ...state,
-    signIn,
-    signUp,
-    signOut,
-    resetPassword,
-  };
+  return { ...state, signIn, signUp, signOut, resetPassword };
 }
