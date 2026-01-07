@@ -10,9 +10,10 @@ interface HeaderProps {
   showMonthSelector?: boolean;
   showBack?: boolean;
   onBack?: () => void;
+  showLogo?: boolean;
 }
 
-export function Header({ title, showMonthSelector = false, showBack, onBack }: HeaderProps) {
+export function Header({ title, showMonthSelector = false, showBack, onBack, showLogo = true }: HeaderProps) {
   const selectedMonth = useSelectedMonth();
   const { goToPreviousMonth, goToNextMonth, goToCurrentMonth } = useAppStore();
   const isOnline = useOnlineStatus();
@@ -24,15 +25,21 @@ export function Header({ title, showMonthSelector = false, showBack, onBack }: H
     <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
       <div className="flex items-center justify-between px-4 py-4">
         {/* Left */}
-        <div className="w-10">
-          {showBack && onBack && (
+        <div className="w-10 flex items-center">
+          {showBack && onBack ? (
             <button
               onClick={onBack}
               className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-          )}
+          ) : showLogo ? (
+            <img 
+              src="/icons/icon-72x72.png" 
+              alt="Finansix" 
+              className="h-9 w-9 rounded-xl"
+            />
+          ) : null}
         </div>
 
         {/* Center */}

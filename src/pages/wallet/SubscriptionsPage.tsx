@@ -433,9 +433,13 @@ function SubscriptionForm({ cards, editingSubscription, onClose }: SubscriptionF
 
   const onSubmit = (data: SubscriptionFormData) => {
     const payload = {
-      ...data,
+      name: data.name,
+      amount: data.amount,
+      billing_day: data.billing_day,
       icon: selectedIcon,
+      category: data.category || undefined,
       credit_card_id: data.credit_card_id || undefined,
+      is_active: data.is_active,
     };
 
     if (isEditing && editingSubscription) {
@@ -450,10 +454,11 @@ function SubscriptionForm({ cards, editingSubscription, onClose }: SubscriptionF
             });
             onClose();
           },
-          onError: () => {
+          onError: (error) => {
+            console.error('Update error:', error);
             toast({
               title: 'Erro ao atualizar',
-              description: 'Tente novamente.',
+              description: error instanceof Error ? error.message : 'Tente novamente.',
               variant: 'destructive',
             });
           },
@@ -469,10 +474,11 @@ function SubscriptionForm({ cards, editingSubscription, onClose }: SubscriptionF
           });
           onClose();
         },
-        onError: () => {
+        onError: (error) => {
+          console.error('Create error:', error);
           toast({
             title: 'Erro ao adicionar',
-            description: 'Tente novamente.',
+            description: error instanceof Error ? error.message : 'Tente novamente.',
             variant: 'destructive',
           });
         },
