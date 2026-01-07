@@ -29,7 +29,6 @@ export function useAuth() {
       const householdId = await getOrCreateHousehold(userId, name);
       setHouseholdId(householdId);
 
-      // Check if categories exist, if not seed them
       const { data: categories } = await supabase
         .from('categories')
         .select('id')
@@ -40,15 +39,15 @@ export function useAuth() {
         await seedDefaultCategories(householdId);
       }
     } catch (error) {
-      console.error('Failed to initialize household:', error);
+      console.error('[Auth] Failed to initialize household:', error);
     }
   }, [setHouseholdId]);
 
   useEffect(() => {
     let mounted = true;
 
-    // Função segura para buscar sessão inicial
-    const getInitialSession = async () => {
+    // Função de inicialização robusta
+    const initSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
         
@@ -58,7 +57,7 @@ export function useAuth() {
           setState({
             user: data.session?.user ?? null,
             session: data.session,
-            isLoading: false, // Libera o loading mesmo se não tiver sessão
+            isLoading: false,
             isAuthenticated: !!data.session,
           });
 
@@ -67,42 +66,50 @@ export function useAuth() {
           }
         }
       } catch (error) {
-        console.error('Erro ao verificar sessão:', error);
-        // Garante que o loading termina mesmo com erro
+        console.error('[Auth] Erro ao verificar sessão:', error);
+        // CRÍTICO: Libera o loading mesmo com erro para exibir o Login
         if (mounted) {
-          setState(prev => ({ ...prev, isLoading: false }));
+          setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
         }
       }
     };
 
-    getInitialSession();
+    // Timeout de segurança: Se o Supabase não responder em 3s, libera a tela
+    const safetyTimeout = setTimeout(() => {
+      if (mounted && state.isLoading) {
+        console.warn('[Auth] Timeout de conexão. Liberando tela.');
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
+    }, 3000);
 
-    // Listen for auth changes
+    initSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (mounted) {
-          setState({
-            user: session?.user ?? null,
-            session,
-            isLoading: false,
-            isAuthenticated: !!session,
-          });
+        if (!mounted) return;
 
-          if (event === 'SIGNED_IN' && session?.user) {
-            await initializeUserHousehold(session.user.id, session.user.email);
-            navigate('/');
-          }
+        setState({
+          user: session?.user ?? null,
+          session,
+          isLoading: false,
+          isAuthenticated: !!session,
+        });
 
-          if (event === 'SIGNED_OUT') {
-            setHouseholdId(null);
-            navigate('/auth/login');
-          }
+        if (event === 'SIGNED_IN' && session?.user) {
+          await initializeUserHousehold(session.user.id, session.user.email);
+          navigate('/');
+        }
+
+        if (event === 'SIGNED_OUT') {
+          setHouseholdId(null);
+          navigate('/auth/login');
         }
       }
     );
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, [navigate, setHouseholdId, initializeUserHousehold]);
