@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AppLayout } from '@/components/layout';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QueryErrorBoundary } from '@/components/QueryErrorBoundary';
+import { PWAInstallBanner } from '@/components/features';
 import { useAuth } from '@/hooks/useAuth';
 
 // Lazy load pages for better initial bundle size
@@ -17,6 +18,11 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const NewTransactionPage = lazy(() => import('@/pages/NewTransactionPage'));
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
+
+// Wallet sub-pages
+const NewCardPage = lazy(() => import('@/pages/wallet/NewCardPage'));
+const NewAccountPage = lazy(() => import('@/pages/wallet/NewAccountPage'));
+const SubscriptionsPage = lazy(() => import('@/pages/wallet/SubscriptionsPage'));
 
 // Loading component for Suspense
 function PageLoader() {
@@ -80,7 +86,7 @@ function AppRoutes() {
           }
         />
 
-        {/* Protected App Routes */}
+        {/* Protected App Routes with bottom nav */}
         <Route
           element={
             <ProtectedRoute>
@@ -94,12 +100,38 @@ function AppRoutes() {
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 
-        {/* Full-screen protected routes */}
+        {/* Full-screen protected routes (no bottom nav) */}
         <Route
           path="/transactions/new"
           element={
             <ProtectedRoute>
               <NewTransactionPage />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Wallet management routes */}
+        <Route
+          path="/cards/new"
+          element={
+            <ProtectedRoute>
+              <NewCardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounts/new"
+          element={
+            <ProtectedRoute>
+              <NewAccountPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/subscriptions"
+          element={
+            <ProtectedRoute>
+              <SubscriptionsPage />
             </ProtectedRoute>
           }
         />
@@ -119,6 +151,7 @@ export default function App() {
           <BrowserRouter>
             <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
               <AppRoutes />
+              <PWAInstallBanner />
               <Toaster />
             </div>
           </BrowserRouter>

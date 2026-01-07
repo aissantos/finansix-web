@@ -16,7 +16,7 @@ const CACHE_NAME = 'finansix-static-v1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/favicon.svg',
+  '/favicon.png',
 ];
 
 // Install: Pre-cache static assets

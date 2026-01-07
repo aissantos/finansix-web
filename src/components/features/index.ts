@@ -4,6 +4,7 @@ export { ReliefChart } from './ReliefChart';
 export { TransactionItem } from './TransactionItem';
 export { TransactionList } from './TransactionList';
 export { CreditCardItem } from './CreditCardItem';
+export { PWAInstallBanner } from './PWAInstallBanner';
 
 // Skeleton loading states
 export {

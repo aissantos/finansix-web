@@ -3,16 +3,30 @@
 -- All queries are filtered by household_id which the user belongs to
 
 -- ============================================================================
--- 1. Helper function to get user's household_id
+-- 1. Helper function to get user's household_id (SECURED SCHEMA STRATEGY)
 -- ============================================================================
-CREATE OR REPLACE FUNCTION auth.user_household_id()
+
+-- Cria um schema privado para funções de sistema que não devem aparecer na API
+CREATE SCHEMA IF NOT EXISTS _secured;
+
+-- Revoga permissões públicas deste schema (ninguém vê via API)
+REVOKE ALL ON SCHEMA _secured FROM anon, authenticated;
+GRANT USAGE ON SCHEMA _secured TO service_role;
+GRANT USAGE ON SCHEMA _secured TO postgres;
+
+-- Cria a função dentro do schema protegido
+CREATE OR REPLACE FUNCTION _secured.user_household_id()
 RETURNS UUID AS $$
-  SELECT household_id 
-  FROM public.household_members 
-  WHERE user_id = auth.uid() 
-  AND role IN ('owner', 'admin', 'member')
+  SELECT household_id
+  FROM public.household_members
+  WHERE user_id = auth.uid()
+  -- Adicione filtros de role se necessário, ex: AND role IN ('owner', 'admin', 'member')
   LIMIT 1;
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Permite que o RLS (executando como usuário autenticado) chame esta função
+GRANT EXECUTE ON FUNCTION _secured.user_household_id() TO authenticated;
+GRANT EXECUTE ON FUNCTION _secured.user_household_id() TO service_role;
 
 -- ============================================================================
 -- 2. Enable RLS on all tables
@@ -79,22 +93,22 @@ CREATE POLICY "Owners can manage members" ON household_members
 DROP POLICY IF EXISTS "Users can view household accounts" ON accounts;
 CREATE POLICY "Users can view household accounts" ON accounts
   FOR SELECT
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can create accounts" ON accounts;
 CREATE POLICY "Users can create accounts" ON accounts
   FOR INSERT
-  WITH CHECK (household_id = auth.user_household_id());
+  WITH CHECK (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can update household accounts" ON accounts;
 CREATE POLICY "Users can update household accounts" ON accounts
   FOR UPDATE
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can delete household accounts" ON accounts;
 CREATE POLICY "Users can delete household accounts" ON accounts
   FOR DELETE
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 -- ============================================================================
 -- 6. Credit cards policies
@@ -102,22 +116,22 @@ CREATE POLICY "Users can delete household accounts" ON accounts
 DROP POLICY IF EXISTS "Users can view household cards" ON credit_cards;
 CREATE POLICY "Users can view household cards" ON credit_cards
   FOR SELECT
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can create cards" ON credit_cards;
 CREATE POLICY "Users can create cards" ON credit_cards
   FOR INSERT
-  WITH CHECK (household_id = auth.user_household_id());
+  WITH CHECK (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can update household cards" ON credit_cards;
 CREATE POLICY "Users can update household cards" ON credit_cards
   FOR UPDATE
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can delete household cards" ON credit_cards;
 CREATE POLICY "Users can delete household cards" ON credit_cards
   FOR DELETE
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 -- ============================================================================
 -- 7. Categories policies (includes system categories with null household_id)
@@ -127,18 +141,18 @@ CREATE POLICY "Users can view categories" ON categories
   FOR SELECT
   USING (
     household_id IS NULL -- System categories visible to all
-    OR household_id = auth.user_household_id()
+    OR household_id = _secured.user_household_id()
   );
 
 DROP POLICY IF EXISTS "Users can create categories" ON categories;
 CREATE POLICY "Users can create categories" ON categories
   FOR INSERT
-  WITH CHECK (household_id = auth.user_household_id());
+  WITH CHECK (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can update own categories" ON categories;
 CREATE POLICY "Users can update own categories" ON categories
   FOR UPDATE
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 -- ============================================================================
 -- 8. Transactions policies
@@ -146,22 +160,22 @@ CREATE POLICY "Users can update own categories" ON categories
 DROP POLICY IF EXISTS "Users can view household transactions" ON transactions;
 CREATE POLICY "Users can view household transactions" ON transactions
   FOR SELECT
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can create transactions" ON transactions;
 CREATE POLICY "Users can create transactions" ON transactions
   FOR INSERT
-  WITH CHECK (household_id = auth.user_household_id());
+  WITH CHECK (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can update household transactions" ON transactions;
 CREATE POLICY "Users can update household transactions" ON transactions
   FOR UPDATE
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can delete household transactions" ON transactions;
 CREATE POLICY "Users can delete household transactions" ON transactions
   FOR DELETE
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 -- ============================================================================
 -- 9. Installments policies
@@ -169,17 +183,17 @@ CREATE POLICY "Users can delete household transactions" ON transactions
 DROP POLICY IF EXISTS "Users can view household installments" ON installments;
 CREATE POLICY "Users can view household installments" ON installments
   FOR SELECT
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can create installments" ON installments;
 CREATE POLICY "Users can create installments" ON installments
   FOR INSERT
-  WITH CHECK (household_id = auth.user_household_id());
+  WITH CHECK (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can update household installments" ON installments;
 CREATE POLICY "Users can update household installments" ON installments
   FOR UPDATE
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 -- ============================================================================
 -- 10. Credit card statements policies
@@ -187,12 +201,12 @@ CREATE POLICY "Users can update household installments" ON installments
 DROP POLICY IF EXISTS "Users can view household statements" ON credit_card_statements;
 CREATE POLICY "Users can view household statements" ON credit_card_statements
   FOR SELECT
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can manage household statements" ON credit_card_statements;
 CREATE POLICY "Users can manage household statements" ON credit_card_statements
   FOR ALL
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 -- ============================================================================
 -- 11. Expected transactions policies
@@ -200,12 +214,12 @@ CREATE POLICY "Users can manage household statements" ON credit_card_statements
 DROP POLICY IF EXISTS "Users can view expected transactions" ON expected_transactions;
 CREATE POLICY "Users can view expected transactions" ON expected_transactions
   FOR SELECT
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 DROP POLICY IF EXISTS "Users can manage expected transactions" ON expected_transactions;
 CREATE POLICY "Users can manage expected transactions" ON expected_transactions
   FOR ALL
-  USING (household_id = auth.user_household_id());
+  USING (household_id = _secured.user_household_id());
 
 -- ============================================================================
 -- 12. Grant usage to authenticated users
@@ -226,6 +240,7 @@ CREATE INDEX IF NOT EXISTS idx_installments_household_id ON installments(househo
 -- ============================================================================
 -- 14. Documentation
 -- ============================================================================
-COMMENT ON FUNCTION auth.user_household_id() IS 
+COMMENT ON FUNCTION _secured.user_household_id() IS 
 'Returns the household_id for the currently authenticated user.
+Located in _secured schema to prevent public API exposure.
 Used in RLS policies to ensure users can only access their household data.';

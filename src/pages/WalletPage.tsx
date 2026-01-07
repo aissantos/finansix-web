@@ -281,7 +281,9 @@ function AccountsTab() {
 }
 
 function SubscriptionsTab() {
-  // Mock subscriptions for now
+  const navigate = useNavigate();
+  
+  // Mock subscriptions for preview - real data on full page
   const subscriptions = [
     { name: 'Netflix Premium', price: 55.90, card: 'Nubank ••8832', date: 'Vence em 2 dias', icon: '🎬', warning: true },
     { name: 'Spotify Duo', price: 21.90, card: 'Nubank ••8832', date: 'Próx: 20 Jan', icon: '🎵' },
@@ -296,10 +298,29 @@ function SubscriptionsTab() {
         <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
           Assinaturas Ativas
         </h3>
-        <div className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <p className="text-[10px] font-bold text-primary uppercase">
-            {formatCurrency(totalMonthly)}/mês
-          </p>
+        <button
+          onClick={() => navigate('/subscriptions')}
+          className="text-xs font-bold text-primary hover:underline transition-all"
+        >
+          Gerenciar todas →
+        </button>
+      </div>
+
+      {/* Total Card */}
+      <div className="bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl p-4 text-white">
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-white/70 text-xs font-medium">Total Mensal</p>
+            <p className="text-2xl font-black">{formatCurrency(totalMonthly)}</p>
+          </div>
+          <Button
+            onClick={() => navigate('/subscriptions')}
+            className="bg-white/20 hover:bg-white/30 text-white border-0"
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Adicionar
+          </Button>
         </div>
       </div>
 
@@ -307,7 +328,8 @@ function SubscriptionsTab() {
         {subscriptions.map((sub, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-slate-800 rounded-3xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 transition-all hover:shadow-md active:scale-[0.99]"
+            onClick={() => navigate('/subscriptions')}
+            className="bg-white dark:bg-slate-800 rounded-3xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 transition-all hover:shadow-md active:scale-[0.99] cursor-pointer"
           >
             <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-2xl relative flex-shrink-0">
               {sub.icon}
