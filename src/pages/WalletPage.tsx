@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calculator, TrendingUp, Calendar, Repeat, AlertCircle, ArrowLeftRight } from 'lucide-react';
+import { Plus, Calculator, TrendingUp, ArrowLeftRight, Repeat } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
-import { CreditCardItem } from '@/components/features';
+import { CreditCardItem, AccountCard, SubscriptionCard } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -41,39 +41,10 @@ export default function WalletPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="min-h-[250px] animate-in fade-in slide-in-from-top-1 duration-300 px-4 mt-6">
+        <div className="min-h-[250px] animate-in fade-in slide-in-from-top-1 duration-300 px-4 mt-6 pb-24">
           {activeTab === 'cards' && <CardsTab />}
           {activeTab === 'accounts' && <AccountsTab />}
           {activeTab === 'subscriptions' && <SubscriptionsTab />}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3 px-4 pb-20 mt-6">
-          {activeTab === 'cards' && (
-            <button
-              onClick={() => navigate('/simulator')}
-              className="w-full text-left bg-gradient-to-r from-teal-400 to-blue-600 p-[1px] rounded-3xl group transition-all hover:shadow-lg active:scale-[0.98]"
-            >
-              <div className="bg-white dark:bg-slate-800 rounded-[23px] p-5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-11 w-11 rounded-2xl bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 flex items-center justify-center shadow-sm">
-                    <Calculator className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white leading-tight">
-                      Simulador de Impacto
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-1 tracking-tight">
-                      Veja como novas compras afetam seu caixa
-                    </p>
-                  </div>
-                </div>
-                <span className="text-slate-300 group-hover:text-primary transition-all group-hover:translate-x-1">
-                  →
-                </span>
-              </div>
-            </button>
-          )}
         </div>
       </PageContainer>
     </>
@@ -133,6 +104,33 @@ function CardsTab() {
 
   return (
     <section className="space-y-6">
+       {/* Actions Buttons Container */}
+       <div className="space-y-3">
+          <button
+              onClick={() => navigate('/simulator')}
+              className="w-full text-left bg-gradient-to-r from-teal-400 to-blue-600 p-[1px] rounded-3xl group transition-all hover:shadow-lg active:scale-[0.98]"
+            >
+              <div className="bg-white dark:bg-slate-800 rounded-[23px] p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-11 w-11 rounded-2xl bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 flex items-center justify-center shadow-sm">
+                    <Calculator className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white leading-tight">
+                      Simulador de Impacto
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1 tracking-tight">
+                      Veja como novas compras afetam seu caixa
+                    </p>
+                  </div>
+                </div>
+                <span className="text-slate-300 group-hover:text-primary transition-all group-hover:translate-x-1">
+                  →
+                </span>
+              </div>
+            </button>
+       </div>
+
       {/* Credit Summary */}
       {usage && (
         <div className="list-card bg-primary/5 dark:bg-primary/10 border-primary/10 dark:border-primary/20">
@@ -169,7 +167,7 @@ function CardsTab() {
         </div>
       )}
 
-      {/* Cards List */}
+      {/* Cards List Grid */}
       <div className="flex justify-between items-end mb-1 px-1">
         <h3 className="section-title">Meus Cartões</h3>
         <button
@@ -180,28 +178,27 @@ function CardsTab() {
         </button>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {cards?.length ? (
           cards.map((card) => (
             <CreditCardItem
               key={card.id}
               card={card}
+              onClick={() => navigate(`/cards/${card.id}/edit`)}
               onEdit={() => navigate(`/cards/${card.id}/edit`)}
-              onDelete={() => {
-                // Will be handled by the menu in CreditCardItem
-                // The actual deletion requires confirmation, which is in EditCardPage
-                navigate(`/cards/${card.id}/edit`);
-              }}
+              onDelete={() => navigate(`/cards/${card.id}/edit`)}
             />
           ))
         ) : (
-          <Card className="p-8 text-center">
-            <p className="text-slate-500 mb-4">Nenhum cartão cadastrado</p>
-            <Button onClick={() => navigate('/cards/new')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Cartão
-            </Button>
-          </Card>
+          <div className="col-span-full">
+            <Card className="p-8 text-center">
+                <p className="text-slate-500 mb-4">Nenhum cartão cadastrado</p>
+                <Button onClick={() => navigate('/cards/new')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Cartão
+                </Button>
+            </Card>
+          </div>
         )}
       </div>
     </section>
@@ -214,17 +211,17 @@ function AccountsTab() {
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        {[...Array(3)].map((_, i) => (
-          <Skeleton key={i} className="h-24 w-full rounded-3xl" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-40 w-full rounded-2xl" />
         ))}
       </div>
     );
   }
 
   return (
-    <section className="space-y-4">
-      {/* Transfer Button */}
+    <section className="space-y-6">
+      {/* Transfer Button - Mantido no topo como destaque */}
       {accounts && accounts.length >= 2 && (
         <button
           onClick={() => navigate('/transfer')}
@@ -252,9 +249,7 @@ function AccountsTab() {
       )}
 
       <div className="flex justify-between items-end mb-1 px-1">
-        <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-          Minhas Contas
-        </h3>
+        <h3 className="section-title">Minhas Contas</h3>
         <button
           onClick={() => navigate('/accounts/new')}
           className="text-xs font-bold text-primary hover:underline transition-all"
@@ -263,51 +258,28 @@ function AccountsTab() {
         </button>
       </div>
 
-      <div className="grid gap-3">
+      {/* Grid Layout Padronizado */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {accounts?.length ? (
           accounts.map((acc) => (
-            <button
+            <AccountCard
               key={acc.id}
+              account={acc}
               onClick={() => navigate(`/accounts/${acc.id}/edit`)}
-              className="w-full text-left bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-all hover:shadow-md active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-black flex-shrink-0 shadow-sm"
-                  style={{ backgroundColor: acc.color || '#6366f1' }}
-                >
-                  {acc.name.substring(0, 2).toUpperCase()}
-                </div>
-                <div className="flex flex-col">
-                  <h4 className="font-bold text-slate-900 dark:text-white leading-tight">
-                    {acc.name}
-                  </h4>
-                  <p className="text-xs text-slate-500 mt-1 font-medium capitalize">
-                    {acc.type === 'checking' ? 'Conta Corrente' : acc.type === 'savings' ? 'Poupança' : acc.type === 'investment' ? 'Investimento' : acc.type === 'cash' ? 'Dinheiro' : acc.type}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                  Saldo
-                </span>
-                <p className={cn(
-                  'text-lg font-black',
-                  (acc.current_balance ?? 0) < 0 ? 'text-expense' : 'text-slate-900 dark:text-white'
-                )}>
-                  {formatCurrency(acc.current_balance ?? 0)}
-                </p>
-              </div>
-            </button>
+              onEdit={() => navigate(`/accounts/${acc.id}/edit`)}
+              onTransfer={() => navigate('/transfer')}
+            />
           ))
         ) : (
-          <Card className="p-8 text-center">
-            <p className="text-slate-500 mb-4">Nenhuma conta cadastrada</p>
-            <Button onClick={() => navigate('/accounts/new')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Conta
-            </Button>
-          </Card>
+          <div className="col-span-full">
+             <Card className="p-8 text-center">
+                <p className="text-slate-500 mb-4">Nenhuma conta cadastrada</p>
+                <Button onClick={() => navigate('/accounts/new')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Conta
+                </Button>
+            </Card>
+          </div>
         )}
       </div>
     </section>
@@ -316,144 +288,85 @@ function AccountsTab() {
 
 function SubscriptionsTab() {
   const navigate = useNavigate();
-  const { data: subscriptions, isLoading } = useSubscriptions();
+  const { data: subscriptions, isLoading, deleteSubscription, toggleSubscription } = useSubscriptions();
   const { data: cards } = useCreditCards();
 
   const activeSubscriptions = subscriptions?.filter(s => s.is_active) ?? [];
   const totalMonthly = activeSubscriptions.reduce((sum, s) => sum + s.amount, 0);
 
-  // Calculate days until billing for each subscription
-  const getSubscriptionStatus = (billingDay: number) => {
-    const today = new Date().getDate();
-    const daysUntil = billingDay >= today
-      ? billingDay - today
-      : 30 - today + billingDay;
-    
-    return {
-      daysUntil,
-      isUpcoming: daysUntil <= 3,
-      label: daysUntil === 0 
-        ? 'Vence hoje' 
-        : daysUntil <= 3 
-          ? `Vence em ${daysUntil} dia${daysUntil > 1 ? 's' : ''}`
-          : `Dia ${billingDay}`,
-    };
-  };
-
   if (isLoading) {
     return (
-      <section className="space-y-4">
-        <Skeleton className="h-8 w-40" />
+      <div className="space-y-4">
         <Skeleton className="h-24 w-full rounded-2xl" />
-        <Skeleton className="h-20 w-full rounded-3xl" />
-        <Skeleton className="h-20 w-full rounded-3xl" />
-      </section>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Skeleton className="h-40 w-full rounded-2xl" />
+            <Skeleton className="h-40 w-full rounded-2xl" />
+        </div>
+      </div>
     );
   }
 
   return (
-    <section className="space-y-4">
-      <div className="flex justify-between items-end mb-1 px-1">
-        <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-          Assinaturas Ativas
-        </h3>
-        <button
-          onClick={() => navigate('/subscriptions')}
-          className="text-xs font-bold text-primary hover:underline transition-all"
-        >
-          Gerenciar todas →
-        </button>
-      </div>
-
-      {/* Total Card */}
-      <div className="bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl p-4 text-white">
+    <section className="space-y-6">
+      {/* Total Banner - Mantido pois é útil */}
+      <div className="bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl p-5 text-white shadow-lg shadow-violet-500/20">
         <div className="flex justify-between items-center">
           <div>
-            <p className="text-white/70 text-xs font-medium">Total Mensal</p>
-            <p className="text-2xl font-black">{formatCurrency(totalMonthly)}</p>
+            <p className="text-white/70 text-xs font-medium mb-1">Total Mensal em Assinaturas</p>
+            <p className="text-3xl font-black tracking-tight">{formatCurrency(totalMonthly)}</p>
           </div>
           <Button
             onClick={() => navigate('/subscriptions')}
             className="bg-white/20 hover:bg-white/30 text-white border-0"
-            size="sm"
           >
             <Plus className="h-4 w-4 mr-1" />
-            Adicionar
+            Nova
           </Button>
         </div>
       </div>
 
-      {activeSubscriptions.length === 0 ? (
-        <Card className="p-8 text-center">
-          <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
-            <Repeat className="h-7 w-7 text-slate-400" />
-          </div>
-          <p className="text-slate-500 text-sm mb-3">Nenhuma assinatura cadastrada</p>
-          <Button onClick={() => navigate('/subscriptions')} size="sm">
-            <Plus className="h-4 w-4 mr-1" />
-            Adicionar primeira
-          </Button>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {activeSubscriptions.slice(0, 5).map((sub) => {
-            const status = getSubscriptionStatus(sub.billing_day);
-            const card = cards?.find(c => c.id === sub.credit_card_id);
+      <div className="flex justify-between items-end mb-1 px-1">
+        <h3 className="section-title">Assinaturas Ativas</h3>
+        <button
+          onClick={() => navigate('/subscriptions')}
+          className="text-xs font-bold text-primary hover:underline transition-all"
+        >
+          Ver todas →
+        </button>
+      </div>
 
+      {/* Grid Layout Padronizado */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {subscriptions?.length ? (
+          subscriptions.map((sub) => {
+            const card = cards?.find(c => c.id === sub.credit_card_id);
             return (
-              <div
+              <SubscriptionCard
                 key={sub.id}
-                onClick={() => navigate('/subscriptions')}
-                className="bg-white dark:bg-slate-800 rounded-3xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 transition-all hover:shadow-md active:scale-[0.99] cursor-pointer"
-              >
-                <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-2xl relative flex-shrink-0">
-                  {sub.icon || '📦'}
-                  {status.isUpcoming && (
-                    <div className="absolute -top-1 -right-1 h-4 w-4 bg-amber-500 rounded-full border-2 border-white flex items-center justify-center">
-                      <AlertCircle className="h-3 w-3 text-white" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 flex flex-col justify-center">
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">{sub.name}</h4>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">
-                      {formatCurrency(sub.amount)}
-                    </p>
-                  </div>
-                  {card && (
-                    <p className="text-[10px] font-medium text-slate-400 mt-0.5">
-                      {card.name} ••{card.last_four_digits}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between mt-2">
-                    <span
-                      className={cn(
-                        'text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1',
-                        status.isUpcoming
-                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                          : 'bg-slate-100 text-slate-500 dark:bg-slate-700'
-                      )}
-                    >
-                      <Calendar className="h-3 w-3" />
-                      {status.label}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                subscription={sub}
+                cardName={card?.name}
+                onClick={() => navigate('/subscriptions')} // Idealmente levaria para edição
+                onEdit={() => navigate('/subscriptions')}
+                onDelete={() => deleteSubscription.mutate(sub.id)}
+                onToggleActive={() => toggleSubscription.mutate({ id: sub.id, isActive: !sub.is_active })}
+              />
             );
-          })}
-          
-          {activeSubscriptions.length > 5 && (
-            <button
-              onClick={() => navigate('/subscriptions')}
-              className="text-center text-xs font-bold text-primary py-2 hover:underline"
-            >
-              Ver todas as {activeSubscriptions.length} assinaturas →
-            </button>
-          )}
-        </div>
-      )}
+          })
+        ) : (
+          <div className="col-span-full">
+            <Card className="p-8 text-center">
+                <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+                    <Repeat className="h-7 w-7 text-slate-400" />
+                </div>
+                <p className="text-slate-500 text-sm mb-3">Nenhuma assinatura cadastrada</p>
+                <Button onClick={() => navigate('/subscriptions')} size="sm">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Adicionar primeira
+                </Button>
+            </Card>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
