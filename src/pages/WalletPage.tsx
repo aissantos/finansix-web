@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calculator, TrendingUp, ArrowLeftRight, Repeat } from 'lucide-react';
+import { 
+  Calculator, 
+  TrendingUp, 
+  Plus,
+  ArrowRight
+} from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { CreditCardItem, AccountCard, SubscriptionCard } from '@/components/features';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { useCreditCards, useCreditUsage, useAccounts, useTotalBalance, useSubscriptions } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 
@@ -18,21 +23,21 @@ export default function WalletPage() {
   return (
     <>
       <Header title="Carteira" />
-      <PageContainer noPadding className="pt-6">
-        {/* Consolidated Balance */}
+      <PageContainer noPadding className="pt-6 pb-24">
+        {/* Consolidated Balance Hero */}
         <ConsolidatedBalance />
 
-        {/* Tabs */}
-        <div className="mx-4 mt-6 bg-slate-200/70 dark:bg-slate-800 p-1.5 rounded-2xl flex shadow-inner border border-slate-100 dark:border-slate-700">
-          {(['accounts', 'cards', 'subscriptions'] as TabType[]).map((tab) => (
+        {/* Modern Segmented Control */}
+        <div className="mx-4 mt-8 p-1.5 rounded-2xl bg-muted/40 border border-border/40 flex">
+          {(['cards', 'accounts', 'subscriptions'] as TabType[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                'flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-200',
+                'flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ease-out',
                 activeTab === tab
-                  ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-600'
+                  ? 'bg-background shadow-sm text-foreground ring-1 ring-black/5 dark:ring-white/10'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
               )}
             >
               {tab === 'cards' ? 'Cartões' : tab === 'accounts' ? 'Contas' : 'Assinaturas'}
@@ -40,8 +45,8 @@ export default function WalletPage() {
           ))}
         </div>
 
-        {/* Tab Content */}
-        <div className="min-h-[250px] animate-in fade-in slide-in-from-top-1 duration-300 px-4 mt-6 pb-24">
+        {/* Content Area with Animation */}
+        <div className="px-4 mt-6 min-h-[400px] animate-in fade-in slide-in-from-top-4 duration-500">
           {activeTab === 'cards' && <CardsTab />}
           {activeTab === 'accounts' && <AccountsTab />}
           {activeTab === 'subscriptions' && <SubscriptionsTab />}
@@ -50,6 +55,10 @@ export default function WalletPage() {
     </>
   );
 }
+
+// -----------------------------------------------------------------------------
+// SUB-COMPONENTS
+// -----------------------------------------------------------------------------
 
 function ConsolidatedBalance() {
   const { data: totalBalance, isLoading: balanceLoading } = useTotalBalance();
@@ -60,28 +69,33 @@ function ConsolidatedBalance() {
 
   if (isLoading) {
     return (
-      <section className="flex flex-col items-center justify-center text-center px-4">
-        <Skeleton className="h-4 w-40 mb-2" />
-        <Skeleton className="h-10 w-48 mb-2" />
-        <Skeleton className="h-6 w-24 rounded-full" />
+      <section className="flex flex-col items-center justify-center text-center px-4 py-8">
+        <Skeleton className="h-4 w-32 mb-4" />
+        <Skeleton className="h-12 w-48 mb-4" />
+        <Skeleton className="h-8 w-24 rounded-full" />
       </section>
     );
   }
 
   return (
-    <section className="flex flex-col items-center justify-center text-center px-4">
-      <p className="text-slate-500 text-sm font-medium mb-1 tracking-tight">
-        Saldo Total Consolidado
+    <section className="relative flex flex-col items-center justify-center text-center px-4">
+      {/* Background Glow Effect */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/20 blur-[60px] rounded-full pointer-events-none" />
+      
+      <p className="text-muted-foreground text-sm font-medium mb-2 tracking-wide uppercase">
+        Patrimônio Líquido
       </p>
-      <div className="flex items-baseline gap-1">
-        <span className="text-slate-400 text-2xl font-semibold">R$</span>
-        <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+      
+      <div className="flex items-baseline gap-1 relative z-10">
+        <span className="text-muted-foreground text-2xl font-semibold">R$</span>
+        <h1 className="text-5xl font-extrabold text-foreground tracking-tighter">
           {formatCurrency(total).replace('R$', '').trim()}
         </h1>
       </div>
-      <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-bold mt-3 border border-green-200 dark:border-green-800/30">
+
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
         <TrendingUp className="h-3.5 w-3.5" />
-        Atualizado agora
+        <span>Atualizado em tempo real</span>
       </div>
     </section>
   );
@@ -94,93 +108,75 @@ function CardsTab() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-32 w-full rounded-2xl" />
-        <Skeleton className="h-40 w-full rounded-2xl" />
-        <Skeleton className="h-40 w-full rounded-2xl" />
+      <div className="space-y-6">
+        <Skeleton className="h-40 w-full rounded-3xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Skeleton className="h-48 w-full rounded-3xl" />
+          <Skeleton className="h-48 w-full rounded-3xl" />
+        </div>
       </div>
     );
   }
 
   return (
-    <section className="space-y-6">
-       {/* Actions Buttons Container */}
-       <div className="space-y-3">
-          <button
-              onClick={() => navigate('/simulator')}
-              className="w-full text-left bg-gradient-to-r from-teal-400 to-blue-600 p-[1px] rounded-3xl group transition-all hover:shadow-lg active:scale-[0.98]"
-            >
-              <div className="bg-white dark:bg-slate-800 rounded-[23px] p-5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-11 w-11 rounded-2xl bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 flex items-center justify-center shadow-sm">
-                    <Calculator className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white leading-tight">
-                      Simulador de Impacto
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-1 tracking-tight">
-                      Veja como novas compras afetam seu caixa
-                    </p>
-                  </div>
-                </div>
-                <span className="text-slate-300 group-hover:text-primary transition-all group-hover:translate-x-1">
-                  →
-                </span>
-              </div>
-            </button>
-       </div>
-
-      {/* Credit Summary */}
-      {usage && (
-        <div className="list-card bg-primary/5 dark:bg-primary/10 border-primary/10 dark:border-primary/20">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h3 className="label-overline text-primary dark:text-blue-400 mb-1">
-                Limite Consolidado
-              </h3>
-              <p className="value-display-lg">
-                {formatCurrency(usage.totalLimit)}
-              </p>
+    <section className="space-y-8">
+      {/* Simulator Banner */}
+      <button
+        onClick={() => navigate('/simulator')}
+        className="w-full group relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[1px] text-left transition-all hover:shadow-xl active:scale-[0.99]"
+      >
+        <div className="relative flex items-center justify-between rounded-[23px] bg-background/95 backdrop-blur-xl p-5 transition-colors group-hover:bg-background/80">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-lg">
+              <Calculator className="h-6 w-6" />
             </div>
-            <div className="text-right">
-              <h3 className="label-overline text-expense mb-1">
-                Total Faturas
-              </h3>
-              <p className="value-display">
-                {formatCurrency(usage.totalUsed)}
-              </p>
+            <div>
+              <h4 className="font-bold text-foreground">Simulador de Faturas</h4>
+              <p className="text-xs text-muted-foreground">Preveja o impacto de novas compras</p>
             </div>
           </div>
-          <div className="space-y-2">
-            <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+        </div>
+      </button>
+
+      {/* Credit Summary Card */}
+      {usage && (
+        <div className="rounded-3xl bg-card border border-border/50 p-6 shadow-sm">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Limite Global</h3>
+              <p className="text-2xl font-bold tracking-tight mt-1">{formatCurrency(usage.totalLimit)}</p>
+            </div>
+            <div className="text-right">
+              <h3 className="text-sm font-medium text-red-500 uppercase tracking-wider">Em Uso</h3>
+              <p className="text-2xl font-bold tracking-tight mt-1 text-red-600 dark:text-red-400">{formatCurrency(usage.totalUsed)}</p>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="h-4 w-full bg-secondary rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary rounded-full transition-all duration-1000"
+                className={cn(
+                  "h-full rounded-full transition-all duration-1000 ease-out",
+                  usage.utilizationPercent > 80 ? "bg-red-500" : "bg-primary"
+                )}
                 style={{ width: `${Math.min(usage.utilizationPercent, 100)}%` }}
               />
             </div>
-            <div className="flex justify-between label-overline">
-              <span>Utilização de Crédito</span>
-              <span>{Math.round(usage.utilizationPercent)}%</span>
+            <div className="flex justify-between text-xs font-bold text-muted-foreground">
+              <span>{Math.round(usage.utilizationPercent)}% Utilizado</span>
+              <span>{formatCurrency(usage.availableLimit)} Disponível</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Cards List Grid */}
-      <div className="flex justify-between items-end mb-1 px-1">
-        <h3 className="section-title">Meus Cartões</h3>
-        <button
-          onClick={() => navigate('/cards/new')}
-          className="text-xs font-bold text-primary hover:underline transition-all"
-        >
-          + Adicionar novo
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cards?.length ? (
-          cards.map((card) => (
+      {/* Cards Grid */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold tracking-tight px-1">Meus Cartões</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {cards?.map((card) => (
             <CreditCardItem
               key={card.id}
               card={card}
@@ -188,18 +184,21 @@ function CardsTab() {
               onEdit={() => navigate(`/cards/${card.id}/edit`)}
               onDelete={() => navigate(`/cards/${card.id}/edit`)}
             />
-          ))
-        ) : (
-          <div className="col-span-full">
-            <Card className="p-8 text-center">
-                <p className="text-slate-500 mb-4">Nenhum cartão cadastrado</p>
-                <Button onClick={() => navigate('/cards/new')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Cartão
-                </Button>
-            </Card>
-          </div>
-        )}
+          ))}
+
+          {/* Ghost Card (Add New) */}
+          <button
+            onClick={() => navigate('/cards/new')}
+            className="group flex min-h-[200px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-muted-foreground/20 bg-muted/5 transition-all hover:bg-muted/10 hover:border-primary/50 hover:shadow-inner active:scale-[0.98]"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted transition-transform group-hover:scale-110 group-hover:bg-primary/10 group-hover:text-primary">
+              <Plus className="h-7 w-7 text-muted-foreground group-hover:text-primary" />
+            </div>
+            <p className="mt-4 text-sm font-semibold text-muted-foreground group-hover:text-foreground">
+              Adicionar Cartão
+            </p>
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -213,7 +212,7 @@ function AccountsTab() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-40 w-full rounded-2xl" />
+          <Skeleton key={i} className="h-48 w-full rounded-3xl" />
         ))}
       </div>
     );
@@ -221,66 +220,35 @@ function AccountsTab() {
 
   return (
     <section className="space-y-6">
-      {/* Transfer Button - Mantido no topo como destaque */}
-      {accounts && accounts.length >= 2 && (
-        <button
-          onClick={() => navigate('/transfer')}
-          className="w-full text-left bg-gradient-to-r from-emerald-400 to-teal-500 p-[1px] rounded-2xl group transition-all hover:shadow-lg active:scale-[0.99]"
-        >
-          <div className="bg-white dark:bg-slate-800 rounded-[15px] p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                <ArrowLeftRight className="h-5 w-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  Transferir entre contas
-                </h4>
-                <p className="text-xs text-slate-500">
-                  Mova dinheiro rapidamente
-                </p>
-              </div>
-            </div>
-            <span className="text-slate-300 group-hover:text-primary transition-all group-hover:translate-x-1">
-              →
-            </span>
-          </div>
-        </button>
-      )}
-
-      <div className="flex justify-between items-end mb-1 px-1">
-        <h3 className="section-title">Minhas Contas</h3>
-        <button
-          onClick={() => navigate('/accounts/new')}
-          className="text-xs font-bold text-primary hover:underline transition-all"
-        >
-          + Adicionar nova
-        </button>
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-lg font-bold tracking-tight">Contas Bancárias</h3>
+        <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md">
+          {accounts?.length || 0} contas
+        </span>
       </div>
 
-      {/* Grid Layout Padronizado */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {accounts?.length ? (
-          accounts.map((acc) => (
-            <AccountCard
-              key={acc.id}
-              account={acc}
-              onClick={() => navigate(`/accounts/${acc.id}/edit`)}
-              onEdit={() => navigate(`/accounts/${acc.id}/edit`)}
-              onTransfer={() => navigate('/transfer')}
-            />
-          ))
-        ) : (
-          <div className="col-span-full">
-             <Card className="p-8 text-center">
-                <p className="text-slate-500 mb-4">Nenhuma conta cadastrada</p>
-                <Button onClick={() => navigate('/accounts/new')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Conta
-                </Button>
-            </Card>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {accounts?.map((acc) => (
+          <AccountCard
+            key={acc.id}
+            account={acc}
+            onEdit={() => navigate(`/accounts/${acc.id}/edit`)}
+            onTransfer={() => navigate('/transfer')}
+          />
+        ))}
+
+        {/* Ghost Card (Add New) */}
+        <button
+          onClick={() => navigate('/accounts/new')}
+          className="group flex min-h-[180px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-muted-foreground/20 bg-muted/5 transition-all hover:bg-muted/10 hover:border-emerald-500/50 hover:shadow-inner active:scale-[0.98]"
+        >
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted transition-transform group-hover:scale-110 group-hover:bg-emerald-500/10 group-hover:text-emerald-500">
+            <Plus className="h-7 w-7 text-muted-foreground group-hover:text-emerald-500" />
           </div>
-        )}
+          <p className="mt-4 text-sm font-semibold text-muted-foreground group-hover:text-foreground">
+            Nova Conta
+          </p>
+        </button>
       </div>
     </section>
   );
@@ -289,18 +257,17 @@ function AccountsTab() {
 function SubscriptionsTab() {
   const navigate = useNavigate();
   const { data: subscriptions, isLoading, deleteSubscription, toggleSubscription } = useSubscriptions();
-  const { data: cards } = useCreditCards();
 
   const activeSubscriptions = subscriptions?.filter(s => s.is_active) ?? [];
   const totalMonthly = activeSubscriptions.reduce((sum, s) => sum + s.amount, 0);
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-24 w-full rounded-2xl" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Skeleton className="h-40 w-full rounded-2xl" />
-            <Skeleton className="h-40 w-full rounded-2xl" />
+      <div className="space-y-6">
+        <Skeleton className="h-24 w-full rounded-3xl" />
+        <div className="grid grid-cols-2 gap-4">
+          <Skeleton className="h-40 w-full rounded-3xl" />
+          <Skeleton className="h-40 w-full rounded-3xl" />
         </div>
       </div>
     );
@@ -308,64 +275,53 @@ function SubscriptionsTab() {
 
   return (
     <section className="space-y-6">
-      {/* Total Banner - Mantido pois é útil */}
-      <div className="bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl p-5 text-white shadow-lg shadow-violet-500/20">
-        <div className="flex justify-between items-center">
+      {/* Monthly Total Summary */}
+      <div className="rounded-3xl bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white shadow-lg shadow-indigo-500/20">
+        <div className="flex items-center justify-between">
           <div>
-            <p className="text-white/70 text-xs font-medium mb-1">Total Mensal em Assinaturas</p>
-            <p className="text-3xl font-black tracking-tight">{formatCurrency(totalMonthly)}</p>
+            <p className="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-1">Custo Mensal Fixo</p>
+            <p className="text-3xl font-extrabold tracking-tight">{formatCurrency(totalMonthly)}</p>
           </div>
-          <Button
-            onClick={() => navigate('/subscriptions')}
-            className="bg-white/20 hover:bg-white/30 text-white border-0"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Nova
-          </Button>
+          <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+             <Calculator className="h-6 w-6 text-white" />
+          </div>
         </div>
       </div>
 
-      <div className="flex justify-between items-end mb-1 px-1">
-        <h3 className="section-title">Assinaturas Ativas</h3>
-        <button
-          onClick={() => navigate('/subscriptions')}
-          className="text-xs font-bold text-primary hover:underline transition-all"
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-lg font-bold tracking-tight">Assinaturas</h3>
+        <button 
+            onClick={() => navigate('/subscriptions')}
+            className="text-sm font-medium text-primary hover:underline"
         >
-          Ver todas →
+            Gerenciar
         </button>
       </div>
 
-      {/* Grid Layout Padronizado */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {subscriptions?.length ? (
-          subscriptions.map((sub) => {
-            const card = cards?.find(c => c.id === sub.credit_card_id);
-            return (
-              <SubscriptionCard
-                key={sub.id}
-                subscription={sub}
-                cardName={card?.name}
-                onClick={() => navigate('/subscriptions')} // Idealmente levaria para edição
-                onEdit={() => navigate('/subscriptions')}
-                onDelete={() => deleteSubscription.mutate(sub.id)}
-                onToggleActive={() => toggleSubscription.mutate({ id: sub.id, isActive: !sub.is_active })}
-              />
-            );
-          })
-        ) : (
-          <div className="col-span-full">
-            <Card className="p-8 text-center">
-                <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
-                    <Repeat className="h-7 w-7 text-slate-400" />
-                </div>
-                <p className="text-slate-500 text-sm mb-3">Nenhuma assinatura cadastrada</p>
-                <Button onClick={() => navigate('/subscriptions')} size="sm">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Adicionar primeira
-                </Button>
-            </Card>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {subscriptions?.map((sub) => (
+          <SubscriptionCard
+            key={sub.id}
+            subscription={sub}
+            onClick={() => navigate('/subscriptions')}
+            onEdit={() => navigate('/subscriptions')}
+            onToggleActive={() => toggleSubscription.mutate({ id: sub.id, isActive: !sub.is_active })}
+            onDelete={() => deleteSubscription.mutate(sub.id)}
+          />
+        ))}
+
+        {/* Ghost Card (Add New) */}
+        <button
+          onClick={() => navigate('/subscriptions')}
+          className="group flex min-h-[160px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-muted-foreground/20 bg-muted/5 transition-all hover:bg-muted/10 hover:border-violet-500/50 hover:shadow-inner active:scale-[0.98]"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted transition-transform group-hover:scale-110 group-hover:bg-violet-500/10 group-hover:text-violet-500">
+            <Plus className="h-6 w-6 text-muted-foreground group-hover:text-violet-500" />
           </div>
-        )}
+          <p className="mt-3 text-sm font-semibold text-muted-foreground group-hover:text-foreground">
+            Nova Assinatura
+          </p>
+        </button>
       </div>
     </section>
   );
