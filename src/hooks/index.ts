@@ -31,6 +31,9 @@ export {
   useCategories,
   useFavoriteCategories,
   useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+  useCheckCategoryUsage,
   useToggleFavoriteCategory,
 } from './useCategories';
 export { useOnlineStatus } from './useOnlineStatus';
@@ -42,3 +45,16 @@ export {
   useDeleteSubscription,
   useSubscriptionTotal,
 } from './useSubscriptions';
+export { useMonthlyComparison, useMonthlyTrend } from './useMonthlyComparison';
+export {
+  useHousehold,
+  useHouseholdMembers,
+  useUpdateHousehold,
+  useUpdateMemberDisplayName,
+  useUpdateMemberRole,
+  useRemoveMember,
+  usePendingInvites,
+  useCreateInvite,
+  useCancelInvite,
+  useAcceptInvite,
+} from './useHousehold';

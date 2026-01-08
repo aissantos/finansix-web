@@ -59,6 +59,43 @@ export async function toggleFavoriteCategory(id: string, isFavorite: boolean): P
   if (error) handleSupabaseError(error);
 }
 
+export async function updateCategory(
+  id: string, 
+  updates: Partial<Omit<InsertTables<'categories'>, 'household_id'>>
+): Promise<Category> {
+  const { data, error } = await supabase
+    .from('categories')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) handleSupabaseError(error);
+  if (!data) throw new NotFoundError('Categoria');
+  return data;
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  // Soft delete - apenas desativa a categoria
+  const { error } = await supabase
+    .from('categories')
+    .update({ is_active: false })
+    .eq('id', id);
+
+  if (error) handleSupabaseError(error);
+}
+
+export async function checkCategoryUsage(id: string): Promise<number> {
+  // Verifica quantas transações usam esta categoria
+  const { count, error } = await supabase
+    .from('transactions')
+    .select('*', { count: 'exact', head: true })
+    .eq('category_id', id);
+
+  if (error) handleSupabaseError(error);
+  return count ?? 0;
+}
+
 // Default categories for new households
 export const DEFAULT_CATEGORIES: Omit<InsertTables<'categories'>, 'household_id'>[] = [
   { name: 'Alimentação', type: 'expense', icon: 'utensils', color: '#ef4444', is_favorite: true, sort_order: 1 },

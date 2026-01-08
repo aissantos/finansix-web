@@ -17,13 +17,23 @@ const WalletPage = lazy(() => import('@/pages/WalletPage'));
 const AnalysisPage = lazy(() => import('@/pages/AnalysisPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const NewTransactionPage = lazy(() => import('@/pages/NewTransactionPage'));
+const TransferPage = lazy(() => import('@/pages/TransferPage'));
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 
 // Wallet sub-pages
 const NewCardPage = lazy(() => import('@/pages/wallet/NewCardPage'));
 const NewAccountPage = lazy(() => import('@/pages/wallet/NewAccountPage'));
+const EditAccountPage = lazy(() => import('@/pages/wallet/EditAccountPage'));
+const EditCardPage = lazy(() => import('@/pages/wallet/EditCardPage'));
 const SubscriptionsPage = lazy(() => import('@/pages/wallet/SubscriptionsPage'));
+
+// Transaction pages
+const EditTransactionPage = lazy(() => import('@/pages/EditTransactionPage'));
+
+// Settings pages
+const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
+const HouseholdPage = lazy(() => import('@/pages/HouseholdPage'));
 
 // Loading component for Suspense
 function PageLoader() {
@@ -121,10 +131,42 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/cards/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditCardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounts/new"
           element={
             <ProtectedRoute>
               <NewAccountPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounts/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditAccountPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transactions/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditTransactionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transfer"
+          element={
+            <ProtectedRoute>
+              <TransferPage />
             </ProtectedRoute>
           }
         />
@@ -137,6 +179,24 @@ function AppRoutes() {
           }
         />
 
+        {/* Settings routes */}
+        <Route
+          path="/categories"
+          element={
+            <ProtectedRoute>
+              <CategoriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/household"
+          element={
+            <ProtectedRoute>
+              <HouseholdPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -144,14 +204,11 @@ function AppRoutes() {
   );
 }
 
-// ... outros imports
-
 export default function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <QueryErrorBoundary>
-          {/* ADICIONE O AuthProvider AQUI */}
           <AuthProvider>
             <BrowserRouter>
               <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
@@ -161,7 +218,6 @@ export default function App() {
               </div>
             </BrowserRouter>
           </AuthProvider>
-          {/* FIM DO AuthProvider */}
         </QueryErrorBoundary>
         
         {import.meta.env.DEV && (

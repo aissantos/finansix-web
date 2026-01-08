@@ -1,32 +1,31 @@
-import { memo } from 'react';
-import { CreditCard, MoreHorizontal } from 'lucide-react';
+import { memo, useState } from 'react';
+import { CreditCard, MoreVertical, Edit3, Trash2 } from 'lucide-react';
 import { formatCurrency, formatCardNumber, cn } from '@/lib/utils';
 import type { CreditCardWithLimits } from '@/types';
 
 interface CreditCardItemProps {
   card: CreditCardWithLimits;
   onClick?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-// Card brand colors
+// Card brand colors - usando classes do tailwind config
 const brandColors: Record<string, string> = {
-  nubank: 'bg-[#820AD1]',
-  inter: 'bg-[#FF7A00]',
-  itau: 'bg-[#EC7000]',
-  bradesco: 'bg-[#cc092f]',
-  santander: 'bg-[#ec0000]',
-  bb: 'bg-[#fdcb00]',
-  caixa: 'bg-[#005ca9]',
-  c6: 'bg-[#1a1a1a]',
-  xp: 'bg-[#101622]',
+  nubank: 'bg-card-nubank',
+  inter: 'bg-card-inter',
+  itau: 'bg-card-itau',
+  bradesco: 'bg-card-bradesco',
+  c6: 'bg-card-c6',
+  xp: 'bg-card-xp',
   default: 'bg-slate-700',
 };
 
 function getCardColor(card: CreditCardWithLimits): string {
   if (card.color) return card.color;
-  const brand = card.brand?.toLowerCase() || '';
+  const name = card.name?.toLowerCase() || '';
   for (const [key, color] of Object.entries(brandColors)) {
-    if (brand.includes(key)) return color;
+    if (name.includes(key)) return color;
   }
   return brandColors.default;
 }
@@ -34,73 +33,116 @@ function getCardColor(card: CreditCardWithLimits): string {
 export const CreditCardItem = memo(function CreditCardItem({
   card,
   onClick,
+  onEdit,
+  onDelete,
 }: CreditCardItemProps) {
+  const [showActions, setShowActions] = useState(false);
   const usagePercent = (card.used_limit / card.credit_limit) * 100;
   const cardColor = getCardColor(card);
   const isCustomColor = card.color?.startsWith('#') || card.color?.startsWith('rgb');
+
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowActions(!showActions);
+  };
+
+  const handleAction = (callback?: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowActions(false);
+    callback?.();
+  };
 
   return (
     <div
       onClick={onClick}
       className={cn(
-        'relative bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-lg border border-slate-100 dark:border-slate-700 overflow-hidden transition-transform',
-        onClick && 'cursor-pointer active:scale-[0.98]'
+        'relative list-card overflow-hidden',
+        onClick && 'cursor-pointer active:scale-[0.99] hover:shadow-md'
       )}
     >
       {/* Top color bar */}
       <div
-        className={cn('absolute top-0 left-0 w-full h-1.5', !isCustomColor && cardColor)}
+        className={cn('absolute top-0 left-0 w-full h-1', !isCustomColor && cardColor)}
         style={isCustomColor ? { backgroundColor: card.color! } : undefined}
       />
 
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
           <div
             className={cn(
-              'h-12 w-12 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-md',
+              'icon-container-lg text-white shadow-md',
               !isCustomColor && cardColor
             )}
             style={isCustomColor ? { backgroundColor: card.color! } : undefined}
           >
-            <CreditCard className="h-6 w-6" />
+            <CreditCard className="h-5 w-5" />
           </div>
           <div>
-            <h4 className="font-bold text-slate-900 dark:text-white text-base leading-tight">
-              {card.name}
-            </h4>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-mono">
+            <h4 className="card-title">{card.name}</h4>
+            <p className="label-overline mt-0.5 font-mono">
               {card.brand} {card.last_four_digits && formatCardNumber(card.last_four_digits)}
             </p>
           </div>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            // Open menu
-          }}
-          className="h-8 w-8 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center text-slate-400 transition-colors"
-        >
-          <MoreHorizontal className="h-5 w-5" />
-        </button>
+        {/* Menu Button */}
+        <div className="relative">
+          <button
+            onClick={handleMenuClick}
+            className="btn-icon touch-target"
+            aria-label="Opções do cartão"
+            aria-expanded={showActions}
+          >
+            <MoreVertical className="h-5 w-5 text-slate-400" />
+          </button>
+
+          {/* Dropdown Menu */}
+          {showActions && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={(e) => { e.stopPropagation(); setShowActions(false); }}
+              />
+              <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 min-w-[140px] animate-in fade-in slide-in-from-top-2 duration-150">
+                {onEdit && (
+                  <button
+                    onClick={handleAction(onEdit)}
+                    className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                  >
+                    <Edit3 className="h-4 w-4 text-slate-400" />
+                    Editar
+                  </button>
+                )}
+                {onDelete && (
+                  <>
+                    <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
+                    <button
+                      onClick={handleAction(onDelete)}
+                      className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Excluir
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Values */}
       <div className="flex items-end justify-between mb-4">
         <div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-            Fatura Atual
-          </p>
-          <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          <p className="label-overline mb-1">Fatura Atual</p>
+          <p className="value-display-lg tracking-tight">
             {formatCurrency(card.used_limit)}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-            Disponível
-          </p>
-          <p className="text-sm font-bold text-income">
+          <p className="label-overline mb-1">Disponível</p>
+          <p className="value-display-sm text-income">
             {formatCurrency(card.available_limit)}
           </p>
         </div>
@@ -110,7 +152,7 @@ export const CreditCardItem = memo(function CreditCardItem({
       <div className="relative w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className={cn(
-            'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(0,0,0,0.1)]',
+            'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out',
             !isCustomColor && cardColor
           )}
           style={{
@@ -122,10 +164,10 @@ export const CreditCardItem = memo(function CreditCardItem({
 
       {/* Footer */}
       <div className="mt-2 flex justify-between">
-        <span className="text-[9px] font-bold text-slate-400 uppercase">
+        <span className="label-overline">
           Limite: {formatCurrency(card.credit_limit)}
         </span>
-        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+        <span className="label-overline">
           {Math.round(usagePercent)}% usado
         </span>
       </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calculator, TrendingUp, Calendar, Repeat, AlertCircle } from 'lucide-react';
+import { Plus, Calculator, TrendingUp, Calendar, Repeat, AlertCircle, ArrowLeftRight } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { CreditCardItem } from '@/components/features';
 import { Card } from '@/components/ui/card';
@@ -124,9 +124,9 @@ function CardsTab() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-32 w-full rounded-3xl" />
-        <Skeleton className="h-48 w-full rounded-3xl" />
-        <Skeleton className="h-48 w-full rounded-3xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
       </div>
     );
   }
@@ -135,33 +135,33 @@ function CardsTab() {
     <section className="space-y-6">
       {/* Credit Summary */}
       {usage && (
-        <div className="bg-primary/5 dark:bg-primary/10 rounded-3xl p-6 border border-primary/10 dark:border-primary/20">
+        <div className="list-card bg-primary/5 dark:bg-primary/10 border-primary/10 dark:border-primary/20">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h3 className="text-xs font-black text-primary dark:text-blue-400 uppercase tracking-widest mb-1">
+              <h3 className="label-overline text-primary dark:text-blue-400 mb-1">
                 Limite Consolidado
               </h3>
-              <p className="text-3xl font-black text-slate-900 dark:text-white">
+              <p className="value-display-lg">
                 {formatCurrency(usage.totalLimit)}
               </p>
             </div>
             <div className="text-right">
-              <h3 className="text-xs font-black text-expense uppercase tracking-widest mb-1">
+              <h3 className="label-overline text-expense mb-1">
                 Total Faturas
               </h3>
-              <p className="text-xl font-black text-slate-900 dark:text-white">
+              <p className="value-display">
                 {formatCurrency(usage.totalUsed)}
               </p>
             </div>
           </div>
           <div className="space-y-2">
-            <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner">
+            <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(19,91,236,0.3)]"
+                className="h-full bg-primary rounded-full transition-all duration-1000"
                 style={{ width: `${Math.min(usage.utilizationPercent, 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+            <div className="flex justify-between label-overline">
               <span>Utilização de Crédito</span>
               <span>{Math.round(usage.utilizationPercent)}%</span>
             </div>
@@ -171,9 +171,7 @@ function CardsTab() {
 
       {/* Cards List */}
       <div className="flex justify-between items-end mb-1 px-1">
-        <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-          Meus Cartões
-        </h3>
+        <h3 className="section-title">Meus Cartões</h3>
         <button
           onClick={() => navigate('/cards/new')}
           className="text-xs font-bold text-primary hover:underline transition-all"
@@ -188,7 +186,12 @@ function CardsTab() {
             <CreditCardItem
               key={card.id}
               card={card}
-              onClick={() => navigate(`/cards/${card.id}`)}
+              onEdit={() => navigate(`/cards/${card.id}/edit`)}
+              onDelete={() => {
+                // Will be handled by the menu in CreditCardItem
+                // The actual deletion requires confirmation, which is in EditCardPage
+                navigate(`/cards/${card.id}/edit`);
+              }}
             />
           ))
         ) : (
@@ -221,6 +224,33 @@ function AccountsTab() {
 
   return (
     <section className="space-y-4">
+      {/* Transfer Button */}
+      {accounts && accounts.length >= 2 && (
+        <button
+          onClick={() => navigate('/transfer')}
+          className="w-full text-left bg-gradient-to-r from-emerald-400 to-teal-500 p-[1px] rounded-2xl group transition-all hover:shadow-lg active:scale-[0.99]"
+        >
+          <div className="bg-white dark:bg-slate-800 rounded-[15px] p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <ArrowLeftRight className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  Transferir entre contas
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Mova dinheiro rapidamente
+                </p>
+              </div>
+            </div>
+            <span className="text-slate-300 group-hover:text-primary transition-all group-hover:translate-x-1">
+              →
+            </span>
+          </div>
+        </button>
+      )}
+
       <div className="flex justify-between items-end mb-1 px-1">
         <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
           Minhas Contas
@@ -236,9 +266,10 @@ function AccountsTab() {
       <div className="grid gap-3">
         {accounts?.length ? (
           accounts.map((acc) => (
-            <div
+            <button
               key={acc.id}
-              className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-all hover:shadow-md active:scale-[0.99]"
+              onClick={() => navigate(`/accounts/${acc.id}/edit`)}
+              className="w-full text-left bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-all hover:shadow-md active:scale-[0.99]"
             >
               <div className="flex items-center gap-4">
                 <div
@@ -252,7 +283,7 @@ function AccountsTab() {
                     {acc.name}
                   </h4>
                   <p className="text-xs text-slate-500 mt-1 font-medium capitalize">
-                    {acc.type === 'checking' ? 'Conta Corrente' : acc.type === 'savings' ? 'Poupança' : acc.type}
+                    {acc.type === 'checking' ? 'Conta Corrente' : acc.type === 'savings' ? 'Poupança' : acc.type === 'investment' ? 'Investimento' : acc.type === 'cash' ? 'Dinheiro' : acc.type}
                   </p>
                 </div>
               </div>
@@ -260,11 +291,14 @@ function AccountsTab() {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
                   Saldo
                 </span>
-                <p className="text-lg font-black text-slate-900 dark:text-white">
+                <p className={cn(
+                  'text-lg font-black',
+                  (acc.current_balance ?? 0) < 0 ? 'text-expense' : 'text-slate-900 dark:text-white'
+                )}>
                   {formatCurrency(acc.current_balance ?? 0)}
                 </p>
               </div>
-            </div>
+            </button>
           ))
         ) : (
           <Card className="p-8 text-center">

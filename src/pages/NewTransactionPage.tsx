@@ -8,6 +8,7 @@ import { X, TrendingDown, TrendingUp, Calendar, CreditCard, Check } from 'lucide
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { InstallmentConfirmDialog } from '@/components/features/InstallmentConfirmDialog';
 import { useCreateTransaction, useCategories, useCreditCards, useAccounts } from '@/hooks';
 import { toast } from '@/hooks/useToast';
 import { formatCurrency, cn } from '@/lib/utils';
@@ -36,6 +37,8 @@ export default function NewTransactionPage() {
 
   const [paymentMethod, setPaymentMethod] = useState<'credit' | 'debit' | 'pix'>('credit');
   const [amountDisplay, setAmountDisplay] = useState('');
+  const [showInstallmentConfirm, setShowInstallmentConfirm] = useState(false);
+  const [pendingSubmitData, setPendingSubmitData] = useState<TransactionForm | null>(null);
 
   const { mutate: createTransaction, isPending } = useCreateTransaction();
   const { data: categories } = useCategories();
@@ -78,7 +81,19 @@ export default function NewTransactionPage() {
     setValue('amount', numValue);
   };
 
-  const onSubmit = (data: TransactionForm) => {
+  const handleFormSubmit = (data: TransactionForm) => {
+    // Se tem parcelas > 1, mostrar confirmação
+    if (data.is_installment && data.total_installments > 1) {
+      setPendingSubmitData(data);
+      setShowInstallmentConfirm(true);
+      return;
+    }
+    
+    // Submeter diretamente se não tem parcelas
+    submitTransaction(data);
+  };
+
+  const submitTransaction = (data: TransactionForm) => {
     createTransaction(
       {
         type: data.type as TransactionType,
@@ -96,9 +111,12 @@ export default function NewTransactionPage() {
       },
       {
         onSuccess: () => {
+          const installmentText = data.is_installment && data.total_installments > 1 
+            ? ` em ${data.total_installments}x` 
+            : '';
           toast({
             title: 'Transação criada!',
-            description: `${data.type === 'income' ? 'Receita' : 'Despesa'} de ${formatCurrency(data.amount)} registrada.`,
+            description: `${data.type === 'income' ? 'Receita' : 'Despesa'} de ${formatCurrency(data.amount)}${installmentText} registrada.`,
             variant: 'success',
           });
           navigate('/');
@@ -113,6 +131,21 @@ export default function NewTransactionPage() {
       }
     );
   };
+
+  const handleInstallmentConfirm = () => {
+    if (pendingSubmitData) {
+      submitTransaction(pendingSubmitData);
+    }
+    setShowInstallmentConfirm(false);
+    setPendingSubmitData(null);
+  };
+
+  const handleInstallmentCancel = () => {
+    setShowInstallmentConfirm(false);
+    setPendingSubmitData(null);
+  };
+
+  const onSubmit = handleFormSubmit;
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -392,6 +425,18 @@ export default function NewTransactionPage() {
           Salvar Transação
         </Button>
       </form>
+
+      {/* Installment Confirmation Dialog */}
+      <InstallmentConfirmDialog
+        isOpen={showInstallmentConfirm}
+        onClose={handleInstallmentCancel}
+        onConfirm={handleInstallmentConfirm}
+        totalAmount={pendingSubmitData?.amount ?? 0}
+        installments={pendingSubmitData?.total_installments ?? 1}
+        cardName={cards?.find(c => c.id === pendingSubmitData?.credit_card_id)?.name}
+        startDate={pendingSubmitData?.transaction_date ? new Date(pendingSubmitData.transaction_date) : undefined}
+        isLoading={isPending}
+      />
     </div>
   );
 }

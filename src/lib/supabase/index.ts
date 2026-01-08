@@ -4,3 +4,4 @@ export * from './credit-cards';
 export * from './accounts';
 export * from './categories';
 export * from './installments';
+export * from './household';

@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Header, PageContainer } from '@/components/layout';
-import { useCreditCards, useSubscriptions, useDeleteSubscription, useSubscriptionTotal } from '@/hooks';
+import { PageHeader } from '@/components/ui/page-header';
+import { PageContainer } from '@/components/layout';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useCreditCards, useSubscriptions, useDeleteSubscription, useUpdateSubscription, useSubscriptionTotal } from '@/hooks';
 import { toast } from '@/hooks/useToast';
 import { cn, formatCurrency } from '@/lib/utils';
 import { SubscriptionForm } from '@/components/features/SubscriptionForm';
@@ -33,7 +35,9 @@ export default function SubscriptionsPage() {
   const { data: subscriptions, isLoading } = useSubscriptions();
   const { data: cards } = useCreditCards();
   const { mutate: deleteSubscription } = useDeleteSubscription();
+  const { mutate: updateSubscription } = useUpdateSubscription();
   const { total, count } = useSubscriptionTotal();
+  const { confirm, Dialog } = useConfirmDialog();
 
   // Filtrar e organizar assinaturas
   const filteredSubscriptions = useMemo(() => {
@@ -71,13 +75,42 @@ export default function SubscriptionsPage() {
   const yearlyTotal = total * 12;
 
   const handleDelete = (id: string, name: string) => {
-    if (confirm(`Deseja realmente excluir "${name}"?`)) {
-      deleteSubscription(id, {
+    confirm({
+      title: 'Excluir assinatura?',
+      description: `Tem certeza que deseja excluir "${name}"? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+      variant: 'danger',
+      onConfirm: () => {
+        deleteSubscription(id, {
+          onSuccess: () => {
+            toast({ title: 'Assinatura excluída', description: `${name} foi removida.`, variant: 'success' });
+          },
+        });
+      },
+    });
+  };
+
+  const handleToggleActive = (id: string, currentStatus: boolean, name: string) => {
+    const newStatus = !currentStatus;
+    updateSubscription(
+      { id, is_active: newStatus },
+      {
         onSuccess: () => {
-          toast({ title: 'Assinatura excluída', description: `${name} foi removida.`, variant: 'success' });
+          toast({
+            title: newStatus ? 'Assinatura reativada' : 'Assinatura pausada',
+            description: `${name} foi ${newStatus ? 'reativada' : 'pausada'}.`,
+            variant: 'success',
+          });
         },
-      });
-    }
+        onError: () => {
+          toast({
+            title: 'Erro',
+            description: 'Não foi possível atualizar a assinatura.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
   };
 
   const handleEdit = (id: string) => {
@@ -92,7 +125,7 @@ export default function SubscriptionsPage() {
 
   return (
     <>
-      <Header title="Assinaturas" showBack onBack={() => navigate('/wallet')} />
+      <PageHeader title="Assinaturas" showBack onBack={() => navigate('/wallet')} />
       
       <PageContainer className="pb-24">
         {/* Hero Stats */}
@@ -252,6 +285,7 @@ export default function SubscriptionsPage() {
                   card={cards?.find(c => c.id === sub.credit_card_id)}
                   onEdit={() => handleEdit(sub.id)}
                   onDelete={() => handleDelete(sub.id, sub.name)}
+                  onToggleActive={() => handleToggleActive(sub.id, sub.is_active, sub.name)}
                 />
               ))}
             </div>
@@ -309,6 +343,8 @@ export default function SubscriptionsPage() {
           </Card>
         )}
       </PageContainer>
+      
+      {Dialog}
     </>
   );
 }

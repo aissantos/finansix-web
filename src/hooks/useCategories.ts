@@ -3,7 +3,10 @@ import {
   getCategories,
   getFavoriteCategories,
   createCategory,
+  updateCategory,
+  deleteCategory,
   toggleFavoriteCategory,
+  checkCategoryUsage,
 } from '@/lib/supabase';
 import { queryKeys } from '@/lib/query-client';
 import { useHouseholdId } from '@/stores';
@@ -40,6 +43,37 @@ export function useCreateCategory() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
     },
+  });
+}
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, ...updates }: { id: string } & Partial<Omit<InsertTables<'categories'>, 'household_id'>>) =>
+      updateCategory(id, updates),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteCategory(id),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+  });
+}
+
+export function useCheckCategoryUsage() {
+  return useMutation({
+    mutationFn: (id: string) => checkCategoryUsage(id),
   });
 }
 

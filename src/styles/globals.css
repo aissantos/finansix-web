@@ -2,10 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+   DESIGN TOKENS - Finansix Design System v2.0
+   ============================================================================= */
+
 @layer base {
   :root {
+    /* Background & Surface */
     --background: 246 246 248;
     --foreground: 15 23 42;
+    
+    /* Spacing Scale (4px base) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    
+    /* Border Radius - PADRONIZADO */
+    --radius-sm: 8px;      /* Pequenos elementos, toggles */
+    --radius-md: 12px;     /* Botões, inputs, ícones containers */
+    --radius-lg: 16px;     /* Cards, modais */
+    --radius-full: 9999px; /* Pills, avatares, badges */
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    
+    /* Typography Scale */
+    --text-2xs: 10px;
+    --text-xs: 12px;
+    --text-sm: 14px;
+    --text-base: 16px;
+    --text-lg: 18px;
+    --text-xl: 20px;
+    --text-2xl: 24px;
+    --text-3xl: 30px;
+    --text-4xl: 36px;
+    
+    /* Touch Targets */
+    --touch-min: 44px;
+    --touch-sm: 40px;
+    --touch-md: 48px;
+    --touch-lg: 56px;
   }
 
   .dark {
@@ -27,6 +69,125 @@
 
   .dark body {
     @apply bg-slate-900 text-slate-100;
+  }
+}
+
+/* =============================================================================
+   COMPONENT CLASSES - Reusable patterns
+   ============================================================================= */
+
+@layer components {
+  /* Typography - Label Overline (substitui text-[10px] font-bold uppercase) */
+  .label-overline {
+    @apply text-[10px] font-bold uppercase tracking-wider text-slate-400;
+  }
+  
+  .label-overline-dark {
+    @apply text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400;
+  }
+  
+  /* Typography - Section Title */
+  .section-title {
+    @apply text-lg font-bold text-slate-900 dark:text-white;
+  }
+  
+  /* Typography - Card Title */
+  .card-title {
+    @apply text-sm font-bold text-slate-900 dark:text-white leading-tight;
+  }
+  
+  /* Typography - Card Subtitle */
+  .card-subtitle {
+    @apply text-xs text-slate-500;
+  }
+  
+  /* Typography - Value Display */
+  .value-display {
+    @apply text-lg font-black text-slate-900 dark:text-white;
+  }
+  
+  .value-display-sm {
+    @apply text-sm font-bold text-slate-900 dark:text-white;
+  }
+  
+  .value-display-lg {
+    @apply text-2xl font-black text-slate-900 dark:text-white;
+  }
+  
+  .value-display-xl {
+    @apply text-4xl font-black text-slate-900 dark:text-white tracking-tight;
+  }
+  
+  /* Icon Containers - PADRONIZADO */
+  .icon-container {
+    @apply h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0;
+  }
+  
+  .icon-container-sm {
+    @apply h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0;
+  }
+  
+  .icon-container-lg {
+    @apply h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0;
+  }
+  
+  .icon-container-xl {
+    @apply h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0;
+  }
+  
+  /* List Card - Base para items de lista */
+  .list-card {
+    @apply bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm;
+  }
+  
+  .list-card-interactive {
+    @apply list-card cursor-pointer transition-all hover:shadow-md active:scale-[0.99];
+  }
+  
+  /* Page Header - Padrão unificado */
+  .page-header {
+    @apply sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800;
+  }
+  
+  .page-header-fullscreen {
+    @apply sticky top-0 z-30 bg-slate-50 dark:bg-slate-900;
+  }
+  
+  /* Touch Target - Mínimo 44px */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  .touch-target-sm {
+    @apply min-h-[40px] min-w-[40px] flex items-center justify-center;
+  }
+  
+  /* Action Button Circle */
+  .btn-icon {
+    @apply h-10 w-10 rounded-full flex items-center justify-center transition-colors hover:bg-slate-100 dark:hover:bg-slate-800;
+  }
+  
+  .btn-icon-sm {
+    @apply h-8 w-8 rounded-full flex items-center justify-center transition-colors hover:bg-slate-100 dark:hover:bg-slate-800;
+  }
+  
+  /* Close Button (X) - Padrão para páginas fullscreen */
+  .btn-close {
+    @apply h-10 w-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 transition-colors shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700;
+  }
+  
+  /* Section Divider */
+  .section-divider {
+    @apply h-px bg-slate-100 dark:bg-slate-800 my-4;
+  }
+  
+  /* Floating Action Area */
+  .floating-action {
+    @apply fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-slate-50 via-slate-50/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 pointer-events-none;
+  }
+  
+  .floating-action > * {
+    @apply pointer-events-auto;
   }
 }
 

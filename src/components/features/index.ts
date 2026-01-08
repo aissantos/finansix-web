@@ -7,6 +7,11 @@ export { CreditCardItem } from './CreditCardItem';
 export { PWAInstallBanner } from './PWAInstallBanner';
 export * from './SubscriptionForm';
 export * from './SubscriptionItem';
+export * from './InstallmentBadge';
+export * from './InvoiceCard';
+export * from './InstallmentConfirmDialog';
+export * from './MonthlyTrendChart';
+export * from './AvatarUploader';
 
 // Skeleton loading states
 export {

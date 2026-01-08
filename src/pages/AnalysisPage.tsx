@@ -5,7 +5,9 @@ import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { MonthlyTrendChart } from '@/components/features/MonthlyTrendChart';
 import { useTransactionsByCategory, useFreeBalance, useTransactions } from '@/hooks';
+import { useMonthlyComparison } from '@/hooks/useMonthlyComparison';
 import { useSelectedMonth } from '@/stores';
 import { formatCurrency, cn } from '@/lib/utils';
 
@@ -29,6 +31,9 @@ export default function AnalysisPage() {
 
         {/* Monthly Comparison */}
         <MonthlyComparison />
+
+        {/* Monthly Trend Chart */}
+        <MonthlyTrendChart months={6} />
 
         {/* Category Distribution */}
         <CategoryDistribution />
@@ -103,12 +108,34 @@ function SummaryCards() {
 }
 
 function MonthlyComparison() {
-  // This would ideally fetch current vs previous month data
-  const currentTotal = 3560;
-  const prevTotal = 3200;
-  const diff = currentTotal - prevTotal;
-  const diffPercent = ((diff / prevTotal) * 100).toFixed(1);
-  const isSpendingMore = diff > 0;
+  const { data: comparison, isLoading } = useMonthlyComparison();
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <Skeleton className="h-5 w-40 mb-4" />
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (!comparison) {
+    return null;
+  }
+
+  const { currentMonth, previousMonth, difference, isSpendingMore } = comparison;
+  const currentTotal = currentMonth.expenses;
+  const prevTotal = previousMonth.expenses;
+  const diffPercent = Math.abs(difference.expensesPercent).toFixed(1);
+  
+  // Calcular porcentagem para a barra (máximo 150% para não quebrar o layout)
+  const barPercent = prevTotal > 0 
+    ? Math.min((currentTotal / prevTotal) * 100, 150) 
+    : currentTotal > 0 ? 100 : 0;
 
   return (
     <Card className="p-6">
@@ -117,12 +144,14 @@ function MonthlyComparison() {
           <h2 className="text-base font-bold text-slate-900 dark:text-white">
             Comparativo Mensal
           </h2>
-          <p className="text-xs text-slate-500">Este mês vs. Mês anterior</p>
+          <p className="text-xs text-slate-500">Despesas: Este mês vs. Anterior</p>
         </div>
-        <Badge variant={isSpendingMore ? 'danger' : 'success'}>
-          {isSpendingMore ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-          {Math.abs(Number(diffPercent))}%
-        </Badge>
+        {(currentTotal > 0 || prevTotal > 0) && (
+          <Badge variant={isSpendingMore ? 'danger' : 'success'}>
+            {isSpendingMore ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+            {diffPercent}%
+          </Badge>
+        )}
       </div>
 
       <div className="space-y-5">
@@ -156,26 +185,37 @@ function MonthlyComparison() {
               'absolute h-full rounded-full transition-all duration-1000 delay-300',
               isSpendingMore ? 'bg-expense' : 'bg-income'
             )}
-            style={{ width: `${(currentTotal / prevTotal) * 100}%` }}
+            style={{ width: `${barPercent}%` }}
           />
         </div>
 
         {/* Message */}
-        <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl flex items-center gap-3">
-          <div
-            className={cn(
-              'h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0',
-              isSpendingMore ? 'bg-red-100 text-expense' : 'bg-green-100 text-income'
-            )}
-          >
-            {isSpendingMore ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+        {(currentTotal > 0 || prevTotal > 0) ? (
+          <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl flex items-center gap-3">
+            <div
+              className={cn(
+                'h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0',
+                isSpendingMore ? 'bg-red-100 text-expense' : 'bg-green-100 text-income'
+              )}
+            >
+              {isSpendingMore ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-snug">
+              {isSpendingMore
+                ? `Você gastou ${formatCurrency(difference.expenses)} a mais que no mês passado.`
+                : difference.expenses < 0
+                  ? `Excelente! Você economizou ${formatCurrency(Math.abs(difference.expenses))} em comparação ao mês anterior.`
+                  : 'Seus gastos estão iguais ao mês anterior.'
+              }
+            </p>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-snug">
-            {isSpendingMore
-              ? `Você gastou ${formatCurrency(diff)} a mais que no mês passado.`
-              : `Excelente! Você economizou ${formatCurrency(Math.abs(diff))} em comparação ao mês anterior.`}
-          </p>
-        </div>
+        ) : (
+          <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl text-center">
+            <p className="text-xs text-slate-500">
+              Sem dados suficientes para comparação
+            </p>
+          </div>
+        )}
       </div>
     </Card>
   );

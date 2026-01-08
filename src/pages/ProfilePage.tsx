@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { Bell, Lock, Palette, HelpCircle, MessageCircle, FileText, LogOut, ChevronRight, Users } from 'lucide-react';
+import { Bell, Lock, Palette, HelpCircle, MessageCircle, FileText, LogOut, ChevronRight, Users, Tag } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks';
+import { AvatarUploader } from '@/components/features';
+import { useAuth, useHouseholdMembers } from '@/hooks';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { data: members } = useHouseholdMembers();
 
   const handleSignOut = async () => {
     try {
@@ -20,6 +22,7 @@ export default function ProfilePage() {
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Usuário';
   const email = user?.email || '';
+  const avatarUrl = user?.user_metadata?.avatar_url;
 
   return (
     <>
@@ -27,21 +30,15 @@ export default function ProfilePage() {
       <PageContainer className="space-y-6 pt-6">
         {/* Profile Header */}
         <section className="flex flex-col items-center gap-4 py-4">
-          <div className="relative">
-            <div className="h-28 w-28 rounded-full shadow-lg ring-4 ring-white dark:ring-slate-700 bg-primary flex items-center justify-center text-white text-4xl font-bold">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-            <button className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2 shadow-md hover:scale-110 transition-transform">
-              <Palette className="h-4 w-4" />
-            </button>
-          </div>
+          <AvatarUploader
+            currentUrl={avatarUrl}
+            displayName={displayName}
+            size="lg"
+          />
           <div className="text-center">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{displayName}</h2>
             <p className="text-slate-500 text-sm font-medium">{email}</p>
           </div>
-          <Button variant="secondary" size="sm">
-            Editar Dados
-          </Button>
         </section>
 
         {/* Household Section */}
@@ -49,19 +46,54 @@ export default function ProfilePage() {
           <h3 className="text-slate-400 text-[10px] font-bold uppercase tracking-wider px-2 mb-2">
             Família (Household)
           </h3>
-          <Card className="p-4 flex items-center justify-between">
-            <div className="flex items-center -space-x-2">
-              <div className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 bg-primary flex items-center justify-center text-white text-sm font-bold">
-                {displayName.charAt(0)}
+          <Card 
+            className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            onClick={() => navigate('/household')}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex items-center -space-x-2">
+                {members?.slice(0, 3).map((member, i) => (
+                  <div 
+                    key={member.id}
+                    className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 bg-primary flex items-center justify-center text-white text-sm font-bold"
+                    style={{ zIndex: 3 - i }}
+                  >
+                    {(member.display_name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                ))}
+                {(!members || members.length === 0) && (
+                  <div className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 bg-primary flex items-center justify-center text-white text-sm font-bold">
+                    {displayName.charAt(0)}
+                  </div>
+                )}
+                <div className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-slate-400" />
+                </div>
               </div>
-              <div className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                <Users className="h-4 w-4 text-slate-400" />
+              <div>
+                <p className="font-bold text-sm text-slate-900 dark:text-white">
+                  {members?.length || 1} membro{(members?.length || 1) !== 1 ? 's' : ''}
+                </p>
+                <p className="text-[10px] text-slate-500">Toque para gerenciar</p>
               </div>
             </div>
-            <button className="flex items-center gap-1 bg-slate-50 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-100">
-              Gerenciar
-              <ChevronRight className="h-4 w-4" />
-            </button>
+            <ChevronRight className="h-5 w-5 text-slate-300" />
+          </Card>
+        </section>
+
+        {/* Data Management Section */}
+        <section>
+          <h3 className="text-slate-400 text-[10px] font-bold uppercase tracking-wider px-2 mb-2">
+            Gestão de Dados
+          </h3>
+          <Card className="divide-y dark:divide-slate-700 overflow-hidden">
+            <SettingItem
+              icon={<Tag className="h-5 w-5" />}
+              iconBg="bg-amber-100 text-amber-600"
+              label="Categorias"
+              sublabel="Gerir categorias de transações"
+              onClick={() => navigate('/categories')}
+            />
           </Card>
         </section>
 
@@ -127,7 +159,7 @@ export default function ProfilePage() {
         </Button>
 
         <p className="text-center text-slate-300 text-[10px] font-bold pb-8">
-          Finansix v1.0.0
+          Finansix v2.0.0
         </p>
       </PageContainer>
     </>
@@ -140,15 +172,20 @@ function SettingItem({
   label,
   sublabel,
   hasToggle,
+  onClick,
 }: {
   icon: React.ReactNode;
   iconBg: string;
   label: string;
   sublabel?: string;
   hasToggle?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+    <button 
+      onClick={onClick}
+      className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+    >
       <div className="flex items-center gap-3">
         <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${iconBg}`}>
           {icon}
