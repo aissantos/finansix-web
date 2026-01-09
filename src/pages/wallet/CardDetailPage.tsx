@@ -610,21 +610,34 @@ export default function CardDetailPage() {
                   onDelete={async () => {
                     if (confirm('Excluir esta parcela e todas as seguintes?')) {
                       try {
+                        console.log('=== DELETE INICIADO ===');
+                        console.log('Transaction ID:', inst.transaction_id);
+                        
                         // Soft delete the transaction (trigger will cascade to installments)
-                        const { error } = await supabase
+                        const { data, error } = await supabase
                           .from('transactions')
                           .update({ deleted_at: new Date().toISOString() })
-                          .eq('id', inst.transaction_id);
+                          .eq('id', inst.transaction_id)
+                          .select();
+
+                        console.log('Delete response:', { data, error });
 
                         if (error) throw error;
 
+                        console.log('✅ Transaction soft deleted');
                         toast({ title: '✅ Compra excluída' });
-                        queryClient.invalidateQueries({ queryKey: ['installments'] });
-                        queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+                        
+                        // Invalidate queries to refresh data
+                        console.log('Invalidating queries...');
+                        await queryClient.invalidateQueries({ queryKey: ['installments'] });
+                        await queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+                        await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+                        console.log('Queries invalidated');
                       } catch (error) {
-                        console.error('Error deleting:', error);
+                        console.error('=== DELETE ERROR ===', error);
                         toast({
                           title: 'Erro ao excluir',
+                          description: error instanceof Error ? error.message : 'Tente novamente',
                           variant: 'destructive',
                         });
                       }
@@ -676,19 +689,34 @@ export default function CardDetailPage() {
                   onDelete={async () => {
                     if (confirm('Excluir esta parcela e todas as seguintes?')) {
                       try {
-                        const { error } = await supabase
+                        console.log('=== DELETE INICIADO (UPCOMING) ===');
+                        console.log('Transaction ID:', inst.transaction_id);
+                        
+                        const { data, error } = await supabase
                           .from('transactions')
                           .update({ deleted_at: new Date().toISOString() })
-                          .eq('id', inst.transaction_id);
+                          .eq('id', inst.transaction_id)
+                          .select();
+
+                        console.log('Delete response:', { data, error });
 
                         if (error) throw error;
 
+                        console.log('✅ Transaction soft deleted');
                         toast({ title: '✅ Compra excluída' });
-                        queryClient.invalidateQueries({ queryKey: ['installments'] });
-                        queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+                        
+                        console.log('Invalidating queries...');
+                        await queryClient.invalidateQueries({ queryKey: ['installments'] });
+                        await queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+                        await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+                        console.log('Queries invalidated');
                       } catch (error) {
-                        console.error('Error deleting:', error);
-                        toast({ title: 'Erro ao excluir', variant: 'destructive' });
+                        console.error('=== DELETE ERROR ===', error);
+                        toast({ 
+                          title: 'Erro ao excluir', 
+                          description: error instanceof Error ? error.message : 'Tente novamente',
+                          variant: 'destructive' 
+                        });
                       }
                     }
                   }}

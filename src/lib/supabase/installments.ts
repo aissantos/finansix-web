@@ -15,6 +15,7 @@ export async function getInstallments(
     .from('installments')
     .select('*')
     .eq('household_id', householdId)
+    .is('deleted_at', null) // ✅ Filtra registros não deletados
     .order('due_date');
 
   if (options?.creditCardId) {
@@ -52,6 +53,7 @@ export async function getInstallmentProjection(
     `)
     .eq('household_id', householdId)
     .eq('status', 'pending')
+    .is('deleted_at', null) // ✅ Filtra registros não deletados
     .gte('billing_month', format(startMonth, 'yyyy-MM-dd'))
     .lt('billing_month', format(endMonth, 'yyyy-MM-dd'));
 
@@ -128,7 +130,8 @@ export async function getPendingInstallmentsTotal(
     .from('installments')
     .select('amount')
     .eq('household_id', householdId)
-    .eq('status', 'pending');
+    .eq('status', 'pending')
+    .is('deleted_at', null); // ✅ Filtra registros não deletados
 
   if (untilDate) {
     query = query.lte('due_date', format(untilDate, 'yyyy-MM-dd'));
