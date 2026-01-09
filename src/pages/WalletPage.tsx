@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Calculator, TrendingUp, Calendar, Repeat, AlertCircle, ArrowLeftRight } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
-import { CreditCardItem, SubscriptionItem } from '@/components/features';
+import { CreditCardItem, AccountItem, SubscriptionItem } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -300,39 +300,12 @@ function AccountsTab() {
       <div className="grid gap-3">
         {accounts?.length ? (
           accounts.map((acc) => (
-            <button
+            <AccountItem
               key={acc.id}
-              onClick={() => navigate(`/accounts/${acc.id}/edit`)}
-              className="w-full text-left bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-all hover:shadow-md active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-black flex-shrink-0 shadow-sm"
-                  style={{ backgroundColor: acc.color || '#6366f1' }}
-                >
-                  {acc.name.substring(0, 2).toUpperCase()}
-                </div>
-                <div className="flex flex-col">
-                  <h4 className="font-bold text-slate-900 dark:text-white leading-tight">
-                    {acc.name}
-                  </h4>
-                  <p className="text-xs text-slate-500 mt-1 font-medium capitalize">
-                    {acc.type === 'checking' ? 'Conta Corrente' : acc.type === 'savings' ? 'Poupança' : acc.type === 'investment' ? 'Investimento' : acc.type === 'cash' ? 'Dinheiro' : acc.type}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                  Saldo
-                </span>
-                <p className={cn(
-                  'text-lg font-black',
-                  (acc.current_balance ?? 0) < 0 ? 'text-expense' : 'text-slate-900 dark:text-white'
-                )}>
-                  {formatCurrency(acc.current_balance ?? 0)}
-                </p>
-              </div>
-            </button>
+              account={acc}
+              onEdit={() => navigate(`/accounts/${acc.id}/edit`)}
+              onDelete={() => navigate(`/accounts/${acc.id}/edit`)}
+            />
           ))
         ) : (
           <Card className="p-8 text-center">
