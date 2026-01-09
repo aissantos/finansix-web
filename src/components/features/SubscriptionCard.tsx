@@ -1,15 +1,8 @@
 import { memo } from 'react';
-import { MoreHorizontal, CalendarClock, AlertCircle } from 'lucide-react';
+import { MoreHorizontal, CalendarClock, AlertCircle, Edit3, Pause, Play, Trash2 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import type { Subscription } from '@/hooks/useSubscriptions';
 
 interface SubscriptionCardProps {
@@ -28,27 +21,44 @@ export const SubscriptionCard = memo(function SubscriptionCard({
   onToggleActive,
 }: SubscriptionCardProps) {
   
-  // Lógica de Datas
   const today = new Date().getDate();
   const billingDay = subscription.billing_day;
   const daysUntil = billingDay >= today ? billingDay - today : 30 - today + billingDay;
   const isUpcoming = daysUntil <= 3 && subscription.is_active;
   const isToday = daysUntil === 0 && subscription.is_active;
 
+  // Montagem dos itens do menu compatível com seu componente DropdownMenu
+  const menuItems = [
+    { 
+      label: 'Editar Detalhes', 
+      icon: <Edit3 className="h-4 w-4" />,
+      onClick: () => onEdit?.() 
+    },
+    { 
+      label: subscription.is_active ? 'Pausar Assinatura' : 'Reativar Assinatura',
+      icon: subscription.is_active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />,
+      onClick: () => onToggleActive?.() 
+    },
+    { 
+      label: 'Excluir', 
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: () => onDelete?.(),
+      variant: 'danger' as const
+    }
+  ];
+
   return (
     <div 
+        onClick={onClick}
         className={cn(
-            "group flex flex-col rounded-3xl border p-5 transition-all duration-300",
-            // Estilos Ativo vs Inativo
+            "group flex flex-col rounded-3xl border p-5 transition-all duration-300 cursor-pointer",
             subscription.is_active 
                 ? "bg-card border-border/50 hover:shadow-lg hover:border-primary/20 dark:hover:shadow-primary/5" 
                 : "bg-muted/30 border-dashed border-border opacity-60 grayscale-[0.8]",
-            // Borda de alerta se estiver vencendo
             isUpcoming && "border-amber-500/50 bg-amber-50/10"
         )}
     >
       <div className="flex items-start justify-between">
-        {/* Ícone Container */}
         <div className={cn(
             "flex h-12 w-12 items-center justify-center rounded-2xl text-2xl shadow-sm transition-transform group-hover:scale-105",
             isUpcoming ? "bg-amber-100 text-amber-600 dark:bg-amber-900/20" : "bg-primary/10 text-primary"
@@ -56,22 +66,14 @@ export const SubscriptionCard = memo(function SubscriptionCard({
             {subscription.icon || '📦'}
         </div>
 
-        {/* Menu Contextual */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onEdit}>Editar Detalhes</DropdownMenuItem>
-            <DropdownMenuItem onClick={onToggleActive}>
-                {subscription.is_active ? 'Pausar Assinatura' : 'Reativar Assinatura'}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onDelete} className="text-red-500">Excluir</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="opacity-0 transition-opacity group-hover:opacity-100" onClick={e => e.stopPropagation()}>
+          <DropdownMenu
+            items={menuItems}
+            trigger={<MoreHorizontal className="h-4 w-4 text-muted-foreground" />}
+            triggerClassName="h-8 w-8 hover:bg-muted rounded-full flex items-center justify-center"
+            position="bottom-left"
+          />
+        </div>
       </div>
 
       <div className="mt-4 flex-1">
@@ -85,7 +87,6 @@ export const SubscriptionCard = memo(function SubscriptionCard({
       </div>
 
       <div className="mt-4 flex items-center justify-between pt-4 border-t border-border/40">
-        {/* Badge de Status */}
         <Badge variant="secondary" className={cn(
             "rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide",
             isToday ? "bg-red-100 text-red-600 dark:bg-red-900/30" :
