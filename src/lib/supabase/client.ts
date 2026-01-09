@@ -21,27 +21,27 @@ export async function getCurrentHouseholdId(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: member } = await supabase
-    .from('household_members')
-    .select('household_id')
-    .eq('user_id', user.id)
-    .single();
+  // Use RPC function to bypass circular RLS issue
+  const { data: householdId, error } = await supabase
+    .rpc('get_user_household_id');
 
-  return member?.household_id ?? null;
+  if (error) {
+    console.error('[Supabase] Error getting household_id:', error);
+    return null;
+  }
+
+  return householdId;
 }
 
 // Helper to get or create household for new users
 // Uses a database RPC function to handle the transaction atomically
 export async function getOrCreateHousehold(userId: string, userName?: string): Promise<string> {
-  // First, check if user already has a household (fast path)
-  const { data: existingMember } = await supabase
-    .from('household_members')
-    .select('household_id')
-    .eq('user_id', userId)
-    .single();
+  // First, check if user already has a household (fast path) - using RPC to avoid RLS
+  const { data: existingHouseholdId } = await supabase
+    .rpc('get_user_household_id');
 
-  if (existingMember?.household_id) {
-    return existingMember.household_id;
+  if (existingHouseholdId) {
+    return existingHouseholdId as string;
   }
 
   // Use RPC function to create household atomically
