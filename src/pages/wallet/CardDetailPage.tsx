@@ -96,52 +96,72 @@ export default function CardDetailPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!card) return;
+    console.log('=== SUBMIT INICIADO ===');
+    console.log('Card:', card);
+    console.log('FormData:', formData);
+    
+    if (!card) {
+      console.error('Cartão não encontrado');
+      return;
+    }
     
     const amount = parseFloat(formData.amount);
     const totalInstallments = parseInt(formData.totalInstallments);
     const currentInstallment = parseInt(formData.currentInstallment);
     
+    console.log('Valores parseados:', { amount, totalInstallments, currentInstallment });
+    
     if (isNaN(amount) || amount <= 0) {
+      console.error('Valor inválido:', amount);
       toast({ title: 'Valor inválido', variant: 'destructive' });
       return;
     }
     
     if (currentInstallment > totalInstallments) {
+      console.error('Parcela atual > total');
       toast({ title: 'Parcela atual não pode ser maior que total', variant: 'destructive' });
       return;
     }
 
     setIsSubmitting(true);
+    console.log('Iniciando requisições ao Supabase...');
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('User:', user?.id);
       if (!user) throw new Error('Usuário não autenticado');
 
-      const { data: household } = await supabase
+      const { data: household, error: householdError } = await supabase
         .from('households')
         .select('id')
         .eq('owner_id', user.id)
         .single();
 
+      console.log('Household:', household, 'Error:', householdError);
       if (!household) throw new Error('Household não encontrado');
 
       // Create transaction
+      const transactionData = {
+        household_id: household.id,
+        type: 'expense' as const,
+        amount: amount,
+        description: formData.description || 'Compra no cartão',
+        credit_card_id: card.id,
+        transaction_date: new Date().toISOString().split('T')[0],
+        status: 'completed' as const,
+        is_installment: totalInstallments > 1,
+        total_installments: totalInstallments,
+      };
+      
+      console.log('Criando transaction:', transactionData);
+      
       const { data: transaction, error: txError } = await supabase
         .from('transactions')
-        .insert({
-          household_id: household.id,
-          type: 'expense',
-          amount: amount,
-          description: formData.description || 'Compra no cartão',
-          credit_card_id: card.id,
-          transaction_date: new Date().toISOString(),
-          status: 'completed',
-          is_installment: totalInstallments > 1,
-        })
+        .insert(transactionData)
         .select()
         .single();
 
+      console.log('Transaction criada:', transaction, 'Error:', txError);
       if (txError) throw txError;
 
       // Create installments
@@ -162,10 +182,19 @@ export default function CardDetailPage() {
         firstDueDate = addMonths(dueDate, 1);
       }
       
+      console.log('First due date:', firstDueDate);
+      
       for (let i = currentInstallment; i <= totalInstallments; i++) {
         // Each installment is in a subsequent month
         const monthsFromFirst = i - currentInstallment;
         const installmentDueDate = addMonths(firstDueDate, monthsFromFirst);
+        
+        // billing_month is the first day of the month of the due date
+        const billingMonth = new Date(
+          installmentDueDate.getFullYear(),
+          installmentDueDate.getMonth(),
+          1
+        );
         
         installmentsToCreate.push({
           household_id: household.id,
@@ -174,17 +203,22 @@ export default function CardDetailPage() {
           installment_number: i,
           total_installments: totalInstallments,
           amount: installmentAmount,
+          billing_month: billingMonth.toISOString().split('T')[0],
           due_date: installmentDueDate.toISOString().split('T')[0],
           status: 'pending',
         });
       }
 
+      console.log('Criando installments:', installmentsToCreate);
+
       const { error: instError } = await supabase
         .from('installments')
         .insert(installmentsToCreate);
 
+      console.log('Installments error:', instError);
       if (instError) throw instError;
 
+      console.log('=== SUCESSO ===');
       toast({
         title: '✅ Compra adicionada',
         description: totalInstallments > 1 
@@ -201,10 +235,10 @@ export default function CardDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['creditCards'] });
       
     } catch (error) {
-      console.error('Error creating purchase:', error);
+      console.error('=== ERRO ===', error);
       toast({
         title: 'Erro ao adicionar compra',
-        description: 'Tente novamente',
+        description: error instanceof Error ? error.message : 'Tente novamente',
         variant: 'destructive',
       });
     } finally {
