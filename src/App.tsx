@@ -23,9 +23,10 @@ const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 
 // Wallet sub-pages
 const NewCardPage = lazy(() => import('@/pages/wallet/NewCardPage'));
+const EditCardPage = lazy(() => import('@/pages/wallet/EditCardPage'));
+const CardDetailPage = lazy(() => import('@/pages/wallet/CardDetailPage'));
 const NewAccountPage = lazy(() => import('@/pages/wallet/NewAccountPage'));
 const EditAccountPage = lazy(() => import('@/pages/wallet/EditAccountPage'));
-const EditCardPage = lazy(() => import('@/pages/wallet/EditCardPage'));
 const SubscriptionsPage = lazy(() => import('@/pages/wallet/SubscriptionsPage'));
 
 // Transaction pages
@@ -127,6 +128,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <NewCardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cards/:id"
+          element={
+            <ProtectedRoute>
+              <CardDetailPage />
             </ProtectedRoute>
           }
         />

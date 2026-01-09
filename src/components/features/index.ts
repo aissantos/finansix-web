@@ -4,6 +4,7 @@ export { ReliefChart } from './ReliefChart';
 export { TransactionItem } from './TransactionItem';
 export { TransactionList } from './TransactionList';
 export { CreditCardItem } from './CreditCardItem';
+export { AccountItem } from './AccountItem';
 export { PWAInstallBanner } from './PWAInstallBanner';
 export * from './SubscriptionForm';
 export * from './SubscriptionItem';

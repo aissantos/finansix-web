@@ -184,6 +184,7 @@ function CardsTab() {
             <CreditCardItem
               key={card.id}
               card={card}
+              onClick={() => navigate(`/cards/${card.id}`)}
               onEdit={() => navigate(`/cards/${card.id}/edit`)}
               onDelete={() => {
                 // Will be handled by the menu in CreditCardItem
