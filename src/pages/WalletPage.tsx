@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Calculator, TrendingUp, Calendar, Repeat, AlertCircle, ArrowLeftRight } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
-import { CreditCardItem } from '@/components/features';
+import { CreditCardItem, SubscriptionItem } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -356,24 +356,6 @@ function SubscriptionsTab() {
   const activeSubscriptions = subscriptions?.filter(s => s.is_active) ?? [];
   const totalMonthly = activeSubscriptions.reduce((sum, s) => sum + s.amount, 0);
 
-  // Calculate days until billing for each subscription
-  const getSubscriptionStatus = (billingDay: number) => {
-    const today = new Date().getDate();
-    const daysUntil = billingDay >= today
-      ? billingDay - today
-      : 30 - today + billingDay;
-    
-    return {
-      daysUntil,
-      isUpcoming: daysUntil <= 3,
-      label: daysUntil === 0 
-        ? 'Vence hoje' 
-        : daysUntil <= 3 
-          ? `Vence em ${daysUntil} dia${daysUntil > 1 ? 's' : ''}`
-          : `Dia ${billingDay}`,
-    };
-  };
-
   if (isLoading) {
     return (
       <section className="space-y-4">
@@ -456,50 +438,16 @@ function SubscriptionsTab() {
       ) : (
         <div className="grid gap-3">
           {activeSubscriptions.slice(0, 5).map((sub) => {
-            const status = getSubscriptionStatus(sub.billing_day);
             const card = cards?.find(c => c.id === sub.credit_card_id);
 
             return (
-              <div
+              <SubscriptionItem
                 key={sub.id}
-                onClick={() => navigate('/subscriptions')}
-                className="bg-white dark:bg-slate-800 rounded-3xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 transition-all hover:shadow-md active:scale-[0.99] cursor-pointer"
-              >
-                <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-2xl relative flex-shrink-0">
-                  {sub.icon || '📦'}
-                  {status.isUpcoming && (
-                    <div className="absolute -top-1 -right-1 h-4 w-4 bg-amber-500 rounded-full border-2 border-white flex items-center justify-center">
-                      <AlertCircle className="h-3 w-3 text-white" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 flex flex-col justify-center">
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">{sub.name}</h4>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">
-                      {formatCurrency(sub.amount)}
-                    </p>
-                  </div>
-                  {card && (
-                    <p className="text-[10px] font-medium text-slate-400 mt-0.5">
-                      {card.name} ••{card.last_four_digits}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between mt-2">
-                    <span
-                      className={cn(
-                        'text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1',
-                        status.isUpcoming
-                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                          : 'bg-slate-100 text-slate-500 dark:bg-slate-700'
-                      )}
-                    >
-                      <Calendar className="h-3 w-3" />
-                      {status.label}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                subscription={sub}
+                card={card}
+                onEdit={() => navigate(`/subscriptions/${sub.id}/edit`)}
+                onDelete={() => navigate(`/subscriptions/${sub.id}/edit`)}
+              />
             );
           })}
           
