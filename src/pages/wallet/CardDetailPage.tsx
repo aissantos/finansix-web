@@ -11,7 +11,10 @@ import {
   Calculator,
   DollarSign,
   X,
-  Check
+  Check,
+  MoreVertical,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -164,65 +167,11 @@ export default function CardDetailPage() {
       console.log('Transaction criada:', transaction, 'Error:', txError);
       if (txError) throw txError;
 
-      // Create installments
-      const installmentsToCreate = [];
-      const installmentAmount = amount / totalInstallments;
-      
-      // Calculate which billing cycle this purchase falls into
-      const purchaseDate = new Date();
-      const purchaseDay = purchaseDate.getDate();
-      
-      // Determine first installment due date
-      let firstDueDate;
-      if (purchaseDay <= card.closing_day) {
-        // Purchase before closing - goes to current billing cycle
-        firstDueDate = dueDate;
-      } else {
-        // Purchase after closing - goes to next billing cycle
-        firstDueDate = addMonths(dueDate, 1);
-      }
-      
-      console.log('First due date:', firstDueDate);
-      
-      for (let i = currentInstallment; i <= totalInstallments; i++) {
-        // Each installment is in a subsequent month
-        const monthsFromFirst = i - currentInstallment;
-        const installmentDueDate = addMonths(firstDueDate, monthsFromFirst);
-        
-        // billing_month is the first day of the month of the due date
-        const billingMonth = new Date(
-          installmentDueDate.getFullYear(),
-          installmentDueDate.getMonth(),
-          1
-        );
-        
-        installmentsToCreate.push({
-          household_id: household.id,
-          transaction_id: transaction.id,
-          credit_card_id: card.id,
-          installment_number: i,
-          total_installments: totalInstallments,
-          amount: installmentAmount,
-          billing_month: billingMonth.toISOString().split('T')[0],
-          due_date: installmentDueDate.toISOString().split('T')[0],
-          status: 'pending',
-        });
-      }
-
-      console.log('Criando installments:', installmentsToCreate);
-
-      const { error: instError } = await supabase
-        .from('installments')
-        .insert(installmentsToCreate);
-
-      console.log('Installments error:', instError);
-      if (instError) throw instError;
-
-      console.log('=== SUCESSO ===');
+      console.log('=== SUCESSO - Trigger criará as parcelas automaticamente ===');
       toast({
         title: '✅ Compra adicionada',
         description: totalInstallments > 1 
-          ? `${totalInstallments}x de ${formatCurrency(installmentAmount)}`
+          ? `${totalInstallments}x de ${formatCurrency(amount / totalInstallments)}`
           : formatCurrency(amount),
       });
 
@@ -259,6 +208,76 @@ export default function CardDetailPage() {
   });
   
   const upcomingTotal = upcomingInstallments.reduce((sum, i) => sum + i.amount, 0);
+
+  // Installment Card Component with CRUD
+  function InstallmentCard({ 
+    installment, 
+    onEdit, 
+    onDelete 
+  }: { 
+    installment: any; 
+    onEdit: () => void; 
+    onDelete: () => void;
+  }) {
+    const [showMenu, setShowMenu] = useState(false);
+
+    return (
+      <Card className="p-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+            <ShoppingCart className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+              Parcela {installment.installment_number}/{installment.total_installments}
+            </p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Vence {format(new Date(installment.due_date), 'dd/MM/yyyy')}
+            </p>
+          </div>
+          <p className="text-sm font-bold text-slate-900 dark:text-white flex-shrink-0">
+            {formatCurrency(installment.amount)}
+          </p>
+          
+          {/* Menu */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
+            >
+              <MoreVertical className="h-4 w-4 text-slate-400" />
+            </button>
+            
+            {showMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowMenu(false)} 
+                />
+                <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 min-w-[140px] animate-in fade-in slide-in-from-top-2 duration-150">
+                  <button
+                    onClick={() => { onEdit(); setShowMenu(false); }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                  >
+                    <Edit3 className="h-4 w-4 text-slate-400" />
+                    Editar
+                  </button>
+                  <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
+                  <button
+                    onClick={() => { onDelete(); setShowMenu(false); }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Excluir
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   if (cardsLoading || installmentsLoading) {
     return (
@@ -581,24 +600,37 @@ export default function CardDetailPage() {
           {currentBillInstallments.length > 0 ? (
             <div className="space-y-2">
               {currentBillInstallments.map((inst) => (
-                <Card key={inst.id} className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                      <ShoppingCart className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Parcela {inst.installment_number}/{inst.total_installments}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Vence {format(new Date(inst.due_date), 'dd/MM/yyyy')}
-                      </p>
-                    </div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {formatCurrency(inst.amount)}
-                    </p>
-                  </div>
-                </Card>
+                <InstallmentCard
+                  key={inst.id}
+                  installment={inst}
+                  onEdit={() => {
+                    // Navigate to transaction edit
+                    navigate(`/transactions/${inst.transaction_id}/edit`);
+                  }}
+                  onDelete={async () => {
+                    if (confirm('Excluir esta parcela e todas as seguintes?')) {
+                      try {
+                        // Soft delete the transaction (trigger will cascade to installments)
+                        const { error } = await supabase
+                          .from('transactions')
+                          .update({ deleted_at: new Date().toISOString() })
+                          .eq('id', inst.transaction_id);
+
+                        if (error) throw error;
+
+                        toast({ title: '✅ Compra excluída' });
+                        queryClient.invalidateQueries({ queryKey: ['installments'] });
+                        queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+                      } catch (error) {
+                        console.error('Error deleting:', error);
+                        toast({
+                          title: 'Erro ao excluir',
+                          variant: 'destructive',
+                        });
+                      }
+                    }
+                  }}
+                />
               ))}
             </div>
           ) : (
@@ -637,24 +669,30 @@ export default function CardDetailPage() {
 
             <div className="space-y-2">
               {upcomingInstallments.slice(0, 3).map((inst) => (
-                <Card key={inst.id} className="p-4 bg-slate-50 dark:bg-slate-800/50">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                      <ShoppingCart className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Parcela {inst.installment_number}/{inst.total_installments}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Vence {format(new Date(inst.due_date), 'dd/MM/yyyy')}
-                      </p>
-                    </div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {formatCurrency(inst.amount)}
-                    </p>
-                  </div>
-                </Card>
+                <InstallmentCard
+                  key={inst.id}
+                  installment={inst}
+                  onEdit={() => navigate(`/transactions/${inst.transaction_id}/edit`)}
+                  onDelete={async () => {
+                    if (confirm('Excluir esta parcela e todas as seguintes?')) {
+                      try {
+                        const { error } = await supabase
+                          .from('transactions')
+                          .update({ deleted_at: new Date().toISOString() })
+                          .eq('id', inst.transaction_id);
+
+                        if (error) throw error;
+
+                        toast({ title: '✅ Compra excluída' });
+                        queryClient.invalidateQueries({ queryKey: ['installments'] });
+                        queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+                      } catch (error) {
+                        console.error('Error deleting:', error);
+                        toast({ title: 'Erro ao excluir', variant: 'destructive' });
+                      }
+                    }
+                  }}
+                />
               ))}
               {upcomingInstallments.length > 3 && (
                 <p className="text-center text-xs text-slate-500 py-2">
