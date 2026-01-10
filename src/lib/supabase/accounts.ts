@@ -29,26 +29,31 @@ export async function getAccount(id: string): Promise<Account> {
 
 export async function createAccount(account: InsertTables<'accounts'>): Promise<Account> {
   // Filter only valid database columns
-  const validFields = {
+  const validFields: any = {
     household_id: account.household_id,
     name: account.name,
     type: account.type,
     currency: account.currency ?? 'BRL',
     initial_balance: account.initial_balance ?? 0,
     current_balance: account.initial_balance ?? 0,
-    current_balance_cents: account.current_balance_cents ?? 0,
     color: account.color,
     icon: account.icon,
     is_active: account.is_active ?? true,
-    // Bank details
-    bank_code: account.bank_code,
-    bank_name: account.bank_name,
-    branch_number: account.branch_number,
-    account_number: account.account_number,
-    account_digit: account.account_digit,
-    pix_key: account.pix_key,
-    pix_key_type: account.pix_key_type,
   };
+
+  // Add bank details only if provided
+  if (account.bank_code !== undefined) validFields.bank_code = account.bank_code;
+  if (account.bank_name !== undefined) validFields.bank_name = account.bank_name;
+  if (account.branch_number !== undefined) validFields.branch_number = account.branch_number;
+  if (account.account_number !== undefined) validFields.account_number = account.account_number;
+  if (account.account_digit !== undefined) validFields.account_digit = account.account_digit;
+  if (account.pix_key !== undefined) validFields.pix_key = account.pix_key;
+  if (account.pix_key_type !== undefined) validFields.pix_key_type = account.pix_key_type;
+
+  // Add cents column if it exists (from P0 migration)
+  if (account.current_balance_cents !== undefined) {
+    validFields.current_balance_cents = account.current_balance_cents;
+  }
 
   const { data, error } = await supabase
     .from('accounts')
