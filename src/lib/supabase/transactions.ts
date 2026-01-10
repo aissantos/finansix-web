@@ -81,9 +81,34 @@ export async function getTransaction(id: string): Promise<TransactionWithDetails
 export async function createTransaction(
   transaction: InsertTables<'transactions'>
 ): Promise<Transaction> {
+  // Filter fields to avoid 400 errors with optional columns
+  const validFields: any = {
+    household_id: transaction.household_id,
+    type: transaction.type,
+    amount: transaction.amount,
+    description: transaction.description,
+    category_id: transaction.category_id,
+    account_id: transaction.account_id,
+    credit_card_id: transaction.credit_card_id,
+    transaction_date: transaction.transaction_date,
+    status: transaction.status ?? 'completed',
+    is_installment: transaction.is_installment ?? false,
+    total_installments: transaction.total_installments ?? 1,
+    is_reimbursable: transaction.is_reimbursable ?? false,
+    reimbursement_status: transaction.reimbursement_status,
+    reimbursement_source: transaction.reimbursement_source,
+    reimbursed_amount: transaction.reimbursed_amount,
+    notes: transaction.notes,
+  };
+
+  // Add amount_cents only if provided (optional column from P0 migration)
+  if (transaction.amount_cents !== undefined) {
+    validFields.amount_cents = transaction.amount_cents;
+  }
+
   const { data, error } = await supabase
     .from('transactions')
-    .insert(transaction)
+    .insert(validFields)
     .select()
     .single();
 
