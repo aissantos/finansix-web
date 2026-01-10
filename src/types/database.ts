@@ -123,12 +123,21 @@ export interface Database {
           currency: string
           initial_balance: number
           current_balance: number
+          current_balance_cents: number
           color: string | null
           icon: string | null
           is_active: boolean
           created_at: string
           updated_at: string
           deleted_at: string | null
+          // Bank details
+          bank_code: string | null
+          bank_name: string | null
+          branch_number: string | null
+          account_number: string | null
+          account_digit: string | null
+          pix_key: string | null
+          pix_key_type: 'cpf' | 'cnpj' | 'email' | 'phone' | 'random' | null
         }
         Insert: {
           id?: string
@@ -138,12 +147,21 @@ export interface Database {
           currency?: string
           initial_balance?: number
           current_balance?: number
+          current_balance_cents?: number
           color?: string | null
           icon?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
+          // Bank details
+          bank_code?: string | null
+          bank_name?: string | null
+          branch_number?: string | null
+          account_number?: string | null
+          account_digit?: string | null
+          pix_key?: string | null
+          pix_key_type?: 'cpf' | 'cnpj' | 'email' | 'phone' | 'random' | null
         }
         Update: {
           name?: string
@@ -151,11 +169,20 @@ export interface Database {
           currency?: string
           initial_balance?: number
           current_balance?: number
+          current_balance_cents?: number
           color?: string | null
           icon?: string | null
           is_active?: boolean
           updated_at?: string
           deleted_at?: string | null
+          // Bank details
+          bank_code?: string | null
+          bank_name?: string | null
+          branch_number?: string | null
+          account_number?: string | null
+          account_digit?: string | null
+          pix_key?: string | null
+          pix_key_type?: 'cpf' | 'cnpj' | 'email' | 'phone' | 'random' | null
         }
         Relationships: []
       }

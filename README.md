@@ -2,7 +2,7 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.5.4.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.4.2-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
@@ -34,7 +34,13 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 
 ## ✨ Novidades
 
-### v1.5.4.1 (Atual) - Bank Details Display
+### v1.5.4.2 (Atual) - TypeScript Types Fix
+
+- ✅ **Types Corrigidos**: Campos bancários adicionados aos tipos TypeScript
+- ✅ **IntelliSense**: Auto-complete funciona para bank_code, bank_name, branch_number, etc
+- ✅ **Type Safety**: Previne erros de tipagem ao acessar dados bancários
+
+### v1.5.4.1 - Bank Details Display
 
 - ✅ **Dados Bancários Visíveis**: Detalhes completos exibidos na página da conta
 - ✅ **Banco + Código**: Nome do banco com código BACEN
