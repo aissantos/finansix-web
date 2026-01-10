@@ -19,12 +19,12 @@ export async function getTransactions(
   }
 ): Promise<TransactionWithDetails[]> {
   let query = supabase
-    .from('transactions')
+    .from('transactions_with_installments_expanded')
     .select(`
       *,
-      category:categories(*),
-      credit_card:credit_cards(*),
-      account:accounts(*)
+      category:category_id(id, name, icon, color, type),
+      credit_card:credit_card_id(id, name, last_digits, brand, credit_limit),
+      account:account_id(id, name, type, balance)
     `)
     .eq('household_id', householdId)
     .is('deleted_at', null)
@@ -55,7 +55,33 @@ export async function getTransactions(
   const { data, error } = await query;
 
   if (error) handleSupabaseError(error);
-  return (data ?? []) as unknown as TransactionWithDetails[];
+  
+  // Map view data back to TransactionWithDetails format
+  return (data ?? []).map(item => ({
+    id: item.transaction_id, // Use original transaction_id
+    virtual_id: item.virtual_id, // Keep virtual_id for reference
+    household_id: item.household_id,
+    type: item.type,
+    description: item.description,
+    amount: item.amount,
+    transaction_date: item.transaction_date,
+    category_id: item.category_id,
+    account_id: item.account_id,
+    credit_card_id: item.credit_card_id,
+    status: item.status,
+    notes: item.notes,
+    is_installment: item.is_installment,
+    total_installments: item.total_installments,
+    installment_number: item.installment_number,
+    billing_month: item.billing_month,
+    due_date: item.due_date,
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+    deleted_at: item.deleted_at,
+    category: item.category,
+    credit_card: item.credit_card,
+    account: item.account,
+  })) as TransactionWithDetails[];
 }
 
 export async function getTransaction(id: string): Promise<TransactionWithDetails> {
