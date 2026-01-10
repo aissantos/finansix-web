@@ -7,8 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MonthlyTrendChart } from '@/components/features/MonthlyTrendChart';
 import { RecentTransactionsFeed } from '@/components/features/RecentTransactionsFeed';
-import { PaymentSummaryCards } from '@/components/features/PaymentSummaryCards';
-import { useTransactionsByCategory, useFreeBalance, useTransactions } from '@/hooks';
+import { useTransactionsByCategory, useFreeBalance, usePaymentSummary } from '@/hooks';
 import { useMonthlyComparison } from '@/hooks/useMonthlyComparison';
 import { useSelectedMonth } from '@/stores';
 import { formatCurrency, cn } from '@/lib/utils';
@@ -28,16 +27,8 @@ export default function AnalysisPage() {
           </button>
         </div>
 
-        {/* Summary Cards */}
+        {/* Summary Cards - Horizontal Scroll */}
         <SummaryCards />
-
-        {/* Payment Status Summary */}
-        <section>
-          <h2 className="text-base font-bold text-slate-900 dark:text-white mb-3">
-            Status de Pagamentos
-          </h2>
-          <PaymentSummaryCards />
-        </section>
 
         {/* Monthly Comparison */}
         <MonthlyComparison />
@@ -50,71 +41,118 @@ export default function AnalysisPage() {
 
         {/* Category Distribution */}
         <CategoryDistribution />
-
-        {/* Pending Bills */}
-        <PendingBills />
       </PageContainer>
     </>
   );
 }
 
 function SummaryCards() {
-  const { data: balance, isLoading } = useFreeBalance();
+  const { data: balance, isLoading: balanceLoading } = useFreeBalance();
+  const { data: paymentSummary, isLoading: paymentLoading } = usePaymentSummary();
+
+  const isLoading = balanceLoading || paymentLoading;
 
   if (isLoading) {
     return (
       <section className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
-        <Skeleton className="min-w-[180px] h-36 rounded-2xl" />
-        <Skeleton className="min-w-[160px] h-36 rounded-2xl" />
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} className="min-w-[160px] h-32 rounded-2xl flex-shrink-0" />
+        ))}
       </section>
     );
   }
 
+  const hasOverdue = (paymentSummary?.overdue ?? 0) > 0;
+
   return (
     <section className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
       {/* Balance Card */}
-      <div className="min-w-[180px] h-36 rounded-2xl bg-primary text-white p-5 flex flex-col justify-between shadow-lg shadow-primary/30 relative overflow-hidden flex-shrink-0">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-5 -mt-5" />
+      <div className="min-w-[170px] h-32 rounded-2xl bg-primary text-white p-4 flex flex-col justify-between shadow-lg shadow-primary/30 relative overflow-hidden flex-shrink-0">
+        <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-4 -mt-4" />
         <div>
           <div className="flex items-center gap-1.5 opacity-80 text-[10px] font-bold uppercase">
-            <TrendingUp className="h-4 w-4" />
+            <TrendingUp className="h-3.5 w-3.5" />
             Saldo Livre
           </div>
-          <p className="text-2xl font-extrabold mt-1">
+          <p className="text-xl font-extrabold mt-1">
             {formatCurrency(balance?.freeBalance ?? 0)}
           </p>
         </div>
-        <div className="bg-white/20 w-fit px-2 py-1 rounded-lg text-[10px] font-bold">
-          Atualizado
+        <div className="bg-white/20 w-fit px-2 py-0.5 rounded-lg text-[9px] font-bold">
+          Disponível
         </div>
       </div>
 
       {/* Income Card */}
-      <div className="min-w-[160px] h-36 rounded-2xl bg-white dark:bg-slate-800 p-5 flex flex-col justify-between border border-slate-100 dark:border-slate-700 shadow-sm flex-shrink-0">
+      <div className="min-w-[150px] h-32 rounded-2xl bg-white dark:bg-slate-800 p-4 flex flex-col justify-between border border-slate-100 dark:border-slate-700 shadow-sm flex-shrink-0">
         <div>
-          <div className="flex items-center gap-2 text-slate-500">
-            <TrendingUp className="h-4 w-4 text-income" />
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <TrendingUp className="h-3.5 w-3.5 text-income" />
             <span className="text-[10px] font-bold uppercase">Receitas</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white mt-2">
+          <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
             {formatCurrency(balance?.expectedIncome ?? 0)}
           </p>
         </div>
-        <span className="text-income text-[10px] font-bold">Esperadas</span>
+        <span className="text-income text-[9px] font-bold">Esperadas</span>
       </div>
 
       {/* Expenses Card */}
-      <div className="min-w-[160px] h-36 rounded-2xl bg-white dark:bg-slate-800 p-5 flex flex-col justify-between border border-slate-100 dark:border-slate-700 shadow-sm flex-shrink-0">
+      <div className="min-w-[150px] h-32 rounded-2xl bg-white dark:bg-slate-800 p-4 flex flex-col justify-between border border-slate-100 dark:border-slate-700 shadow-sm flex-shrink-0">
         <div>
-          <div className="flex items-center gap-2 text-slate-500">
-            <TrendingDown className="h-4 w-4 text-expense" />
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <TrendingDown className="h-3.5 w-3.5 text-expense" />
             <span className="text-[10px] font-bold uppercase">Despesas</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white mt-2">
+          <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
             {formatCurrency(balance?.creditCardDue ?? 0)}
           </p>
         </div>
-        <span className="text-expense text-[10px] font-bold">Em faturas</span>
+        <span className="text-expense text-[9px] font-bold">Em faturas</span>
+      </div>
+
+      {/* Pending Bills Card */}
+      <div className="min-w-[150px] h-32 rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-4 flex flex-col justify-between border border-amber-200 dark:border-amber-800 flex-shrink-0">
+        <div>
+          <div className="flex items-center gap-1.5 text-amber-600">
+            <Clock className="h-3.5 w-3.5" />
+            <span className="text-[10px] font-bold uppercase">A Pagar</span>
+          </div>
+          <p className="text-lg font-bold text-amber-700 dark:text-amber-300 mt-1">
+            {formatCurrency(paymentSummary?.pending ?? 0)}
+          </p>
+        </div>
+        <span className="text-amber-600 text-[9px] font-bold">Pendente</span>
+      </div>
+
+      {/* Overdue Card - Only shows if has overdue */}
+      {hasOverdue && (
+        <div className="min-w-[150px] h-32 rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 flex flex-col justify-between border-2 border-red-300 dark:border-red-700 flex-shrink-0 ring-2 ring-red-400 ring-offset-2">
+          <div>
+            <div className="flex items-center gap-1.5 text-red-600">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-bold uppercase">Vencido</span>
+            </div>
+            <p className="text-lg font-bold text-red-600 dark:text-red-400 mt-1">
+              {formatCurrency(paymentSummary?.overdue ?? 0)}
+            </p>
+          </div>
+          <span className="text-red-500 text-[9px] font-bold">⚠️ Atenção!</span>
+        </div>
+      )}
+
+      {/* Paid Card */}
+      <div className="min-w-[150px] h-32 rounded-2xl bg-green-50 dark:bg-green-900/20 p-4 flex flex-col justify-between border border-green-200 dark:border-green-800 flex-shrink-0">
+        <div>
+          <div className="flex items-center gap-1.5 text-green-600">
+            <CheckCircle className="h-3.5 w-3.5" />
+            <span className="text-[10px] font-bold uppercase">Pago</span>
+          </div>
+          <p className="text-lg font-bold text-green-700 dark:text-green-300 mt-1">
+            {formatCurrency(paymentSummary?.paid ?? 0)}
+          </p>
+        </div>
+        <span className="text-green-600 text-[9px] font-bold">Este mês</span>
       </div>
     </section>
   );
@@ -334,55 +372,5 @@ function CategoryDistribution() {
         </div>
       </div>
     </Card>
-  );
-}
-
-function PendingBills() {
-  const { data: transactions } = useTransactions({ type: 'expense' });
-
-  const pendingBills = transactions?.filter((t) => t.status === 'pending').slice(0, 3) || [];
-
-  if (!pendingBills.length) {
-    return null;
-  }
-
-  return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Contas a Pagar</h2>
-        <button className="text-primary text-xs font-bold hover:underline">Ver todas</button>
-      </div>
-
-      <div className="space-y-3">
-        {pendingBills.map((bill) => (
-          <div
-            key={bill.id}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border-l-4 border-amber-500 flex items-center justify-between transition-all hover:translate-x-1"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full flex items-center justify-center bg-amber-50 text-amber-600">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm leading-tight text-slate-900 dark:text-white">
-                  {bill.description}
-                </h4>
-                <p className="text-[10px] font-medium text-slate-400">
-                  {bill.category?.name || 'Sem categoria'}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-bold text-sm text-slate-900 dark:text-white">
-                {formatCurrency(bill.amount)}
-              </p>
-              <button className="text-primary text-[10px] font-bold mt-1 hover:underline">
-                Pagar
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
