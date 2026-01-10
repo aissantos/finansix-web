@@ -76,7 +76,7 @@ export default function EditTransactionPage() {
   useEffect(() => {
     if (transaction) {
       reset({
-        type: transaction.type as TransactionType,
+        type: transaction.type === 'transfer' ? 'expense' : transaction.type,
         amount: transaction.amount,
         description: transaction.description,
         category_id: transaction.category_id || null,

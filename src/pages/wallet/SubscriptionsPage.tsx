@@ -213,7 +213,18 @@ export default function SubscriptionsPage() {
         {showAddForm && (
           <SubscriptionForm
             cards={cards}
-            initialData={editingId ? subscriptions?.find(s => s.id === editingId) : undefined}
+            initialData={editingId ? (() => {
+              const sub = subscriptions?.find(s => s.id === editingId);
+              return sub ? {
+                id: sub.id,
+                name: sub.name,
+                amount: sub.amount ?? undefined,
+                billing_day: sub.billing_day,
+                is_active: sub.is_active,
+                icon: sub.icon ?? undefined,
+                credit_card_id: sub.credit_card_id,
+              } : undefined;
+            })() : undefined}
             onClose={handleCloseForm}
           />
         )}

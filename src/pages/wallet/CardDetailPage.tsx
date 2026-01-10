@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useCreditCards, useInstallments } from '@/hooks';
 import { useToast } from '@/hooks/useToast';
-import { formatCurrency, formatCardNumber, cn } from '@/lib/utils';
+import { formatCurrency, formatCardNumber} from '@/lib/utils';
 import { format, addMonths, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase/client';
@@ -99,12 +99,8 @@ export default function CardDetailPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('=== SUBMIT INICIADO ===');
-    console.log('Card:', card);
-    console.log('FormData:', formData);
     
     if (!card) {
-      console.error('Cartão não encontrado');
       return;
     }
     
@@ -112,35 +108,29 @@ export default function CardDetailPage() {
     const totalInstallments = parseInt(formData.totalInstallments);
     const currentInstallment = parseInt(formData.currentInstallment);
     
-    console.log('Valores parseados:', { amount, totalInstallments, currentInstallment });
     
     if (isNaN(amount) || amount <= 0) {
-      console.error('Valor inválido:', amount);
       toast({ title: 'Valor inválido', variant: 'destructive' });
       return;
     }
     
     if (currentInstallment > totalInstallments) {
-      console.error('Parcela atual > total');
       toast({ title: 'Parcela atual não pode ser maior que total', variant: 'destructive' });
       return;
     }
 
     setIsSubmitting(true);
-    console.log('Iniciando requisições ao Supabase...');
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('User:', user?.id);
       if (!user) throw new Error('Usuário não autenticado');
 
-      const { data: household, error: householdError } = await supabase
+      const { data: household, error: _householdError } = await supabase
         .from('households')
         .select('id')
         .eq('owner_id', user.id)
         .single();
 
-      console.log('Household:', household, 'Error:', householdError);
       if (!household) throw new Error('Household não encontrado');
 
       // Create transaction
@@ -156,18 +146,15 @@ export default function CardDetailPage() {
         total_installments: totalInstallments,
       };
       
-      console.log('Criando transaction:', transactionData);
       
-      const { data: transaction, error: txError } = await supabase
+      const { data: _transaction, error: txError } = await supabase
         .from('transactions')
         .insert(transactionData)
         .select()
         .single();
 
-      console.log('Transaction criada:', transaction, 'Error:', txError);
       if (txError) throw txError;
 
-      console.log('=== SUCESSO - Trigger criará as parcelas automaticamente ===');
       toast({
         title: '✅ Compra adicionada',
         description: totalInstallments > 1 
@@ -184,7 +171,6 @@ export default function CardDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['creditCards'] });
       
     } catch (error) {
-      console.error('=== ERRO ===', error);
       toast({
         title: 'Erro ao adicionar compra',
         description: error instanceof Error ? error.message : 'Tente novamente',
@@ -610,31 +596,24 @@ export default function CardDetailPage() {
                   onDelete={async () => {
                     if (confirm('Excluir esta parcela e todas as seguintes?')) {
                       try {
-                        console.log('=== DELETE INICIADO ===');
-                        console.log('Transaction ID:', inst.transaction_id);
                         
                         // Soft delete the transaction (trigger will cascade to installments)
-                        const { data, error } = await supabase
+                        const { error } = await supabase
                           .from('transactions')
                           .update({ deleted_at: new Date().toISOString() })
                           .eq('id', inst.transaction_id)
                           .select();
 
-                        console.log('Delete response:', { data, error });
 
                         if (error) throw error;
 
-                        console.log('✅ Transaction soft deleted');
                         toast({ title: '✅ Compra excluída' });
                         
                         // Invalidate queries to refresh data
-                        console.log('Invalidating queries...');
                         await queryClient.invalidateQueries({ queryKey: ['installments'] });
                         await queryClient.invalidateQueries({ queryKey: ['creditCards'] });
                         await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-                        console.log('Queries invalidated');
                       } catch (error) {
-                        console.error('=== DELETE ERROR ===', error);
                         toast({
                           title: 'Erro ao excluir',
                           description: error instanceof Error ? error.message : 'Tente novamente',
@@ -689,29 +668,22 @@ export default function CardDetailPage() {
                   onDelete={async () => {
                     if (confirm('Excluir esta parcela e todas as seguintes?')) {
                       try {
-                        console.log('=== DELETE INICIADO (UPCOMING) ===');
-                        console.log('Transaction ID:', inst.transaction_id);
                         
-                        const { data, error } = await supabase
+                        const { error } = await supabase
                           .from('transactions')
                           .update({ deleted_at: new Date().toISOString() })
                           .eq('id', inst.transaction_id)
                           .select();
 
-                        console.log('Delete response:', { data, error });
 
                         if (error) throw error;
 
-                        console.log('✅ Transaction soft deleted');
                         toast({ title: '✅ Compra excluída' });
                         
-                        console.log('Invalidating queries...');
                         await queryClient.invalidateQueries({ queryKey: ['installments'] });
                         await queryClient.invalidateQueries({ queryKey: ['creditCards'] });
                         await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-                        console.log('Queries invalidated');
                       } catch (error) {
-                        console.error('=== DELETE ERROR ===', error);
                         toast({ 
                           title: 'Erro ao excluir', 
                           description: error instanceof Error ? error.message : 'Tente novamente',

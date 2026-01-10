@@ -16,8 +16,8 @@ import {
   Check,
   Clock,
   Send,
-  Copy,
-  AlertTriangle,
+
+
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -69,7 +69,7 @@ export default function HouseholdPage() {
   
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [editingName, setEditingName] = useState(false);
-  const [householdName, setHouseholdName] = useState('');
+  const [, setHouseholdName] = useState('');
 
   const isLoading = householdLoading || membersLoading;
   
@@ -449,8 +449,8 @@ function MemberItem({
   canManage: boolean;
 }) {
   const [showMenu, setShowMenu] = useState(false);
-  const { mutate: removeMember, isPending: isRemoving } = useRemoveMember();
-  const { mutate: updateRole, isPending: isUpdating } = useUpdateMemberRole();
+  const { mutate: removeMember, isPending: _isRemoving } = useRemoveMember();
+  const { mutate: updateRole, isPending: _isUpdating } = useUpdateMemberRole();
   
   const role = (member.role || 'member') as MemberRole;
   const roleConfig = ROLE_CONFIG[role];

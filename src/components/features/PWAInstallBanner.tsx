@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Download, Share, Plus } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+
 
 export function PWAInstallBanner() {
   const { isInstallable, isIOS, install, dismiss } = usePWAInstall();

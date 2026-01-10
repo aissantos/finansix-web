@@ -48,14 +48,14 @@ export async function getInstallmentProjection(
     .from('installments')
     .select(`
       amount,
-      billing_month,
+      due_date,
       credit_card:credit_cards(id, name, color)
     `)
     .eq('household_id', householdId)
     .eq('status', 'pending')
-    .is('deleted_at', null) // ✅ Filtra registros não deletados
-    .gte('billing_month', format(startMonth, 'yyyy-MM-dd'))
-    .lt('billing_month', format(endMonth, 'yyyy-MM-dd'));
+    .is('deleted_at', null)
+    .gte('due_date', format(startMonth, 'yyyy-MM-dd'))
+    .lt('due_date', format(endMonth, 'yyyy-MM-dd'));
 
   if (error) handleSupabaseError(error);
 
@@ -74,12 +74,12 @@ export async function getInstallmentProjection(
   // Aggregate data
   type InstallmentRow = {
     amount: number;
-    billing_month: string;
+    due_date: string;
     credit_card: { id: string; name: string; color: string | null } | null;
   };
   
-  for (const inst of (data ?? []) as InstallmentRow[]) {
-    const key = format(new Date(inst.billing_month), 'yyyy-MM');
+  for (const inst of (data ?? []) as unknown as InstallmentRow[]) {
+    const key = format(new Date(inst.due_date), 'yyyy-MM');
     const projection = projections.get(key);
 
     if (projection) {

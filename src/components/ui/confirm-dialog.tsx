@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useRef } from 'react';
-import { AlertTriangle, Trash2, X, AlertCircle, HelpCircle } from 'lucide-react';
+import { AlertTriangle, Trash2, X, HelpCircle } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 

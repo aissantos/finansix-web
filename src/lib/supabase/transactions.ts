@@ -55,7 +55,7 @@ export async function getTransactions(
   const { data, error } = await query;
 
   if (error) handleSupabaseError(error);
-  return (data ?? []) as TransactionWithDetails[];
+  return (data ?? []) as unknown as TransactionWithDetails[];
 }
 
 export async function getTransaction(id: string): Promise<TransactionWithDetails> {
@@ -73,7 +73,7 @@ export async function getTransaction(id: string): Promise<TransactionWithDetails
 
   if (error) handleSupabaseError(error);
   if (!data) throw new NotFoundError('Transação');
-  return data as TransactionWithDetails;
+  return data as unknown as TransactionWithDetails;
 }
 
 export async function createTransaction(
@@ -145,8 +145,9 @@ export async function getTransactionsByCategory(
   if (error) handleSupabaseError(error);
 
   // Aggregate by category
-  const aggregated = (data ?? []).reduce((acc, tx) => {
-    const cat = tx.category as { id: string; name: string; color: string } | null;
+  type TxWithCategory = { amount: number; category: { id: string; name: string; color: string } | null };
+  const aggregated = ((data ?? []) as unknown as TxWithCategory[]).reduce((acc, tx) => {
+    const cat = tx.category;
     const catId = cat?.id || 'uncategorized';
     if (!acc[catId]) {
       acc[catId] = {

@@ -232,12 +232,11 @@ export function MonthlyTrendChart({
 }
 
 function TrendIndicator({
-  label,
   value,
   isUp,
   isGood,
 }: {
-  label: string;
+  label?: string;
   value: string;
   isUp: boolean;
   isGood: boolean;

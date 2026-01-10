@@ -83,26 +83,22 @@ export default function TransferPage() {
     try {
       // 1. Criar despesa na conta de origem
       await createTransaction({
-        household_id: householdId,
         account_id: fromAccountId,
         type: 'expense',
         amount: numericAmount,
         description: transferDescription,
         transaction_date: new Date().toISOString().split('T')[0],
         status: 'completed',
-        metadata: { transfer_id: transferId, transfer_type: 'out', linked_account: toAccountId },
       });
 
       // 2. Criar receita na conta de destino
       await createTransaction({
-        household_id: householdId,
         account_id: toAccountId,
         type: 'income',
         amount: numericAmount,
         description: transferDescription,
         transaction_date: new Date().toISOString().split('T')[0],
         status: 'completed',
-        metadata: { transfer_id: transferId, transfer_type: 'in', linked_account: fromAccountId },
       });
 
       toast({ 

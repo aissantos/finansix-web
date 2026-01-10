@@ -45,11 +45,14 @@ async function getMonthlyData(
     return { income: 0, expenses: 0, balance: 0 };
   }
 
-  const income = (transactions ?? [])
+  type TransactionRow = { type: string; amount: number };
+  const txList = (transactions ?? []) as TransactionRow[];
+
+  const income = txList
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + (t.amount ?? 0), 0);
 
-  const expenses = (transactions ?? [])
+  const expenses = txList
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + (t.amount ?? 0), 0);
 

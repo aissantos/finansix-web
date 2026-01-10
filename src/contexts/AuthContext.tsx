@@ -57,7 +57,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 1. Timeout de Segurança (CRÍTICO: Destrava a tela após 3s se a rede falhar)
     const safetyTimeout = setTimeout(() => {
       if (mounted && state.isLoading) {
-        console.warn('[Auth] Timeout de conexão. Forçando liberação da tela.');
         setState(prev => ({ ...prev, isLoading: false }));
       }
     }, 3000);

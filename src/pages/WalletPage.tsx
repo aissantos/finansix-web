@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calculator, TrendingUp, Calendar, Repeat, AlertCircle, ArrowLeftRight } from 'lucide-react';
+import { Plus, Calculator, TrendingUp, Repeat, ArrowLeftRight } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { CreditCardItem, AccountItem, SubscriptionItem } from '@/components/features';
 import { Card } from '@/components/ui/card';
@@ -328,7 +328,7 @@ function SubscriptionsTab() {
   const { data: cards } = useCreditCards();
 
   const activeSubscriptions = subscriptions?.filter(s => s.is_active) ?? [];
-  const totalMonthly = activeSubscriptions.reduce((sum, s) => sum + s.amount, 0);
+  const totalMonthly = activeSubscriptions.reduce((sum, s) => sum + (s.amount ?? 0), 0);
 
   if (isLoading) {
     return (

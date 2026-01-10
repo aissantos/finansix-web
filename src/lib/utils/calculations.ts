@@ -131,7 +131,8 @@ export async function calculateFreeBalance(
     .eq('is_active', true)
     .is('deleted_at', null);
 
-  const currentBalance = (accounts || []).reduce(
+  type AccountRow = { current_balance: number };
+  const currentBalance = ((accounts || []) as AccountRow[]).reduce(
     (sum, a) => sum + (a.current_balance ?? 0),
     0
   );
@@ -147,7 +148,8 @@ export async function calculateFreeBalance(
     .lte('transaction_date', targetDateStr)
     .is('deleted_at', null);
 
-  const pendingExpenses = (pendingTx || []).reduce(
+  type TxAmountRow = { amount: number };
+  const pendingExpenses = ((pendingTx || []) as TxAmountRow[]).reduce(
     (sum, t) => sum + t.amount,
     0
   );
@@ -160,7 +162,8 @@ export async function calculateFreeBalance(
     .eq('status', 'pending')
     .lte('due_date', targetDateStr);
 
-  const creditCardDue = (installments || []).reduce(
+  type InstAmountRow = { amount: number };
+  const creditCardDue = ((installments || []) as InstAmountRow[]).reduce(
     (sum, i) => sum + i.amount,
     0
   );
@@ -178,7 +181,8 @@ export async function calculateFreeBalance(
       .lte('start_date', targetDateStr)
       .or(`end_date.is.null,end_date.gte.${format(today, 'yyyy-MM-dd')}`);
 
-    for (const exp of expectations || []) {
+    type ExpectedRow = { amount: number; confidence_percent: number; type: string };
+    for (const exp of ((expectations || []) as ExpectedRow[])) {
       const projectedAmount = exp.amount * ((exp.confidence_percent ?? 0) / 100);
 
       if (exp.type === 'income') {
@@ -198,7 +202,8 @@ export async function calculateFreeBalance(
     .in('reimbursement_status', ['pending', 'partial'])
     .is('deleted_at', null);
 
-  const pendingReimbursements = (reimbursements || []).reduce(
+  type ReimbRow = { amount: number; reimbursed_amount: number | null };
+  const pendingReimbursements = ((reimbursements || []) as ReimbRow[]).reduce(
     (sum, t) => sum + (t.amount - (t.reimbursed_amount ?? 0)),
     0
   );
@@ -262,4 +267,22 @@ export function getBalanceBgColor(value: number): string {
 export function calculatePercentageChange(current: number, previous: number): number {
   if (previous === 0) return current > 0 ? 100 : 0;
   return ((current - previous) / Math.abs(previous)) * 100;
+}
+
+/**
+ * Calculate monthly average from a list of values
+ */
+export function calculateMonthlyAverage(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
+}
+
+/**
+ * Calculate total amount for installments
+ */
+export function calculateInstallmentTotal(
+  amount: number,
+  totalInstallments: number
+): number {
+  return amount * totalInstallments;
 }

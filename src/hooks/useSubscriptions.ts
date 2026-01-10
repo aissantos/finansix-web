@@ -106,7 +106,7 @@ export function useDeleteSubscription() {
 export function useSubscriptionTotal() {
   const { data: subscriptions } = useSubscriptions();
   
-  const total = subscriptions?.reduce((sum, s) => sum + (s.is_active ? s.amount : 0), 0) ?? 0;
+  const total = subscriptions?.reduce((sum, s) => sum + (s.is_active && s.amount ? s.amount : 0), 0) ?? 0;
   const count = subscriptions?.filter(s => s.is_active).length ?? 0;
   
   return { total, count };

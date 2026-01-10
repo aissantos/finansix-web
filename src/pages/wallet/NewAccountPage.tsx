@@ -22,7 +22,7 @@ import { useCreateAccount } from '@/hooks';
 import { toast } from '@/hooks/useToast';
 import { cn, formatCurrency } from '@/lib/utils';
 import { 
-  BANK_PRESETS, 
+ 
   searchBanks,
   getBanksByType,
   type BankPreset 

@@ -435,6 +435,7 @@ export default function NewTransactionPage() {
         installments={pendingSubmitData?.total_installments ?? 1}
         cardName={cards?.find(c => c.id === pendingSubmitData?.credit_card_id)?.name}
         startDate={pendingSubmitData?.transaction_date ? new Date(pendingSubmitData.transaction_date) : undefined}
+        description={pendingSubmitData?.description ?? ''}
         isLoading={isPending}
       />
     </div>
