@@ -125,39 +125,40 @@ export interface BankPreset {
   color: string;
   icon?: string;
   type: 'digital' | 'traditional' | 'investment';
+  bankCode?: string; // Código BACEN/COMPE
 }
 
 export const BANK_PRESETS: BankPreset[] = [
   // Bancos Digitais
-  { id: 'nubank', name: 'Nubank', color: '#820AD1', type: 'digital' },
-  { id: 'inter', name: 'Inter', color: '#FF7A00', type: 'digital' },
-  { id: 'c6', name: 'C6 Bank', color: '#242424', type: 'digital' },
-  { id: 'next', name: 'Next', color: '#00E676', type: 'digital' },
-  { id: 'neon', name: 'Neon', color: '#00E5FF', type: 'digital' },
-  { id: 'picpay', name: 'PicPay', color: '#21C25E', type: 'digital' },
-  { id: 'pagbank', name: 'PagBank', color: '#00B140', type: 'digital' },
-  { id: 'original', name: 'Banco Original', color: '#00A651', type: 'digital' },
-  { id: 'will', name: 'Will Bank', color: '#FFDD00', type: 'digital' },
-  { id: 'iti', name: 'iti Itaú', color: '#EC7000', type: 'digital' },
+  { id: 'nubank', name: 'Nubank', color: '#820AD1', type: 'digital', bankCode: '260' },
+  { id: 'inter', name: 'Inter', color: '#FF7A00', type: 'digital', bankCode: '077' },
+  { id: 'c6', name: 'C6 Bank', color: '#242424', type: 'digital', bankCode: '336' },
+  { id: 'next', name: 'Next', color: '#00E676', type: 'digital', bankCode: '237' },
+  { id: 'neon', name: 'Neon', color: '#00E5FF', type: 'digital', bankCode: '735' },
+  { id: 'picpay', name: 'PicPay', color: '#21C25E', type: 'digital', bankCode: '380' },
+  { id: 'pagbank', name: 'PagBank', color: '#00B140', type: 'digital', bankCode: '290' },
+  { id: 'original', name: 'Banco Original', color: '#00A651', type: 'digital', bankCode: '212' },
+  { id: 'will', name: 'Will Bank', color: '#FFDD00', type: 'digital', bankCode: '280' },
+  { id: 'iti', name: 'iti Itaú', color: '#EC7000', type: 'digital', bankCode: '341' },
   
   // Bancos Tradicionais
-  { id: 'bb', name: 'Banco do Brasil', color: '#FFCC00', type: 'traditional' },
-  { id: 'caixa', name: 'Caixa Econômica', color: '#005CA9', type: 'traditional' },
-  { id: 'itau', name: 'Itaú', color: '#EC7000', type: 'traditional' },
-  { id: 'bradesco', name: 'Bradesco', color: '#CC092F', type: 'traditional' },
-  { id: 'santander', name: 'Santander', color: '#EC0000', type: 'traditional' },
-  { id: 'btg', name: 'BTG Pactual', color: '#001E62', type: 'traditional' },
-  { id: 'safra', name: 'Safra', color: '#004B87', type: 'traditional' },
-  { id: 'sicredi', name: 'Sicredi', color: '#00A651', type: 'traditional' },
-  { id: 'sicoob', name: 'Sicoob', color: '#003366', type: 'traditional' },
-  { id: 'banrisul', name: 'Banrisul', color: '#004B87', type: 'traditional' },
+  { id: 'bb', name: 'Banco do Brasil', color: '#FFCC00', type: 'traditional', bankCode: '001' },
+  { id: 'caixa', name: 'Caixa Econômica', color: '#005CA9', type: 'traditional', bankCode: '104' },
+  { id: 'itau', name: 'Itaú', color: '#EC7000', type: 'traditional', bankCode: '341' },
+  { id: 'bradesco', name: 'Bradesco', color: '#CC092F', type: 'traditional', bankCode: '237' },
+  { id: 'santander', name: 'Santander', color: '#EC0000', type: 'traditional', bankCode: '033' },
+  { id: 'btg', name: 'BTG Pactual', color: '#001E62', type: 'traditional', bankCode: '208' },
+  { id: 'safra', name: 'Safra', color: '#004B87', type: 'traditional', bankCode: '422' },
+  { id: 'sicredi', name: 'Sicredi', color: '#00A651', type: 'traditional', bankCode: '748' },
+  { id: 'sicoob', name: 'Sicoob', color: '#003366', type: 'traditional', bankCode: '756' },
+  { id: 'banrisul', name: 'Banrisul', color: '#004B87', type: 'traditional', bankCode: '041' },
   
   // Corretoras/Investimentos
-  { id: 'xp', name: 'XP Investimentos', color: '#000000', type: 'investment' },
-  { id: 'rico', name: 'Rico', color: '#FF5500', type: 'investment' },
-  { id: 'clear', name: 'Clear', color: '#00AEEF', type: 'investment' },
-  { id: 'modal', name: 'Modal', color: '#00263E', type: 'investment' },
-  { id: 'genial', name: 'Genial', color: '#FFB800', type: 'investment' },
+  { id: 'xp', name: 'XP Investimentos', color: '#000000', type: 'investment', bankCode: '102' },
+  { id: 'rico', name: 'Rico', color: '#FF5500', type: 'investment', bankCode: '102' },
+  { id: 'clear', name: 'Clear', color: '#00AEEF', type: 'investment', bankCode: '102' },
+  { id: 'modal', name: 'Modal', color: '#00263E', type: 'investment', bankCode: '746' },
+  { id: 'genial', name: 'Genial', color: '#FFB800', type: 'investment', bankCode: '125' },
   { id: 'avenue', name: 'Avenue', color: '#5B00FF', type: 'investment' },
   { id: 'nomad', name: 'Nomad', color: '#9747FF', type: 'investment' },
 ];

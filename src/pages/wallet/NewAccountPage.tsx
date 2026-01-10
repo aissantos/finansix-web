@@ -125,6 +125,11 @@ export default function NewAccountPage() {
     setValue('name', bank.name);
     setSelectedColor(bank.color);
     setValue('type', bank.type === 'investment' ? 'investment' : 'checking');
+    // Auto-fill bank data
+    setValue('bank_name', bank.name);
+    if (bank.bankCode) {
+      setValue('bank_code', bank.bankCode);
+    }
     setStep('form');
   };
 

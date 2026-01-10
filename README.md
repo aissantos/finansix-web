@@ -2,7 +2,7 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.5.2.2-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.2.3-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
@@ -31,7 +31,14 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 
 ## ✨ Novidades
 
-### v1.5.2.2 (Atual)
+### v1.5.2.3 (Atual)
+
+- ✅ **Account Detail Page**: Nova página de detalhes da conta bancária (similar ao cartão de crédito)
+- ✅ **Header Avatar**: Avatar do usuário logado no header (substitui ícone do sistema)
+- ✅ **Auto-fill Bank Data**: Ao selecionar banco, preenche automaticamente nome e código bancário
+- ✅ **Bank Codes**: Códigos BACEN/COMPE adicionados aos presets de bancos
+
+### v1.5.2.2 (Bug Fixes)
 
 - ✅ **Bottom Nav Hide on Scroll**: Menu inferior oculta ao rolar para baixo, reaparece ao rolar para cima
 - ✅ **Bug Fix**: Correção do erro 404 em `transactions_with_installments_expanded`
@@ -43,13 +50,6 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 - ✅ **Animações Framer Motion**: Transições suaves entre páginas
 - ✅ **Shimmer Effects**: Efeito brilho em skeletons de carregamento
 - ✅ **Smart Suggestions (Base)**: Sistema de sugestões inteligentes para categorias
-
-### v1.5.0.x (Fundação)
-
-- ✅ **CRUD Completo**: Transações, Cartões, Contas, Categorias, Assinaturas
-- ✅ **Sistema de Household**: Gestão familiar com convites e papéis
-- ✅ **PWA**: Instalável com suporte offline
-- ✅ **Design System**: Componentes padronizados e responsivos
 
 ## 🏗 Arquitetura
 
@@ -90,6 +90,8 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 | Onboarding Tour | Tour guiado para novos usuários | ✅ |
 | Page Transitions | Animações suaves com Framer Motion | ✅ |
 | Bottom Nav Auto-hide | Menu oculta/aparece baseado no scroll | ✅ |
+| Account Detail | Página de detalhes da conta bancária | ✅ |
+| User Avatar | Avatar do usuário no header | ✅ |
 
 ### UX Features
 
@@ -97,6 +99,7 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 |---------|-----------|--------|
 | Smart Suggestions | Sugestões inteligentes de categorias | 🔄 Base |
 | Shimmer Loading | Efeito shimmer em skeletons | ✅ |
+| Auto-fill Bank | Preenche dados do banco automaticamente | ✅ |
 | Pull to Refresh | Atualização por gesto | 🔜 v1.6 |
 | Haptic Feedback | Vibração em ações | 🔜 v1.7 |
 
@@ -182,13 +185,18 @@ finansix-web/
 │   ├── hooks/            # Custom React hooks
 │   │   ├── useTransactions.ts
 │   │   ├── useAccounts.ts
-│   │   ├── useScrollDirection.ts  # NEW: Scroll direction detection
+│   │   ├── useScrollDirection.ts
 │   │   └── ...
 │   ├── lib/
 │   │   ├── supabase/     # Supabase client & queries
 │   │   ├── utils/        # Utility functions
-│   │   └── presets/      # Bank presets, categories, etc.
-│   ├── pages/            # Page components
+│   │   └── presets.ts    # Bank presets with codes
+│   ├── pages/
+│   │   ├── wallet/
+│   │   │   ├── AccountDetailPage.tsx  # NEW
+│   │   │   ├── CardDetailPage.tsx
+│   │   │   └── ...
+│   │   └── ...
 │   ├── stores/           # Zustand stores
 │   ├── types/            # TypeScript types
 │   └── styles/           # Global styles
@@ -203,6 +211,9 @@ finansix-web/
 - [x] Bottom Nav hide on scroll
 - [x] Fix transactions query
 - [x] Fix account creation
+- [x] Account detail page
+- [x] User avatar in header
+- [x] Auto-fill bank data
 
 ### v1.6.0 - Testing & Dashboard
 - [ ] Test coverage 40%+
@@ -229,4 +240,4 @@ MIT © Versix Solutions
 
 ---
 
-**Finansix v1.5.2.2** | Built with ❤️ by Versix Team
+**Finansix v1.5.2.3** | Built with ❤️ by Versix Team

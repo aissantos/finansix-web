@@ -304,6 +304,7 @@ function AccountsTab() {
             <AccountItem
               key={acc.id}
               account={acc}
+              onClick={() => navigate(`/accounts/${acc.id}`)}
               onEdit={() => navigate(`/accounts/${acc.id}/edit`)}
               onDelete={() => navigate(`/accounts/${acc.id}/edit`)}
             />

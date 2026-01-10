@@ -28,6 +28,7 @@ const EditCardPage = lazy(() => import('@/pages/wallet/EditCardPage'));
 const CardDetailPage = lazy(() => import('@/pages/wallet/CardDetailPage'));
 const NewAccountPage = lazy(() => import('@/pages/wallet/NewAccountPage'));
 const EditAccountPage = lazy(() => import('@/pages/wallet/EditAccountPage'));
+const AccountDetailPage = lazy(() => import('@/pages/wallet/AccountDetailPage'));
 const SubscriptionsPage = lazy(() => import('@/pages/wallet/SubscriptionsPage'));
 
 // Transaction pages
@@ -172,6 +173,14 @@ function AnimatedRoutes() {
               element={
                 <ProtectedRoute>
                   <NewAccountPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/accounts/:id"
+              element={
+                <ProtectedRoute>
+                  <AccountDetailPage />
                 </ProtectedRoute>
               }
             />

@@ -1,9 +1,10 @@
-import { Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bell, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAppStore, useSelectedMonth } from '@/stores';
 import { cn } from '@/lib/utils';
-import { useOnlineStatus } from '@/hooks';
+import { useOnlineStatus, useAuth } from '@/hooks';
+import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   title?: string;
@@ -17,9 +18,16 @@ export function Header({ title, showMonthSelector = false, showBack, onBack, sho
   const selectedMonth = useSelectedMonth();
   const { goToPreviousMonth, goToNextMonth, goToCurrentMonth } = useAppStore();
   const isOnline = useOnlineStatus();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const isCurrentMonth =
     format(selectedMonth, 'yyyy-MM') === format(new Date(), 'yyyy-MM');
+
+  // Get user avatar or initials
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'U';
+  const initials = displayName.charAt(0).toUpperCase();
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
@@ -34,11 +42,27 @@ export function Header({ title, showMonthSelector = false, showBack, onBack, sho
               <ChevronLeft className="h-5 w-5" />
             </button>
           ) : showLogo ? (
-            <img 
-              src="/icons/icon-72x72.png" 
-              alt="Finansix" 
-              className="h-9 w-9 rounded-xl"
-            />
+            <button
+              onClick={() => navigate('/profile')}
+              className="relative group"
+              aria-label="Perfil do usuário"
+            >
+              {avatarUrl ? (
+                <img 
+                  src={avatarUrl} 
+                  alt={displayName}
+                  className="h-9 w-9 rounded-full object-cover ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-primary transition-all"
+                />
+              ) : (
+                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-primary transition-all">
+                  {initials}
+                </div>
+              )}
+              {/* Online indicator */}
+              {isOnline && (
+                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white dark:ring-slate-900" />
+              )}
+            </button>
           ) : null}
         </div>
 
