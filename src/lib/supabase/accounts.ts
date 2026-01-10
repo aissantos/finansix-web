@@ -28,12 +28,22 @@ export async function getAccount(id: string): Promise<Account> {
 }
 
 export async function createAccount(account: InsertTables<'accounts'>): Promise<Account> {
+  // Filter only valid database columns
+  const validFields = {
+    household_id: account.household_id,
+    name: account.name,
+    type: account.type,
+    currency: account.currency ?? 'BRL',
+    initial_balance: account.initial_balance ?? 0,
+    current_balance: account.initial_balance ?? 0,
+    color: account.color,
+    icon: account.icon,
+    is_active: account.is_active ?? true,
+  };
+
   const { data, error } = await supabase
     .from('accounts')
-    .insert({
-      ...account,
-      current_balance: account.initial_balance ?? 0,
-    })
+    .insert(validFields)
     .select()
     .single();
 

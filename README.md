@@ -2,25 +2,23 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.2.2-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
-![CI](https://github.com/versix/finansix-web/workflows/CI/badge.svg)
 ![Production Ready](https://img.shields.io/badge/Production-Ready-success.svg)
 
 ## 📋 Índice
 
 - [Visão Geral](#-visão-geral)
+- [Novidades](#-novidades)
 - [Arquitetura](#-arquitetura)
 - [Funcionalidades](#-funcionalidades)
 - [Tech Stack](#-tech-stack)
 - [Setup](#-setup)
 - [Scripts Disponíveis](#-scripts-disponíveis)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Database Schema](#-database-schema)
-- [Testes](#-testes)
-- [CI/CD](#-cicd)
+- [Roadmap](#-roadmap)
 
 ## 🎯 Visão Geral
 
@@ -31,16 +29,27 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 - **Explosão de Parcelas**: Projeção automática de parcelamentos nos meses futuros
 - **Multi-tenancy**: Suporte a famílias (households) com múltiplos membros
 
-### ✨ Novidades v1.1.0 (Production Ready)
+## ✨ Novidades
 
-- ✅ **Error Tracking com Sentry**: Monitoramento proativo de erros em produção
-- ✅ **Bundle Optimization**: 40% redução no tamanho inicial (300KB → 180KB)
-- ✅ **Database View Otimizada**: Free Balance 75% mais rápido (1 query vs 4)
-- ✅ **Virtualized Lists**: Performance perfeita com 1000+ transações
-- ✅ **Cobertura de Testes**: 30% coverage com testes críticos
-- ✅ **Error Boundaries**: Zero crashes visíveis ao usuário
+### v1.5.2.2 (Atual)
 
-Ver [CHANGELOG_v1.1.0.md](./CHANGELOG_v1.1.0.md) para detalhes completos.
+- ✅ **Bottom Nav Hide on Scroll**: Menu inferior oculta ao rolar para baixo, reaparece ao rolar para cima
+- ✅ **Bug Fix**: Correção do erro 404 em `transactions_with_installments_expanded`
+- ✅ **Bug Fix**: Correção do erro 400 ao criar nova conta bancária
+
+### v1.5.1.0 (Quick Wins UX)
+
+- ✅ **Onboarding Tour Interativo**: Tour guiado para novos usuários com react-joyride
+- ✅ **Animações Framer Motion**: Transições suaves entre páginas
+- ✅ **Shimmer Effects**: Efeito brilho em skeletons de carregamento
+- ✅ **Smart Suggestions (Base)**: Sistema de sugestões inteligentes para categorias
+
+### v1.5.0.x (Fundação)
+
+- ✅ **CRUD Completo**: Transações, Cartões, Contas, Categorias, Assinaturas
+- ✅ **Sistema de Household**: Gestão familiar com convites e papéis
+- ✅ **PWA**: Instalável com suporte offline
+- ✅ **Design System**: Componentes padronizados e responsivos
 
 ## 🏗 Arquitetura
 
@@ -48,6 +57,7 @@ Ver [CHANGELOG_v1.1.0.md](./CHANGELOG_v1.1.0.md) para detalhes completos.
 ┌─────────────────────────────────────────────────────────────┐
 │                        Frontend (PWA)                        │
 │  React 18 + TypeScript + Vite + TailwindCSS + TanStack Query│
+│  + Framer Motion + Zustand + React Hook Form                │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -77,7 +87,18 @@ Ver [CHANGELOG_v1.1.0.md](./CHANGELOG_v1.1.0.md) para detalhes completos.
 | Installment Explosion | Projeção automática de parcelas | ✅ |
 | Reimbursements | Controle de valores a receber | ✅ |
 | PWA | Instalável com suporte offline | ✅ |
-| Error Tracking | Integração com Sentry | ✅ |
+| Onboarding Tour | Tour guiado para novos usuários | ✅ |
+| Page Transitions | Animações suaves com Framer Motion | ✅ |
+| Bottom Nav Auto-hide | Menu oculta/aparece baseado no scroll | ✅ |
+
+### UX Features
+
+| Feature | Descrição | Status |
+|---------|-----------|--------|
+| Smart Suggestions | Sugestões inteligentes de categorias | 🔄 Base |
+| Shimmer Loading | Efeito shimmer em skeletons | ✅ |
+| Pull to Refresh | Atualização por gesto | 🔜 v1.6 |
+| Haptic Feedback | Vibração em ações | 🔜 v1.7 |
 
 ## 🛠 Tech Stack
 
@@ -88,11 +109,12 @@ Ver [CHANGELOG_v1.1.0.md](./CHANGELOG_v1.1.0.md) para detalhes completos.
 - **TailwindCSS 3.4** - Styling
 - **TanStack Query 5** - Server State
 - **Zustand** - Client State
+- **Framer Motion 11** - Animations
 - **React Router 6** - Routing
 - **React Hook Form + Zod** - Forms
+- **react-joyride** - Onboarding Tours
 - **date-fns** - Date Manipulation
 - **Lucide React** - Icons
-- **Sentry** - Error Tracking
 
 ### Backend (Supabase)
 - **PostgreSQL 15** - Database
@@ -105,16 +127,15 @@ Ver [CHANGELOG_v1.1.0.md](./CHANGELOG_v1.1.0.md) para detalhes completos.
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 18+
 - pnpm 9+
-- Supabase CLI
-- Docker (para Supabase local)
+- Supabase account
 
 ### Installation
 
 ```bash
 # Clone repository
-git clone https://github.com/versix/finansix-web.git
+git clone https://github.com/aissantos/finansix-web.git
 cd finansix-web
 
 # Install dependencies
@@ -124,15 +145,6 @@ pnpm install
 cp .env.example .env.local
 # Edit .env.local with your Supabase credentials
 
-# Start Supabase locally (optional)
-pnpm supabase start
-
-# Run database migrations
-pnpm supabase db push
-
-# Generate types from database
-pnpm db:types
-
 # Start development server
 pnpm dev
 ```
@@ -140,10 +152,8 @@ pnpm dev
 ### Environment Variables
 
 ```env
-VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_SENTRY_DSN=your-sentry-dsn
-VITE_APP_VERSION=1.1.0
 ```
 
 ## 📜 Scripts Disponíveis
@@ -153,97 +163,58 @@ pnpm dev          # Start development server
 pnpm build        # Build for production
 pnpm preview      # Preview production build
 pnpm lint         # Run ESLint
-pnpm lint:fix     # Fix ESLint errors
 pnpm typecheck    # Run TypeScript type checking
-pnpm test         # Run tests in watch mode
-pnpm test:coverage # Run tests with coverage
-pnpm db:types     # Generate Supabase types
+pnpm test         # Run tests
 ```
 
 ## 📁 Estrutura do Projeto
 
 ```
 finansix-web/
-├── .github/
-│   └── workflows/        # CI/CD pipelines
 ├── public/
 │   ├── manifest.json     # PWA manifest
 │   └── sw.js             # Service Worker
 ├── src/
 │   ├── components/
-│   │   ├── ui/           # Base UI components
-│   │   ├── features/     # Feature components
-│   │   └── layout/       # Layout components
+│   │   ├── ui/           # Base UI components (Button, Input, Card...)
+│   │   ├── features/     # Feature components (BalanceHero, TransactionItem...)
+│   │   └── layout/       # Layout components (BottomNav, Header...)
 │   ├── hooks/            # Custom React hooks
+│   │   ├── useTransactions.ts
+│   │   ├── useAccounts.ts
+│   │   ├── useScrollDirection.ts  # NEW: Scroll direction detection
+│   │   └── ...
 │   ├── lib/
 │   │   ├── supabase/     # Supabase client & queries
-│   │   └── utils/        # Utility functions
+│   │   ├── utils/        # Utility functions
+│   │   └── presets/      # Bank presets, categories, etc.
 │   ├── pages/            # Page components
 │   ├── stores/           # Zustand stores
-│   ├── test/             # Test utilities
 │   ├── types/            # TypeScript types
 │   └── styles/           # Global styles
 ├── supabase/
-│   ├── migrations/       # Database migrations
-│   └── functions/        # Edge Functions
+│   └── migrations/       # Database migrations
 └── package.json
 ```
 
-## 🗄 Database Schema
+## 🗺 Roadmap
 
-### Core Tables
+### v1.5.2.x (Atual) - Bug Fixes & Polish
+- [x] Bottom Nav hide on scroll
+- [x] Fix transactions query
+- [x] Fix account creation
 
-```sql
-households          -- Multi-tenant root (families)
-household_members   -- User-household relationships
-accounts            -- Bank accounts
-credit_cards        -- Credit cards with billing info
-categories          -- Transaction categories
-transactions        -- All financial movements
-installments        -- Exploded installment records
-credit_card_statements -- Monthly card statements
-expected_transactions  -- Recurring income/expenses
-```
+### v1.6.0 - Testing & Dashboard
+- [ ] Test coverage 40%+
+- [ ] Dashboard widgets configuráveis
+- [ ] Category Insights
+- [ ] Spending Alerts
 
-## 🧪 Testes
-
-```bash
-# Run all tests
-pnpm test
-
-# Run with coverage
-pnpm test:coverage
-
-# Run specific test file
-pnpm test calculations.test.ts
-```
-
-### Test Structure
-
-- `src/**/*.test.ts` - Unit tests
-- `src/test/setup.ts` - Test setup and mocks
-- `src/test/utils.tsx` - Test utilities with providers
-
-## 🔄 CI/CD
-
-O projeto usa GitHub Actions para CI/CD:
-
-1. **Lint & Type Check** - ESLint + TypeScript
-2. **Unit Tests** - Vitest com coverage
-3. **Build** - Verificação de build
-4. **Deploy Preview** - Deploy automático para PRs
-5. **Deploy Production** - Deploy para main
-
-### Required Secrets
-
-```
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
-VERCEL_TOKEN
-VERCEL_ORG_ID
-VERCEL_PROJECT_ID
-CODECOV_TOKEN (optional)
-```
+### v1.7.0 - Open Finance MVP
+- [ ] Integração Pluggy
+- [ ] Sincronização de transações
+- [ ] Haptic feedback
+- [ ] Pull-to-refresh
 
 ## 🔐 Security
 
@@ -251,7 +222,6 @@ CODECOV_TOKEN (optional)
 - JWT-based authentication
 - Secure household isolation
 - Input validation with Zod
-- Error boundaries prevent crashes
 
 ## 📄 License
 
@@ -259,4 +229,4 @@ MIT © Versix Solutions
 
 ---
 
-Built with ❤️ by Versix Team
+**Finansix v1.5.2.2** | Built with ❤️ by Versix Team
