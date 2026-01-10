@@ -49,6 +49,19 @@ export const TransactionItem = memo(function TransactionItem({
   const hasInstallments = transaction.is_installment && (transaction.total_installments ?? 0) > 1;
   const categoryColor = transaction.category?.color || (isIncome ? '#22c55e' : '#ef4444');
 
+  // Get current month's installment (if installment transaction)
+  const currentInstallment = hasInstallments && transaction.installments?.length
+    ? transaction.installments[0]
+    : null;
+
+  // Display amount: installment amount if exists, otherwise transaction amount
+  const displayAmount = currentInstallment
+    ? currentInstallment.amount
+    : transaction.amount;
+
+  // Display installment info
+  const installmentNumber = currentInstallment?.installment_number || 1;
+
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowActions(!showActions);
@@ -87,8 +100,7 @@ export const TransactionItem = memo(function TransactionItem({
             </span>
             {hasInstallments && (
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 flex-shrink-0">
-                {transaction.installments?.[0]?.installment_number || 1}/
-                {transaction.total_installments}
+                {installmentNumber}/{transaction.total_installments}
               </Badge>
             )}
           </div>
@@ -107,7 +119,7 @@ export const TransactionItem = memo(function TransactionItem({
               isIncome ? 'text-income' : 'text-expense'
             )}
           >
-            {isIncome ? '+' : '-'} {formatCurrency(transaction.amount)}
+            {isIncome ? '+' : '-'} {formatCurrency(displayAmount)}
           </span>
           <span className="label-overline">
             {formatDateRelative(transaction.transaction_date)}

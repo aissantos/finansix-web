@@ -24,7 +24,8 @@ export async function getTransactions(
       *,
       category:categories(id, name, icon, color, type),
       credit_card:credit_cards(id, name, last_four_digits, brand, credit_limit),
-      account:accounts(id, name, type, current_balance)
+      account:accounts(id, name, type, current_balance),
+      installments:installments(*)
     `)
     .eq('household_id', householdId)
     .is('deleted_at', null)

@@ -6,10 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 
 export function BalanceHero() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(false); // ← Inicia ocultado
   const [showBreakdown, setShowBreakdown] = useState(false);
-  
-  // Mantemos o useFreeBalance se você quiser manter a funcionalidade do card de detalhes (breakdown)
   const { data, isLoading } = useFreeBalance();
   const { data: accountBalance, isLoading: accountLoading } = useTotalBalance();
 
@@ -17,25 +15,28 @@ export function BalanceHero() {
     return <BalanceHeroSkeleton />;
   }
 
-  // ALTERAÇÃO PRINCIPAL: O saldo principal agora é o saldo das contas, não o livre
-  const balance = accountBalance ?? 0;
+  const balance = data?.freeBalance ?? 0;
   const isPositive = balance >= 0;
 
   return (
     <section className="flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
-      
-      {/* REMOVIDO: A div redundante "Saldo em Contas" que ficava aqui foi excluída */}
+      {/* Account Balance - Always visible */}
+      <div className="flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800">
+        <Wallet className="h-4 w-4 text-slate-500" />
+        <span className="text-xs text-slate-500 font-medium">Saldo em Contas:</span>
+        <span className="text-xs font-bold text-slate-900 dark:text-white">
+          {formatCurrency(accountBalance ?? 0)}
+        </span>
+      </div>
 
       <div className="flex items-center gap-2 mb-1">
-        {/* ATUALIZADO: Rótulo alterado para refletir o dado real */}
-        <span className="text-slate-500 text-sm font-medium">Saldo em Contas</span>
+        <span className="text-slate-500 text-sm font-medium">Saldo Livre Disponível</span>
         <button
           onClick={() => setIsVisible(!isVisible)}
           className="text-slate-400 hover:text-slate-600 transition-colors"
         >
           {isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
         </button>
-        {/* O botão de info ainda abre o breakdown do Saldo Livre se desejar manter a análise */}
         <button
           onClick={() => setShowBreakdown(!showBreakdown)}
           className="text-slate-400 hover:text-primary transition-colors"
@@ -78,11 +79,11 @@ export function BalanceHero() {
         </p>
       </div>
 
-      {/* Breakdown Card - Mantive a lógica original caso queira ver a composição do saldo livre ao clicar no Info */}
+      {/* Breakdown Card */}
       {showBreakdown && data && isVisible && (
         <Card className="mt-4 p-4 w-full max-w-sm text-left animate-in fade-in slide-in-from-top-2 duration-200">
           <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-            Composição do Saldo Livre
+            Composição do Saldo
           </h4>
           <div className="space-y-2">
             {data.breakdown.map((item, i) => (
@@ -103,10 +104,10 @@ export function BalanceHero() {
             <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-slate-900 dark:text-white">
-                  Saldo Livre Projetado
+                  Saldo Livre
                 </span>
-                <span className={cn('text-sm font-black', getBalanceColor(data.freeBalance))}>
-                  {formatCurrency(data.freeBalance)}
+                <span className={cn('text-sm font-black', getBalanceColor(balance))}>
+                  {formatCurrency(balance)}
                 </span>
               </div>
             </div>
@@ -120,7 +121,7 @@ export function BalanceHero() {
 function BalanceHeroSkeleton() {
   return (
     <section className="flex flex-col items-center justify-center text-center">
-      {/* Removido o esqueleto do badge superior também */}
+      <Skeleton className="h-6 w-48 mb-3 rounded-full" />
       <Skeleton className="h-4 w-40 mb-2" />
       <Skeleton className="h-10 w-48 mb-2" />
       <Skeleton className="h-6 w-28 rounded-full" />
