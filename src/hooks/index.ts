@@ -1,5 +1,6 @@
 export { useAuth } from './useAuth';
 export { useScrollDirection } from './useScrollDirection';
+export { usePaymentSummary } from './usePaymentSummary';
 export {
   useTransactions,
   useTransaction,

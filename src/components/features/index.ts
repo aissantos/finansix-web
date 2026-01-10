@@ -8,6 +8,8 @@ export { AccountItem } from './AccountItem';
 export { PWAInstallBanner } from './PWAInstallBanner';
 export { RecentTransactionsFeed } from './RecentTransactionsFeed';
 export { OnboardingTour, useResetOnboarding } from './OnboardingTour';
+export { PaymentDialog } from './PaymentDialog';
+export { PaymentSummaryCards } from './PaymentSummaryCards';
 export * from './SubscriptionForm';
 export * from './SubscriptionItem';
 export * from './InstallmentBadge';

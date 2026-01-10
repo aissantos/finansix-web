@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MonthlyTrendChart } from '@/components/features/MonthlyTrendChart';
 import { RecentTransactionsFeed } from '@/components/features/RecentTransactionsFeed';
+import { PaymentSummaryCards } from '@/components/features/PaymentSummaryCards';
 import { useTransactionsByCategory, useFreeBalance, useTransactions } from '@/hooks';
 import { useMonthlyComparison } from '@/hooks/useMonthlyComparison';
 import { useSelectedMonth } from '@/stores';
@@ -29,6 +30,14 @@ export default function AnalysisPage() {
 
         {/* Summary Cards */}
         <SummaryCards />
+
+        {/* Payment Status Summary */}
+        <section>
+          <h2 className="text-base font-bold text-slate-900 dark:text-white mb-3">
+            Status de Pagamentos
+          </h2>
+          <PaymentSummaryCards />
+        </section>
 
         {/* Monthly Comparison */}
         <MonthlyComparison />

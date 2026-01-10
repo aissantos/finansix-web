@@ -6,7 +6,7 @@ import { CreditCardItem, AccountItem, SubscriptionItem } from '@/components/feat
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { useCreditCards, useCreditUsage, useAccounts, useTotalBalance, useSubscriptions } from '@/hooks';
+import { useCreditCards, useCreditUsage, useAccounts, useSubscriptions } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 
 type TabType = 'cards' | 'accounts' | 'subscriptions';
@@ -19,11 +19,8 @@ export default function WalletPage() {
     <>
       <Header title="Carteira" />
       <PageContainer noPadding className="pt-6">
-        {/* Consolidated Balance */}
-        <ConsolidatedBalance />
-
         {/* Tabs */}
-        <div className="px-6 mb-8 max-w-md mx-auto">
+        <div className="px-6 mb-4 max-w-md mx-auto">
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
             {(['accounts', 'cards', 'subscriptions'] as TabType[]).map((tab) => (
               <button
@@ -79,35 +76,6 @@ export default function WalletPage() {
         </div>
       </PageContainer>
     </>
-  );
-}
-
-function ConsolidatedBalance() {
-  const { data: totalBalance, isLoading: balanceLoading } = useTotalBalance();
-  const { data: creditUsage, isLoading: creditLoading } = useCreditUsage();
-
-  const isLoading = balanceLoading || creditLoading;
-  const total = (totalBalance ?? 0) + (creditUsage?.totalLimit ?? 0) - (creditUsage?.totalUsed ?? 0);
-
-  if (isLoading) {
-    return (
-      <section className="flex flex-col items-center justify-center text-center px-4">
-        <Skeleton className="h-4 w-40 mb-2" />
-        <Skeleton className="h-10 w-48 mb-2" />
-        <Skeleton className="h-6 w-24 rounded-full" />
-      </section>
-    );
-  }
-
-  return (
-    <section className="flex flex-col items-center justify-center text-center px-6 py-4">
-      <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1 uppercase tracking-wider">
-        Saldo Total
-      </p>
-      <h2 className="text-slate-900 dark:text-white tracking-tight text-4xl font-extrabold">
-        {formatCurrency(total)}
-      </h2>
-    </section>
   );
 }
 

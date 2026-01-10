@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { useCreditCards, useInstallments } from '@/hooks';
 import { useToast } from '@/hooks/useToast';
 import { formatCurrency, formatCardNumber} from '@/lib/utils';
-import { format, addMonths, differenceInDays } from 'date-fns';
+import { format, addMonths, differenceInDays, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -181,16 +181,28 @@ export default function CardDetailPage() {
     }
   };
 
-  // Group installments by status
+  // Group installments by status - FIX: filter by billing month correctly
   const currentBillInstallments = cardInstallments.filter(i => {
     const dueDate = new Date(i.due_date);
-    return dueDate <= closingDate && i.status === 'pending';
+    const billingMonth = new Date(i.billing_month);
+    // Current bill: billing_month matches current billing cycle
+    const currentBillingMonth = startOfMonth(closingDate);
+    return billingMonth.getTime() === currentBillingMonth.getTime() && i.status === 'pending';
+  });
+  
+  // Overdue installments: past due_date but still pending (separate section)
+  const overdueInstallments = cardInstallments.filter(i => {
+    const dueDate = new Date(i.due_date);
+    return dueDate < today && i.status === 'pending';
   });
   
   const currentBillTotal = currentBillInstallments.reduce((sum, i) => sum + i.amount, 0);
+  const overdueTotal = overdueInstallments.reduce((sum, i) => sum + i.amount, 0);
+  
   const upcomingInstallments = cardInstallments.filter(i => {
-    const dueDate = new Date(i.due_date);
-    return dueDate > closingDate && dueDate <= nextClosingDate && i.status === 'pending';
+    const billingMonth = new Date(i.billing_month);
+    const nextBillingMonth = startOfMonth(nextClosingDate);
+    return billingMonth.getTime() === nextBillingMonth.getTime() && i.status === 'pending';
   });
   
   const upcomingTotal = upcomingInstallments.reduce((sum, i) => sum + i.amount, 0);

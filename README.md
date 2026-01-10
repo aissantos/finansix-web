@@ -2,12 +2,11 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.5.4.4-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.4.6-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
 ![Production Ready](https://img.shields.io/badge/Production-Ready-success.svg)
-![Google Audited](https://img.shields.io/badge/Google-Audited-4285F4.svg)
 
 ## 📋 Índice
 
@@ -29,76 +28,24 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 - **Otimização de Cartões**: Recomendação do melhor cartão para cada compra
 - **Explosão de Parcelas**: Projeção automática de parcelamentos nos meses futuros
 - **Multi-tenancy**: Suporte a famílias (households) com múltiplos membros
-- **Precisão Matemática**: Cálculos em centavos (INTEGER) - zero floating point errors
-- **70+ Bancos Brasileiros**: Bancos digitais, tradicionais e corretoras
 
 ## ✨ Novidades
 
-### v1.5.4.4 (Atual) - CRITICAL FIX: createAccount
+### v1.5.4.6 (Atual)
 
-- ✅ **Bug Crítico Resolvido**: Campos bancários agora são salvos no cadastro
-- ✅ **createAccount Corrigido**: Função não estava salvando bank_name, bank_code, etc
-- ✅ **Persistência Total**: Dados salvos corretamente no banco de dados
-- ✅ **Feature 100% Funcional**: Cadastro, edição e exibição funcionando
+- 🐛 **Hotfix**: Correção da exibição de parcelas retroativas (parcelas passadas não aparecem mais na fatura atual)
+- ✅ **Bill Payment System**: Sistema de pagamento/baixa de contas (Em Aberto, Pago, Vencido)
+- ✅ **Invoice Payment**: Pagamento de fatura de cartão (Total, Parcial, Mínimo)
+- ✅ **Overdue Tracking**: Identificação automática de contas vencidas
+- ✅ **PaymentDialog**: Novo componente para confirmação de pagamentos
 
-### v1.5.4.3 - Edit Account Bank Details
+### v1.5.2.x (Anteriores)
 
-- ✅ **Campos Bancários em Edição**: Dados bancários agora aparecem no formulário de edição
-- ✅ **Persistência Completa**: Campos salvos e carregados corretamente
-- ✅ **UX Consistente**: Mesmos campos de cadastro disponíveis na edição
-
-### v1.5.4.2 - TypeScript Types Fix
-
-- ✅ **Types Corrigidos**: Campos bancários adicionados aos tipos TypeScript
-- ✅ **IntelliSense**: Auto-complete funciona para bank_code, bank_name, branch_number, etc
-- ✅ **Type Safety**: Previne erros de tipagem ao acessar dados bancários
-
-### v1.5.4.1 - Bank Details Display
-
-- ✅ **Dados Bancários Visíveis**: Detalhes completos exibidos na página da conta
-- ✅ **Banco + Código**: Nome do banco com código BACEN
-- ✅ **Agência e Conta**: Formatação adequada com dígito verificador
-- ✅ **Chave PIX**: Tipo e valor da chave PIX exibidos
-
-### v1.5.4.0 - Bank UX Improvements
-
-- ✅ **70+ Bancos**: Lista expandida com bancos digitais, tradicionais e corretoras
-- ✅ **Busca Inteligente**: Sistema de bancos populares vs pesquisáveis
-- ✅ **Auto-preenchimento**: Código BACEN e cor preenchidos automaticamente
-- ✅ **Formulário Otimizado**: Campo único para seleção de banco
-
-### v1.5.3.0 - CRITICAL P0 FIX
-
-**🚨 FLOATING POINT PRECISION FIX (Google Audit)**
-
-- ✅ **Cents-Based Calculations**: Todos cálculos agora usam centavos (BIGINT)
-- ✅ **Zero Precision Errors**: Eliminado 100% dos erros de ponto flutuante (0.1 + 0.2 = 0.3 ✓)
-- ✅ **New Columns**: `amount_cents`, `current_balance_cents`, `credit_limit_cents`
-- ✅ **Safe Math Utilities**: `toCents()`, `toReais()`, `addCents()`, `subtractCents()`
-- ✅ **Updated Triggers**: Trigger `create_installments` agora usa aritmética de inteiros
-- ✅ **Migration Safe**: Dados existentes migrados automaticamente (amount → amount_cents)
-
-**Impacto:**
-- ❌ ANTES: `R$ 100.10 - R$ 0.20 - R$ 0.30 = R$ 99.5999999...` (ERRADO)
-- ✅ DEPOIS: `R$ 100.10 - R$ 0.20 - R$ 0.30 = R$ 99.60` (CORRETO)
-
-- ✅ **Account Detail Page**: Nova página de detalhes da conta bancária (similar ao cartão de crédito)
-- ✅ **Header Avatar**: Avatar do usuário logado no header (substitui ícone do sistema)
-- ✅ **Auto-fill Bank Data**: Ao selecionar banco, preenche automaticamente nome e código bancário
-- ✅ **Bank Codes**: Códigos BACEN/COMPE adicionados aos presets de bancos
-
-### v1.5.2.2 (Bug Fixes)
-
-- ✅ **Bottom Nav Hide on Scroll**: Menu inferior oculta ao rolar para baixo, reaparece ao rolar para cima
-- ✅ **Bug Fix**: Correção do erro 404 em `transactions_with_installments_expanded`
-- ✅ **Bug Fix**: Correção do erro 400 ao criar nova conta bancária
-
-### v1.5.1.0 (Quick Wins UX)
-
-- ✅ **Onboarding Tour Interativo**: Tour guiado para novos usuários com react-joyride
-- ✅ **Animações Framer Motion**: Transições suaves entre páginas
-- ✅ **Shimmer Effects**: Efeito brilho em skeletons de carregamento
-- ✅ **Smart Suggestions (Base)**: Sistema de sugestões inteligentes para categorias
+- ✅ **Account Detail Page**: Página de detalhes da conta bancária
+- ✅ **Header Avatar**: Avatar do usuário logado no header
+- ✅ **Auto-fill Bank Data**: Preenchimento automático de dados bancários
+- ✅ **Bottom Nav Hide on Scroll**: Menu oculta ao rolar para baixo
+- ✅ **Bug Fixes**: Correções de erros 404/400
 
 ## 🏗 Arquitetura
 
@@ -134,23 +81,27 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 | Relief Chart | Visualização de alívio financeiro futuro | ✅ |
 | Multi-household | Suporte a múltiplas famílias | ✅ |
 | Installment Explosion | Projeção automática de parcelas | ✅ |
-| Reimbursements | Controle de valores a receber | ✅ |
+| Bill Payment | Pagamento/baixa de contas a pagar | ✅ **NEW** |
+| Invoice Payment | Pagamento de fatura de cartão | ✅ **NEW** |
+| Overdue Tracking | Identificação de contas vencidas | ✅ **NEW** |
 | PWA | Instalável com suporte offline | ✅ |
-| Onboarding Tour | Tour guiado para novos usuários | ✅ |
-| Page Transitions | Animações suaves com Framer Motion | ✅ |
-| Bottom Nav Auto-hide | Menu oculta/aparece baseado no scroll | ✅ |
-| Account Detail | Página de detalhes da conta bancária | ✅ |
-| User Avatar | Avatar do usuário no header | ✅ |
 
-### UX Features
+### Bill Status System
 
-| Feature | Descrição | Status |
-|---------|-----------|--------|
-| Smart Suggestions | Sugestões inteligentes de categorias | 🔄 Base |
-| Shimmer Loading | Efeito shimmer em skeletons | ✅ |
-| Auto-fill Bank | Preenche dados do banco automaticamente | ✅ |
-| Pull to Refresh | Atualização por gesto | 🔜 v1.6 |
-| Haptic Feedback | Vibração em ações | 🔜 v1.7 |
+| Status | Descrição | Cor |
+|--------|-----------|-----|
+| `pending` | Conta em aberto | 🟡 Amarelo |
+| `paid` | Conta paga | 🟢 Verde |
+| `overdue` | Conta vencida | 🔴 Vermelho |
+| `partial` | Pagamento parcial | 🔵 Azul |
+
+### Invoice Payment Types
+
+| Tipo | Descrição |
+|------|-----------|
+| **Total** | Paga toda a fatura |
+| **Parcial** | Paga parte da fatura |
+| **Mínimo** | Paga o valor mínimo (15%) |
 
 ## 🛠 Tech Stack
 
@@ -164,7 +115,6 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 - **Framer Motion 11** - Animations
 - **React Router 6** - Routing
 - **React Hook Form + Zod** - Forms
-- **react-joyride** - Onboarding Tours
 - **date-fns** - Date Manipulation
 - **Lucide React** - Icons
 
@@ -197,6 +147,9 @@ pnpm install
 cp .env.example .env.local
 # Edit .env.local with your Supabase credentials
 
+# Run database migrations (IMPORTANT for v1.5.4.6)
+pnpm supabase db push
+
 # Start development server
 pnpm dev
 ```
@@ -217,6 +170,7 @@ pnpm preview      # Preview production build
 pnpm lint         # Run ESLint
 pnpm typecheck    # Run TypeScript type checking
 pnpm test         # Run tests
+pnpm supabase db push  # Apply migrations
 ```
 
 ## 📁 Estrutura do Projeto
@@ -228,41 +182,34 @@ finansix-web/
 │   └── sw.js             # Service Worker
 ├── src/
 │   ├── components/
-│   │   ├── ui/           # Base UI components (Button, Input, Card...)
-│   │   ├── features/     # Feature components (BalanceHero, TransactionItem...)
-│   │   └── layout/       # Layout components (BottomNav, Header...)
+│   │   ├── ui/           # Base UI components
+│   │   ├── features/     
+│   │   │   ├── PaymentDialog.tsx  # NEW: Payment confirmation
+│   │   │   └── ...
+│   │   └── layout/       # Layout components
 │   ├── hooks/            # Custom React hooks
-│   │   ├── useTransactions.ts
-│   │   ├── useAccounts.ts
-│   │   ├── useScrollDirection.ts
-│   │   └── ...
 │   ├── lib/
 │   │   ├── supabase/     # Supabase client & queries
-│   │   ├── utils/        # Utility functions
-│   │   └── presets.ts    # Bank presets with codes
+│   │   └── utils/        # Utility functions
 │   ├── pages/
-│   │   ├── wallet/
-│   │   │   ├── AccountDetailPage.tsx  # NEW
-│   │   │   ├── CardDetailPage.tsx
-│   │   │   └── ...
-│   │   └── ...
-│   ├── stores/           # Zustand stores
-│   ├── types/            # TypeScript types
-│   └── styles/           # Global styles
+│   │   └── wallet/
+│   │       ├── CardDetailPage.tsx  # Updated with payment
+│   │       └── ...
+│   └── types/            # TypeScript types
 ├── supabase/
-│   └── migrations/       # Database migrations
+│   └── migrations/
+│       ├── 20260110200000_bill_payment_status.sql  # NEW
+│       └── ...
 └── package.json
 ```
 
 ## 🗺 Roadmap
 
-### v1.5.2.x (Atual) - Bug Fixes & Polish
-- [x] Bottom Nav hide on scroll
-- [x] Fix transactions query
-- [x] Fix account creation
-- [x] Account detail page
-- [x] User avatar in header
-- [x] Auto-fill bank data
+### v1.5.4.x (Atual) - Bill Payments
+- [x] Hotfix parcelas retroativas
+- [x] Sistema de pagamento de contas
+- [x] Pagamento de fatura de cartão
+- [x] Status de contas vencidas
 
 ### v1.6.0 - Testing & Dashboard
 - [ ] Test coverage 40%+
@@ -289,4 +236,4 @@ MIT © Versix Solutions
 
 ---
 
-**Finansix v1.5.2.3** | Built with ❤️ by Versix Team
+**Finansix v1.5.4.6** | Built with ❤️ by Versix Team

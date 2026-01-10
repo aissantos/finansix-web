@@ -9,6 +9,7 @@ import {
   TransactionList,
   DashboardSkeleton,
   OnboardingTour,
+  PaymentSummaryCards,
 } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { DeleteConfirmDialog } from '@/components/ui';
@@ -61,6 +62,7 @@ export default function HomePage() {
         ) : (
           <>
             <BalanceHero />
+            <PaymentSummaryCards />
             <CardOptimizer />
             <SubscriptionsSummary />
             <ReliefChart />
