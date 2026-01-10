@@ -412,6 +412,66 @@ export default function AccountDetailPage() {
           </div>
         </Card>
 
+        {/* Bank Details */}
+        {(account.bank_name || account.branch_number || account.account_number || account.pix_key) && (
+          <Card className="p-4">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">
+              Dados Bancários
+            </h4>
+            <div className="space-y-3 text-sm">
+              {account.bank_name && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Banco</span>
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {account.bank_name}
+                    {account.bank_code && (
+                      <span className="text-xs text-slate-400 ml-2">({account.bank_code})</span>
+                    )}
+                  </span>
+                </div>
+              )}
+              {account.branch_number && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Agência</span>
+                  <span className="font-mono font-medium text-slate-900 dark:text-white">
+                    {account.branch_number}
+                  </span>
+                </div>
+              )}
+              {account.account_number && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Conta</span>
+                  <span className="font-mono font-medium text-slate-900 dark:text-white">
+                    {account.account_number}
+                    {account.account_digit && `-${account.account_digit}`}
+                  </span>
+                </div>
+              )}
+              {account.pix_key && (
+                <div className="space-y-1">
+                  <div className="flex justify-between items-start">
+                    <span className="text-slate-500">Chave PIX</span>
+                    <div className="text-right">
+                      {account.pix_key_type && (
+                        <div className="text-xs text-slate-400 uppercase mb-1">
+                          {account.pix_key_type === 'cpf' && 'CPF'}
+                          {account.pix_key_type === 'cnpj' && 'CNPJ'}
+                          {account.pix_key_type === 'email' && 'E-mail'}
+                          {account.pix_key_type === 'phone' && 'Telefone'}
+                          {account.pix_key_type === 'random' && 'Aleatória'}
+                        </div>
+                      )}
+                      <span className="font-mono font-medium text-slate-900 dark:text-white break-all">
+                        {account.pix_key}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
         {/* Edit Button */}
         <Button
           onClick={() => navigate(`/accounts/${account.id}/edit`)}

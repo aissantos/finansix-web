@@ -2,7 +2,7 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.5.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.4.1-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
@@ -30,10 +30,25 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 - **Explosão de Parcelas**: Projeção automática de parcelamentos nos meses futuros
 - **Multi-tenancy**: Suporte a famílias (households) com múltiplos membros
 - **Precisão Matemática**: Cálculos em centavos (INTEGER) - zero floating point errors
+- **70+ Bancos Brasileiros**: Bancos digitais, tradicionais e corretoras
 
 ## ✨ Novidades
 
-### v1.5.3.0 (Atual) - CRITICAL P0 FIX
+### v1.5.4.1 (Atual) - Bank Details Display
+
+- ✅ **Dados Bancários Visíveis**: Detalhes completos exibidos na página da conta
+- ✅ **Banco + Código**: Nome do banco com código BACEN
+- ✅ **Agência e Conta**: Formatação adequada com dígito verificador
+- ✅ **Chave PIX**: Tipo e valor da chave PIX exibidos
+
+### v1.5.4.0 - Bank UX Improvements
+
+- ✅ **70+ Bancos**: Lista expandida com bancos digitais, tradicionais e corretoras
+- ✅ **Busca Inteligente**: Sistema de bancos populares vs pesquisáveis
+- ✅ **Auto-preenchimento**: Código BACEN e cor preenchidos automaticamente
+- ✅ **Formulário Otimizado**: Campo único para seleção de banco
+
+### v1.5.3.0 - CRITICAL P0 FIX
 
 **🚨 FLOATING POINT PRECISION FIX (Google Audit)**
 
@@ -47,14 +62,6 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 **Impacto:**
 - ❌ ANTES: `R$ 100.10 - R$ 0.20 - R$ 0.30 = R$ 99.5999999...` (ERRADO)
 - ✅ DEPOIS: `R$ 100.10 - R$ 0.20 - R$ 0.30 = R$ 99.60` (CORRETO)
-
-### v1.5.2.4 (Auth Bugfix)
-
-- ✅ **Schema `_secured`**: Criado schema para funções SECURITY DEFINER
-- ✅ **Fix 500 Error**: Resolvido erro crítico no signup de novos usuários
-- ✅ **Auto Setup**: Household criado automaticamente via trigger
-
-### v1.5.2.3 (UX Enhancements)
 
 - ✅ **Account Detail Page**: Nova página de detalhes da conta bancária (similar ao cartão de crédito)
 - ✅ **Header Avatar**: Avatar do usuário logado no header (substitui ícone do sistema)

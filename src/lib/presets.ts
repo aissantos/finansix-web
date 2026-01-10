@@ -126,41 +126,79 @@ export interface BankPreset {
   icon?: string;
   type: 'digital' | 'traditional' | 'investment';
   bankCode?: string; // Código BACEN/COMPE
+  popular?: boolean; // Mostrar por padrão
 }
 
 export const BANK_PRESETS: BankPreset[] = [
-  // Bancos Digitais
-  { id: 'nubank', name: 'Nubank', color: '#820AD1', type: 'digital', bankCode: '260' },
-  { id: 'inter', name: 'Inter', color: '#FF7A00', type: 'digital', bankCode: '077' },
-  { id: 'c6', name: 'C6 Bank', color: '#242424', type: 'digital', bankCode: '336' },
+  // Bancos Digitais POPULARES
+  { id: 'nubank', name: 'Nubank', color: '#820AD1', type: 'digital', bankCode: '260', popular: true },
+  { id: 'inter', name: 'Inter', color: '#FF7A00', type: 'digital', bankCode: '077', popular: true },
+  { id: 'c6', name: 'C6 Bank', color: '#242424', type: 'digital', bankCode: '336', popular: true },
+  { id: 'picpay', name: 'PicPay', color: '#21C25E', type: 'digital', bankCode: '380', popular: true },
+  { id: 'neon', name: 'Neon', color: '#00E5FF', type: 'digital', bankCode: '735', popular: true },
+  
+  // Bancos Tradicionais POPULARES
+  { id: 'itau', name: 'Itaú', color: '#EC7000', type: 'traditional', bankCode: '341', popular: true },
+  { id: 'bradesco', name: 'Bradesco', color: '#CC092F', type: 'traditional', bankCode: '237', popular: true },
+  { id: 'santander', name: 'Santander', color: '#EC0000', type: 'traditional', bankCode: '033', popular: true },
+  { id: 'bb', name: 'Banco do Brasil', color: '#FFCC00', type: 'traditional', bankCode: '001', popular: true },
+  { id: 'caixa', name: 'Caixa Econômica', color: '#005CA9', type: 'traditional', bankCode: '104', popular: true },
+  
+  // Bancos Digitais (aparecem na busca)
   { id: 'next', name: 'Next', color: '#00E676', type: 'digital', bankCode: '237' },
-  { id: 'neon', name: 'Neon', color: '#00E5FF', type: 'digital', bankCode: '735' },
-  { id: 'picpay', name: 'PicPay', color: '#21C25E', type: 'digital', bankCode: '380' },
   { id: 'pagbank', name: 'PagBank', color: '#00B140', type: 'digital', bankCode: '290' },
   { id: 'original', name: 'Banco Original', color: '#00A651', type: 'digital', bankCode: '212' },
   { id: 'will', name: 'Will Bank', color: '#FFDD00', type: 'digital', bankCode: '280' },
   { id: 'iti', name: 'iti Itaú', color: '#EC7000', type: 'digital', bankCode: '341' },
+  { id: 'superdigital', name: 'Superdigital', color: '#FF6B00', type: 'digital', bankCode: '340' },
+  { id: 'banco99', name: 'Banco 99', color: '#FFCD00', type: 'digital', bankCode: '384' },
+  { id: 'mercadopago', name: 'Mercado Pago', color: '#00AEEF', type: 'digital', bankCode: '323' },
+  { id: 'recargapay', name: 'RecargaPay', color: '#00C853', type: 'digital', bankCode: '376' },
+  { id: 'digio', name: 'Digio', color: '#00B4D8', type: 'digital', bankCode: '654' },
+  { id: 'bancopan', name: 'Banco Pan', color: '#0066CC', type: 'digital', bankCode: '623' },
+  { id: 'bs2', name: 'BS2', color: '#00A859', type: 'digital', bankCode: '218' },
+  { id: 'agibank', name: 'Agibank', color: '#FF6B00', type: 'digital', bankCode: '121' },
+  { id: 'bancobmg', name: 'Banco BMG', color: '#003DA5', type: 'digital', bankCode: '318' },
+  { id: 'pagseguro', name: 'PagSeguro', color: '#00C26D', type: 'digital', bankCode: '290' },
+  { id: 'omeubank', name: 'Ô Meu Bank', color: '#FF5722', type: 'digital', bankCode: '355' },
+  { id: 'sofisadireta', name: 'Sofisa Direto', color: '#0052A5', type: 'digital', bankCode: '637' },
   
-  // Bancos Tradicionais
-  { id: 'bb', name: 'Banco do Brasil', color: '#FFCC00', type: 'traditional', bankCode: '001' },
-  { id: 'caixa', name: 'Caixa Econômica', color: '#005CA9', type: 'traditional', bankCode: '104' },
-  { id: 'itau', name: 'Itaú', color: '#EC7000', type: 'traditional', bankCode: '341' },
-  { id: 'bradesco', name: 'Bradesco', color: '#CC092F', type: 'traditional', bankCode: '237' },
-  { id: 'santander', name: 'Santander', color: '#EC0000', type: 'traditional', bankCode: '033' },
+  // Bancos Tradicionais (aparecem na busca)
   { id: 'btg', name: 'BTG Pactual', color: '#001E62', type: 'traditional', bankCode: '208' },
   { id: 'safra', name: 'Safra', color: '#004B87', type: 'traditional', bankCode: '422' },
   { id: 'sicredi', name: 'Sicredi', color: '#00A651', type: 'traditional', bankCode: '748' },
   { id: 'sicoob', name: 'Sicoob', color: '#003366', type: 'traditional', bankCode: '756' },
   { id: 'banrisul', name: 'Banrisul', color: '#004B87', type: 'traditional', bankCode: '041' },
+  { id: 'brb', name: 'BRB', color: '#005CA9', type: 'traditional', bankCode: '070' },
+  { id: 'banestes', name: 'Banestes', color: '#003366', type: 'traditional', bankCode: '021' },
+  { id: 'banese', name: 'Banese', color: '#004B87', type: 'traditional', bankCode: '047' },
+  { id: 'banpara', name: 'Banpará', color: '#00703C', type: 'traditional', bankCode: '037' },
+  { id: 'abc', name: 'Banco ABC', color: '#000080', type: 'traditional', bankCode: '246' },
+  { id: 'banese', name: 'Banese Card', color: '#004B87', type: 'traditional', bankCode: '047' },
+  { id: 'daycoval', name: 'Daycoval', color: '#003A70', type: 'traditional', bankCode: '707' },
+  { id: 'fibra', name: 'Fibra', color: '#ED8000', type: 'traditional', bankCode: '224' },
+  { id: 'citibank', name: 'Citibank', color: '#003DA5', type: 'traditional', bankCode: '745' },
+  { id: 'hsbc', name: 'HSBC', color: '#DB0011', type: 'traditional', bankCode: '269' },
+  { id: 'votorantim', name: 'Banco Votorantim', color: '#F07F00', type: 'traditional', bankCode: '655' },
+  { id: 'rendimento', name: 'Rendimento', color: '#00A859', type: 'traditional', bankCode: '633' },
+  { id: 'pine', name: 'Pine', color: '#00A859', type: 'traditional', bankCode: '643' },
   
-  // Corretoras/Investimentos
-  { id: 'xp', name: 'XP Investimentos', color: '#000000', type: 'investment', bankCode: '102' },
+  // Corretoras/Investimentos POPULARES
+  { id: 'xp', name: 'XP Investimentos', color: '#000000', type: 'investment', bankCode: '102', popular: true },
+  
+  // Corretoras/Investimentos (aparecem na busca)
   { id: 'rico', name: 'Rico', color: '#FF5500', type: 'investment', bankCode: '102' },
   { id: 'clear', name: 'Clear', color: '#00AEEF', type: 'investment', bankCode: '102' },
   { id: 'modal', name: 'Modal', color: '#00263E', type: 'investment', bankCode: '746' },
   { id: 'genial', name: 'Genial', color: '#FFB800', type: 'investment', bankCode: '125' },
   { id: 'avenue', name: 'Avenue', color: '#5B00FF', type: 'investment' },
   { id: 'nomad', name: 'Nomad', color: '#9747FF', type: 'investment' },
+  { id: 'easynvest', name: 'Easynvest', color: '#00A859', type: 'investment', bankCode: '102' },
+  { id: 'toro', name: 'Toro Investimentos', color: '#FF6B00', type: 'investment', bankCode: '352' },
+  { id: 'ativa', name: 'Ativa Investimentos', color: '#003DA5', type: 'investment', bankCode: '188' },
+  { id: 'warren', name: 'Warren', color: '#6C63FF', type: 'investment' },
+  { id: 'orama', name: 'Órama', color: '#00A859', type: 'investment', bankCode: '325' },
+  { id: 'guide', name: 'Guide Investimentos', color: '#FF6B00', type: 'investment', bankCode: '177' },
 ];
 
 // ============================================================================
@@ -229,15 +267,31 @@ export function searchSubscriptions(query: string): SubscriptionPreset[] {
   );
 }
 
+export function getPopularBanks(): BankPreset[] {
+  return BANK_PRESETS.filter((b) => b.popular === true);
+}
+
 export function searchBanks(query: string): BankPreset[] {
   const normalizedQuery = query.toLowerCase().trim();
-  if (!normalizedQuery) return BANK_PRESETS;
   
+  // Se não tem busca, retorna apenas os populares
+  if (!normalizedQuery) return getPopularBanks();
+  
+  // Com busca, retorna todos que correspondem
   return BANK_PRESETS.filter(
-    (b) => b.name.toLowerCase().includes(normalizedQuery)
+    (b) => b.name.toLowerCase().includes(normalizedQuery) ||
+           b.bankCode?.includes(normalizedQuery)
   );
 }
 
 export function getBanksByType(type: BankPreset['type']): BankPreset[] {
   return BANK_PRESETS.filter((b) => b.type === type);
+}
+
+export function getBankById(id: string): BankPreset | undefined {
+  return BANK_PRESETS.find((b) => b.id === id);
+}
+
+export function getBankByCode(code: string): BankPreset | undefined {
+  return BANK_PRESETS.find((b) => b.bankCode === code);
 }
