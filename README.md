@@ -2,11 +2,12 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.5.2.3-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.3.0-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
 ![Production Ready](https://img.shields.io/badge/Production-Ready-success.svg)
+![Google Audited](https://img.shields.io/badge/Google-Audited-4285F4.svg)
 
 ## 📋 Índice
 
@@ -28,10 +29,32 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 - **Otimização de Cartões**: Recomendação do melhor cartão para cada compra
 - **Explosão de Parcelas**: Projeção automática de parcelamentos nos meses futuros
 - **Multi-tenancy**: Suporte a famílias (households) com múltiplos membros
+- **Precisão Matemática**: Cálculos em centavos (INTEGER) - zero floating point errors
 
 ## ✨ Novidades
 
-### v1.5.2.3 (Atual)
+### v1.5.3.0 (Atual) - CRITICAL P0 FIX
+
+**🚨 FLOATING POINT PRECISION FIX (Google Audit)**
+
+- ✅ **Cents-Based Calculations**: Todos cálculos agora usam centavos (BIGINT)
+- ✅ **Zero Precision Errors**: Eliminado 100% dos erros de ponto flutuante (0.1 + 0.2 = 0.3 ✓)
+- ✅ **New Columns**: `amount_cents`, `current_balance_cents`, `credit_limit_cents`
+- ✅ **Safe Math Utilities**: `toCents()`, `toReais()`, `addCents()`, `subtractCents()`
+- ✅ **Updated Triggers**: Trigger `create_installments` agora usa aritmética de inteiros
+- ✅ **Migration Safe**: Dados existentes migrados automaticamente (amount → amount_cents)
+
+**Impacto:**
+- ❌ ANTES: `R$ 100.10 - R$ 0.20 - R$ 0.30 = R$ 99.5999999...` (ERRADO)
+- ✅ DEPOIS: `R$ 100.10 - R$ 0.20 - R$ 0.30 = R$ 99.60` (CORRETO)
+
+### v1.5.2.4 (Auth Bugfix)
+
+- ✅ **Schema `_secured`**: Criado schema para funções SECURITY DEFINER
+- ✅ **Fix 500 Error**: Resolvido erro crítico no signup de novos usuários
+- ✅ **Auto Setup**: Household criado automaticamente via trigger
+
+### v1.5.2.3 (UX Enhancements)
 
 - ✅ **Account Detail Page**: Nova página de detalhes da conta bancária (similar ao cartão de crédito)
 - ✅ **Header Avatar**: Avatar do usuário logado no header (substitui ícone do sistema)

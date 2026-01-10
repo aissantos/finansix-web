@@ -13,6 +13,56 @@ import type {
 import { supabase } from '@/lib/supabase/client';
 
 // ============================================
+// MONETARY UTILITIES (CENTS-BASED)
+// ============================================
+
+/**
+ * Convert reais to cents (for storage)
+ * @param reais - Amount in reais (e.g., 123.45)
+ * @returns Amount in cents (e.g., 12345)
+ */
+export function toCents(reais: number): number {
+  return Math.round(reais * 100);
+}
+
+/**
+ * Convert cents to reais (for display)
+ * @param cents - Amount in cents (e.g., 12345)
+ * @returns Amount in reais (e.g., 123.45)
+ */
+export function toReais(cents: number): number {
+  return cents / 100;
+}
+
+/**
+ * Add amounts in cents (safe from floating point errors)
+ */
+export function addCents(...amounts: number[]): number {
+  return amounts.reduce((sum, amount) => sum + amount, 0);
+}
+
+/**
+ * Subtract amounts in cents
+ */
+export function subtractCents(a: number, b: number): number {
+  return a - b;
+}
+
+/**
+ * Multiply cents by a factor
+ */
+export function multiplyCents(cents: number, factor: number): number {
+  return Math.round(cents * factor);
+}
+
+/**
+ * Divide cents amount into equal parts
+ */
+export function divideCents(cents: number, divisor: number): number {
+  return Math.round(cents / divisor);
+}
+
+// ============================================
 // BEST CARD ALGORITHM
 // ============================================
 
@@ -112,7 +162,7 @@ export function getBestCard(
 }
 
 // ============================================
-// FREE BALANCE CALCULATION
+// FREE BALANCE CALCULATION (CENTS-BASED)
 // ============================================
 
 export async function calculateFreeBalance(
@@ -123,24 +173,23 @@ export async function calculateFreeBalance(
   const today = startOfMonth(new Date());
   const targetDateStr = format(targetDate, 'yyyy-MM-dd');
 
-  // 1. Current balance from all accounts
+  // 1. Current balance from all accounts (IN CENTS)
   const { data: accounts } = await supabase
     .from('accounts')
-    .select('current_balance')
+    .select('current_balance_cents')
     .eq('household_id', householdId)
     .eq('is_active', true)
     .is('deleted_at', null);
 
-  type AccountRow = { current_balance: number };
-  const currentBalance = ((accounts || []) as AccountRow[]).reduce(
-    (sum, a) => sum + (a.current_balance ?? 0),
-    0
+  type AccountRow = { current_balance_cents: number };
+  const currentBalanceCents = addCents(
+    ...((accounts || []) as AccountRow[]).map(a => a.current_balance_cents ?? 0)
   );
 
-  // 2. Pending expenses (not on credit card)
+  // 2. Pending expenses (not on credit card) (IN CENTS)
   const { data: pendingTx } = await supabase
     .from('transactions')
-    .select('amount')
+    .select('amount_cents')
     .eq('household_id', householdId)
     .eq('type', 'expense')
     .eq('status', 'pending')
@@ -148,29 +197,27 @@ export async function calculateFreeBalance(
     .lte('transaction_date', targetDateStr)
     .is('deleted_at', null);
 
-  type TxAmountRow = { amount: number };
-  const pendingExpenses = ((pendingTx || []) as TxAmountRow[]).reduce(
-    (sum, t) => sum + t.amount,
-    0
+  type TxAmountRow = { amount_cents: number };
+  const pendingExpensesCents = addCents(
+    ...((pendingTx || []) as TxAmountRow[]).map(t => t.amount_cents)
   );
 
-  // 3. Credit card due (pending installments until target date)
+  // 3. Credit card due (pending installments until target date) (IN CENTS)
   const { data: installments } = await supabase
     .from('installments')
-    .select('amount')
+    .select('amount_cents')
     .eq('household_id', householdId)
     .eq('status', 'pending')
     .lte('due_date', targetDateStr);
 
-  type InstAmountRow = { amount: number };
-  const creditCardDue = ((installments || []) as InstAmountRow[]).reduce(
-    (sum, i) => sum + i.amount,
-    0
+  type InstAmountRow = { amount_cents: number };
+  const creditCardDueCents = addCents(
+    ...((installments || []) as InstAmountRow[]).map(i => i.amount_cents)
   );
 
-  // 4 & 5. Expected income and expenses (if projections enabled)
-  let expectedIncome = 0;
-  let expectedExpenses = 0;
+  // 4 & 5. Expected income and expenses (if projections enabled) (IN CENTS)
+  let expectedIncomeCents = 0;
+  let expectedExpensesCents = 0;
 
   if (includeProjections) {
     const { data: expectations } = await supabase
@@ -183,67 +230,71 @@ export async function calculateFreeBalance(
 
     type ExpectedRow = { amount: number; confidence_percent: number; type: string };
     for (const exp of ((expectations || []) as ExpectedRow[])) {
-      const projectedAmount = exp.amount * ((exp.confidence_percent ?? 0) / 100);
+      const amountCents = toCents(exp.amount);
+      const projectedCents = multiplyCents(amountCents, (exp.confidence_percent ?? 0) / 100);
 
       if (exp.type === 'income') {
-        expectedIncome += projectedAmount;
+        expectedIncomeCents = addCents(expectedIncomeCents, projectedCents);
       } else if (exp.type === 'expense') {
-        expectedExpenses += projectedAmount;
+        expectedExpensesCents = addCents(expectedExpensesCents, projectedCents);
       }
     }
   }
 
-  // 6. Pending reimbursements
+  // 6. Pending reimbursements (IN CENTS)
   const { data: reimbursements } = await supabase
     .from('transactions')
-    .select('amount, reimbursed_amount')
+    .select('amount_cents, reimbursed_amount')
     .eq('household_id', householdId)
     .eq('is_reimbursable', true)
     .in('reimbursement_status', ['pending', 'partial'])
     .is('deleted_at', null);
 
-  type ReimbRow = { amount: number; reimbursed_amount: number | null };
-  const pendingReimbursements = ((reimbursements || []) as ReimbRow[]).reduce(
-    (sum, t) => sum + (t.amount - (t.reimbursed_amount ?? 0)),
-    0
+  type ReimbRow = { amount_cents: number; reimbursed_amount: number | null };
+  const pendingReimbursementsCents = addCents(
+    ...((reimbursements || []) as ReimbRow[]).map(t => 
+      subtractCents(t.amount_cents, toCents(t.reimbursed_amount ?? 0))
+    )
   );
 
-  // FINAL FORMULA
-  const freeBalance =
-    currentBalance -
-    pendingExpenses -
-    creditCardDue +
-    expectedIncome -
-    expectedExpenses +
-    pendingReimbursements;
+  // FINAL FORMULA (ALL IN CENTS - NO FLOATING POINT!)
+  const freeBalanceCents = addCents(
+    currentBalanceCents,
+    -pendingExpensesCents,
+    -creditCardDueCents,
+    expectedIncomeCents,
+    -expectedExpensesCents,
+    pendingReimbursementsCents
+  );
 
+  // Convert to reais for display
   const breakdown: BalanceBreakdownItem[] = [
-    { label: 'Saldo em contas', value: currentBalance, type: 'positive' },
-    { label: 'Despesas pendentes', value: -pendingExpenses, type: 'negative' },
-    { label: 'Faturas de cartão', value: -creditCardDue, type: 'negative' },
+    { label: 'Saldo em contas', value: toReais(currentBalanceCents), type: 'positive' },
+    { label: 'Despesas pendentes', value: -toReais(pendingExpensesCents), type: 'negative' },
+    { label: 'Faturas de cartão', value: -toReais(creditCardDueCents), type: 'negative' },
   ];
 
   if (includeProjections) {
     breakdown.push(
-      { label: 'Receitas esperadas', value: expectedIncome, type: 'positive' },
-      { label: 'Despesas fixas', value: -expectedExpenses, type: 'negative' }
+      { label: 'Receitas esperadas', value: toReais(expectedIncomeCents), type: 'positive' },
+      { label: 'Despesas fixas', value: -toReais(expectedExpensesCents), type: 'negative' }
     );
   }
 
   breakdown.push({
     label: 'Reembolsos a receber',
-    value: pendingReimbursements,
+    value: toReais(pendingReimbursementsCents),
     type: 'positive',
   });
 
   return {
-    currentBalance,
-    pendingExpenses,
-    creditCardDue,
-    expectedIncome,
-    expectedExpenses,
-    pendingReimbursements,
-    freeBalance,
+    currentBalance: toReais(currentBalanceCents),
+    pendingExpenses: toReais(pendingExpensesCents),
+    creditCardDue: toReais(creditCardDueCents),
+    expectedIncome: toReais(expectedIncomeCents),
+    expectedExpenses: toReais(expectedExpensesCents),
+    pendingReimbursements: toReais(pendingReimbursementsCents),
+    freeBalance: toReais(freeBalanceCents),
     breakdown,
   };
 }
@@ -270,19 +321,20 @@ export function calculatePercentageChange(current: number, previous: number): nu
 }
 
 /**
- * Calculate monthly average from a list of values
+ * Calculate monthly average from a list of values (IN CENTS)
  */
-export function calculateMonthlyAverage(values: number[]): number {
-  if (values.length === 0) return 0;
-  return values.reduce((sum, v) => sum + v, 0) / values.length;
+export function calculateMonthlyAverage(valuesCents: number[]): number {
+  if (valuesCents.length === 0) return 0;
+  const totalCents = addCents(...valuesCents);
+  return toReais(divideCents(totalCents, valuesCents.length));
 }
 
 /**
- * Calculate total amount for installments
+ * Calculate total amount for installments (IN CENTS)
  */
 export function calculateInstallmentTotal(
-  amount: number,
+  amountCents: number,
   totalInstallments: number
 ): number {
-  return amount * totalInstallments;
+  return toReais(multiplyCents(amountCents, totalInstallments));
 }
