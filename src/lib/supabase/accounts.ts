@@ -36,9 +36,18 @@ export async function createAccount(account: InsertTables<'accounts'>): Promise<
     currency: account.currency ?? 'BRL',
     initial_balance: account.initial_balance ?? 0,
     current_balance: account.initial_balance ?? 0,
+    current_balance_cents: account.current_balance_cents ?? 0,
     color: account.color,
     icon: account.icon,
     is_active: account.is_active ?? true,
+    // Bank details
+    bank_code: account.bank_code,
+    bank_name: account.bank_name,
+    branch_number: account.branch_number,
+    account_number: account.account_number,
+    account_digit: account.account_digit,
+    pix_key: account.pix_key,
+    pix_key_type: account.pix_key_type,
   };
 
   const { data, error } = await supabase

@@ -2,7 +2,7 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.5.4.3-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.4.4-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
@@ -34,7 +34,14 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 
 ## ✨ Novidades
 
-### v1.5.4.3 (Atual) - Edit Account Bank Details
+### v1.5.4.4 (Atual) - CRITICAL FIX: createAccount
+
+- ✅ **Bug Crítico Resolvido**: Campos bancários agora são salvos no cadastro
+- ✅ **createAccount Corrigido**: Função não estava salvando bank_name, bank_code, etc
+- ✅ **Persistência Total**: Dados salvos corretamente no banco de dados
+- ✅ **Feature 100% Funcional**: Cadastro, edição e exibição funcionando
+
+### v1.5.4.3 - Edit Account Bank Details
 
 - ✅ **Campos Bancários em Edição**: Dados bancários agora aparecem no formulário de edição
 - ✅ **Persistência Completa**: Campos salvos e carregados corretamente
