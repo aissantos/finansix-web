@@ -36,7 +36,11 @@ export default function CardDetailPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: cards, isLoading: cardsLoading } = useCreditCards();
-  const { data: installments, isLoading: installmentsLoading } = useInstallments();
+  
+  // Get installments for this specific card (all months to show projections)
+  const { data: allInstallments, isLoading: installmentsLoading } = useInstallments({
+    creditCardId: id,
+  });
 
   // Form state
   const [showForm, setShowForm] = useState(false);
@@ -49,7 +53,7 @@ export default function CardDetailPage() {
   });
 
   const card = cards?.find(c => c.id === id);
-  const cardInstallments = installments?.filter(i => i.credit_card_id === id) || [];
+  const cardInstallments = allInstallments || [];
 
   // Calculate current billing cycle
   const today = new Date();

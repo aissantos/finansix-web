@@ -1,6 +1,8 @@
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Calendar, Clock } from 'lucide-react';
 import { useBestCard } from '@/hooks';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
+import { format, differenceInDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 
@@ -21,6 +23,10 @@ export function CardOptimizer() {
     );
   }
 
+  const today = new Date();
+  const daysUntilClosing = differenceInDays(recommendation.closingDate, today);
+  const daysUntilDue = differenceInDays(recommendation.dueDate, today);
+
   return (
     <section>
       <div className="flex items-center justify-between mb-3 px-1">
@@ -38,15 +44,19 @@ export function CardOptimizer() {
           {/* Badge */}
           <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider mb-2 border border-white/10">
             <Sparkles className="h-3 w-3" />
-            Melhor Opção
+            Melhor Opção Hoje
           </div>
 
           {/* Card info */}
           <div className="flex justify-between items-start">
             <div>
               <h4 className="text-lg font-bold">{recommendation.cardName}</h4>
-              <p className="text-blue-100 text-sm leading-snug">
-                {recommendation.reason}
+              <p className="text-blue-100 text-sm leading-snug mt-1">
+                {daysUntilClosing > 0
+                  ? `Fecha em ${daysUntilClosing} dias`
+                  : daysUntilClosing === 0
+                    ? 'Fecha hoje!'
+                    : 'Fatura já fechou'}
               </p>
             </div>
 
@@ -61,24 +71,47 @@ export function CardOptimizer() {
           </div>
 
           {/* Footer */}
-          <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+          <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-3 gap-2">
             <div className="flex flex-col">
-              <span className="text-[10px] text-blue-200 uppercase font-bold">
-                Limite Disponível
+              <span className="text-[10px] text-blue-200 uppercase font-bold flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                Fechamento
               </span>
               <span className="text-sm font-medium">
-                {formatCurrency(recommendation.availableLimit)}
+                {format(recommendation.closingDate, 'dd/MM', { locale: ptBR })}
+              </span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] text-blue-200 uppercase font-bold flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Vencimento
+              </span>
+              <span className="text-sm font-medium">
+                {format(recommendation.dueDate, 'dd/MM', { locale: ptBR })}
               </span>
             </div>
 
             <div className="flex flex-col text-right">
               <span className="text-[10px] text-blue-200 uppercase font-bold">
-                Vencimento
+                Limite
               </span>
               <span className="text-sm font-medium">
-                {formatDate(recommendation.dueDate, 'dd/MM')}
+                {formatCurrency(recommendation.availableLimit)}
               </span>
             </div>
+          </div>
+
+          {/* Days until payment highlight */}
+          <div className="mt-3 bg-white/10 rounded-lg p-2 text-center">
+            <span className="text-xs font-bold">
+              {daysUntilDue > 0 
+                ? `💰 ${daysUntilDue} dias até o pagamento`
+                : daysUntilDue === 0
+                  ? '⚠️ Vence hoje!'
+                  : `⚠️ Venceu há ${Math.abs(daysUntilDue)} dias`
+              }
+            </span>
           </div>
         </div>
       </div>
@@ -93,7 +126,7 @@ function CardOptimizerSkeleton() {
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-4 w-16" />
       </div>
-      <Skeleton className="h-40 w-full rounded-2xl" />
+      <Skeleton className="h-48 w-full rounded-2xl" />
     </section>
   );
 }

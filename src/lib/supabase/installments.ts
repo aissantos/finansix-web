@@ -15,7 +15,7 @@ export async function getInstallments(
     .from('installments')
     .select('*')
     .eq('household_id', householdId)
-    .is('deleted_at', null) // ✅ Filtra registros não deletados
+    .is('deleted_at', null)
     .order('due_date');
 
   if (options?.creditCardId) {
@@ -39,23 +39,25 @@ export async function getInstallments(
 
 export async function getInstallmentProjection(
   householdId: string,
-  months = 12
+  months = 12,
+  fromDate?: Date  // ← Novo parâmetro opcional
 ): Promise<MonthlyProjection[]> {
-  const startMonth = startOfMonth(new Date());
+  const startMonth = startOfMonth(fromDate ?? new Date());
   const endMonth = addMonths(startMonth, months);
 
   const { data, error } = await supabase
     .from('installments')
     .select(`
       amount,
+      billing_month,
       due_date,
       credit_card:credit_cards(id, name, color)
     `)
     .eq('household_id', householdId)
     .eq('status', 'pending')
     .is('deleted_at', null)
-    .gte('due_date', format(startMonth, 'yyyy-MM-dd'))
-    .lt('due_date', format(endMonth, 'yyyy-MM-dd'));
+    .gte('billing_month', format(startMonth, 'yyyy-MM-dd'))
+    .lt('billing_month', format(endMonth, 'yyyy-MM-dd'));
 
   if (error) handleSupabaseError(error);
 
@@ -71,15 +73,16 @@ export async function getInstallmentProjection(
     });
   }
 
-  // Aggregate data
+  // Aggregate data by billing_month (not due_date)
   type InstallmentRow = {
     amount: number;
+    billing_month: string;
     due_date: string;
     credit_card: { id: string; name: string; color: string | null } | null;
   };
   
   for (const inst of (data ?? []) as unknown as InstallmentRow[]) {
-    const key = format(new Date(inst.due_date), 'yyyy-MM');
+    const key = format(new Date(inst.billing_month), 'yyyy-MM');
     const projection = projections.get(key);
 
     if (projection) {
@@ -131,7 +134,7 @@ export async function getPendingInstallmentsTotal(
     .select('amount')
     .eq('household_id', householdId)
     .eq('status', 'pending')
-    .is('deleted_at', null); // ✅ Filtra registros não deletados
+    .is('deleted_at', null);
 
   if (untilDate) {
     query = query.lte('due_date', format(untilDate, 'yyyy-MM-dd'));

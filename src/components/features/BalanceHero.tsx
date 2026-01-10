@@ -1,16 +1,17 @@
-import { Eye, EyeOff, TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { Eye, EyeOff, TrendingUp, TrendingDown, Info, Wallet } from 'lucide-react';
 import { useState } from 'react';
-import { useFreeBalance } from '@/hooks';
+import { useFreeBalance, useTotalBalance } from '@/hooks';
 import { formatCurrency, cn, getBalanceColor } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 
 export function BalanceHero() {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false); // ← Inicia ocultado
   const [showBreakdown, setShowBreakdown] = useState(false);
   const { data, isLoading } = useFreeBalance();
+  const { data: accountBalance, isLoading: accountLoading } = useTotalBalance();
 
-  if (isLoading) {
+  if (isLoading || accountLoading) {
     return <BalanceHeroSkeleton />;
   }
 
@@ -19,6 +20,15 @@ export function BalanceHero() {
 
   return (
     <section className="flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
+      {/* Account Balance - Always visible */}
+      <div className="flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800">
+        <Wallet className="h-4 w-4 text-slate-500" />
+        <span className="text-xs text-slate-500 font-medium">Saldo em Contas:</span>
+        <span className="text-xs font-bold text-slate-900 dark:text-white">
+          {formatCurrency(accountBalance ?? 0)}
+        </span>
+      </div>
+
       <div className="flex items-center gap-2 mb-1">
         <span className="text-slate-500 text-sm font-medium">Saldo Livre Disponível</span>
         <button
@@ -111,6 +121,7 @@ export function BalanceHero() {
 function BalanceHeroSkeleton() {
   return (
     <section className="flex flex-col items-center justify-center text-center">
+      <Skeleton className="h-6 w-48 mb-3 rounded-full" />
       <Skeleton className="h-4 w-40 mb-2" />
       <Skeleton className="h-10 w-48 mb-2" />
       <Skeleton className="h-6 w-28 rounded-full" />
