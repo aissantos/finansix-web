@@ -60,3 +60,6 @@ export {
   useCancelInvite,
   useAcceptInvite,
 } from './useHousehold';
+
+// NEW: v2.0 Smart Hooks
+export { useSmartCategorySearch } from './useSmartCategorySearch';

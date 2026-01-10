@@ -18,6 +18,12 @@ export * from './InstallmentConfirmDialog';
 export * from './MonthlyTrendChart';
 export * from './AvatarUploader';
 
+// NEW: v2.0 Elite Features
+export { SwipeableTransactionItem } from './SwipeableTransactionItem';
+export { QuickActionFAB } from './QuickActionFAB';
+export { BalanceForecaster } from './BalanceForecaster';
+export { SmartInsights } from './SmartInsights';
+
 // Skeleton loading states
 export {
   BalanceHeroSkeleton,
