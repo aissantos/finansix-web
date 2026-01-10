@@ -1,16 +1,17 @@
 import { useNavigate } from 'react-router-dom';
-import { useRecentTransactions, useDeleteTransaction } from '@/hooks';
+import { useRecentTransactions } from '@/hooks';
 import { TransactionItem } from './TransactionItem';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useConfirmDialog } from '@/components/ui/confirm-dialog';
-import { toast } from '@/hooks/useToast';
+import type { TransactionWithDetails } from '@/types';
 
 interface TransactionListProps {
   limit?: number;
   showTitle?: boolean;
   onViewAll?: () => void;
   showActions?: boolean;
+  onEdit?: (transaction: TransactionWithDetails) => void;
+  onDelete?: (transaction: TransactionWithDetails) => void;
 }
 
 export function TransactionList({ 
@@ -18,41 +19,24 @@ export function TransactionList({
   showTitle = true, 
   onViewAll,
   showActions = true,
+  onEdit,
+  onDelete,
 }: TransactionListProps) {
   const navigate = useNavigate();
   const { data: transactions, isLoading } = useRecentTransactions(limit);
-  const { mutate: deleteTransaction } = useDeleteTransaction();
-  const { confirm, Dialog } = useConfirmDialog();
 
-  const handleEdit = (id: string) => {
-    navigate(`/transactions/${id}/edit`);
+  const handleEdit = (transaction: TransactionWithDetails) => {
+    if (onEdit) {
+      onEdit(transaction);
+    } else {
+      navigate(`/transactions/${transaction.id}/edit`);
+    }
   };
 
-  const handleDelete = (id: string, description: string) => {
-    confirm({
-      title: 'Excluir transação?',
-      description: `Tem certeza que deseja excluir "${description}"? Esta ação não pode ser desfeita.`,
-      confirmText: 'Excluir',
-      variant: 'danger',
-      onConfirm: () => {
-        deleteTransaction(id, {
-          onSuccess: () => {
-            toast({
-              title: 'Transação excluída',
-              description: 'A transação foi removida com sucesso.',
-              variant: 'success',
-            });
-          },
-          onError: () => {
-            toast({
-              title: 'Erro ao excluir',
-              description: 'Tente novamente.',
-              variant: 'destructive',
-            });
-          },
-        });
-      },
-    });
+  const handleDelete = (transaction: TransactionWithDetails) => {
+    if (onDelete) {
+      onDelete(transaction);
+    }
   };
 
   if (isLoading) {
@@ -99,14 +83,12 @@ export function TransactionList({
           <TransactionItem 
             key={tx.id} 
             transaction={tx}
-            onClick={() => handleEdit(tx.id)}
-            onEdit={showActions ? () => handleEdit(tx.id) : undefined}
-            onDelete={showActions ? () => handleDelete(tx.id, tx.description) : undefined}
+            onClick={() => handleEdit(tx)}
+            onEdit={showActions ? () => handleEdit(tx) : undefined}
+            onDelete={showActions ? () => handleDelete(tx) : undefined}
           />
         ))}
       </div>
-      
-      {Dialog}
     </section>
   );
 }

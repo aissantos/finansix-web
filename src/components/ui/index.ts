@@ -18,5 +18,26 @@ export { EmptyState, OnboardingEmptyState } from './empty-state';
 // New components - Design System v2.0
 export { PageHeader } from './page-header';
 export { ConfirmDialog, useConfirmDialog } from './confirm-dialog';
+export { DeleteConfirmDialog } from './delete-confirm-dialog';
 export { ListCard, FinancialCard } from './list-card';
 export { DropdownMenu, DropdownMenuDivider } from './dropdown-menu';
+export {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './dialog';
+export {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './alert-dialog';

@@ -117,8 +117,8 @@ export function useUpdateTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateTables<'transactions'> }) =>
-      updateTransaction(id, data),
+    mutationFn: ({ id, updates }: { id: string; updates: UpdateTables<'transactions'> }) =>
+      updateTransaction(id, updates),
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });

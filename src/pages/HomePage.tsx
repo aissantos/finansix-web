@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Repeat, ChevronRight } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
@@ -9,11 +10,19 @@ import {
   DashboardSkeleton,
 } from '@/components/features';
 import { Card } from '@/components/ui/card';
-import { useFreeBalance, useRecentTransactions, useCreditCards, useSubscriptionTotal } from '@/hooks';
+import { DeleteConfirmDialog } from '@/components/ui';
+import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
+import { useFreeBalance, useRecentTransactions, useCreditCards, useSubscriptionTotal, useDeleteTransaction } from '@/hooks';
 import { formatCurrency } from '@/lib/utils';
+import { toast } from '@/hooks/useToast';
+import type { TransactionWithDetails } from '@/types';
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const deleteMutation = useDeleteTransaction();
+  
+  const [editingTransaction, setEditingTransaction] = useState<TransactionWithDetails | null>(null);
+  const [deletingTransaction, setDeletingTransaction] = useState<TransactionWithDetails | null>(null);
   
   // Check if any critical data is loading
   const { isLoading: balanceLoading } = useFreeBalance();
@@ -21,6 +30,26 @@ export default function HomePage() {
   const { isLoading: cardsLoading } = useCreditCards();
   
   const isInitialLoad = balanceLoading && transactionsLoading && cardsLoading;
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingTransaction) return;
+
+    try {
+      await deleteMutation.mutateAsync(deletingTransaction.id);
+      toast({
+        title: 'Transação excluída',
+        description: 'A transação foi removida com sucesso',
+        variant: 'success',
+      });
+      setDeletingTransaction(null);
+    } catch (error) {
+      toast({
+        title: 'Erro ao excluir',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <>
@@ -37,10 +66,27 @@ export default function HomePage() {
             <TransactionList
               limit={5}
               onViewAll={() => navigate('/analysis')}
+              onEdit={setEditingTransaction}
+              onDelete={setDeletingTransaction}
             />
           </>
         )}
       </PageContainer>
+
+      {/* Modals */}
+      <EditTransactionModal
+        isOpen={!!editingTransaction}
+        onClose={() => setEditingTransaction(null)}
+        transaction={editingTransaction}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={!!deletingTransaction}
+        onClose={() => setDeletingTransaction(null)}
+        onConfirm={handleDeleteConfirm}
+        entityName="esta transação"
+        isLoading={deleteMutation.isPending}
+      />
     </>
   );
 }

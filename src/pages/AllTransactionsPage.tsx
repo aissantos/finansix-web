@@ -23,10 +23,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useTransactions, useCategories } from '@/hooks';
+import { DeleteConfirmDialog } from '@/components/ui';
+import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
+import { TransactionItem } from '@/components/features/TransactionItem';
+import { useTransactions, useCategories, useDeleteTransaction } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from '@/hooks/useToast';
+import type { TransactionWithDetails } from '@/types';
 
 type FilterType = 'all' | 'income' | 'expense';
 
@@ -125,6 +130,8 @@ function CategoryDistributionChart({ transactions }: { transactions: any[] }) {
 
 export default function AllTransactionsPage() {
   const navigate = useNavigate();
+  const deleteMutation = useDeleteTransaction();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -133,6 +140,9 @@ export default function AllTransactionsPage() {
     start: null,
     end: null
   });
+  
+  const [editingTransaction, setEditingTransaction] = useState<TransactionWithDetails | null>(null);
+  const [deletingTransaction, setDeletingTransaction] = useState<TransactionWithDetails | null>(null);
 
   const { data: transactions, isLoading } = useTransactions();
   const { data: categories } = useCategories();
@@ -234,6 +244,26 @@ export default function AllTransactionsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingTransaction) return;
+
+    try {
+      await deleteMutation.mutateAsync(deletingTransaction.id);
+      toast({
+        title: 'Transação excluída',
+        description: 'A transação foi removida com sucesso',
+        variant: 'success',
+      });
+      setDeletingTransaction(null);
+    } catch (error) {
+      toast({
+        title: 'Erro ao excluir',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (isLoading) {
@@ -465,64 +495,16 @@ export default function AllTransactionsPage() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1">
               {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transação' : 'transações'}
             </p>
-            {filteredTransactions.map((transaction) => {
-              const isIncome = transaction.type === 'income';
-              const Icon = isIncome ? ArrowDownLeft : ArrowUpRight;
-              const categoryColor = transaction.category?.color || '#6366f1';
-
-              return (
-                <Card
+            <div className="flex flex-col gap-3">
+              {filteredTransactions.map((transaction) => (
+                <TransactionItem
                   key={transaction.id}
-                  onClick={() => navigate(`/transactions/${transaction.id}`)}
-                  className="p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ 
-                        backgroundColor: `${categoryColor}15`,
-                        color: categoryColor 
-                      }}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                        {transaction.description}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-xs text-slate-500">
-                          {format(new Date(transaction.transaction_date), 'dd MMM yyyy', { locale: ptBR })}
-                        </p>
-                        {transaction.category && (
-                          <>
-                            <span className="text-slate-300">•</span>
-                            <p className="text-xs text-slate-500 truncate">
-                              {transaction.category.name}
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="text-right flex-shrink-0">
-                      <p className={cn(
-                        'text-sm font-bold',
-                        isIncome ? 'text-income' : 'text-slate-900 dark:text-white'
-                      )}>
-                        {isIncome ? '+' : ''}{formatCurrency(transaction.amount)}
-                      </p>
-                      {transaction.is_installment && (
-                        <Badge variant="secondary" className="text-[10px] mt-1">
-                          {transaction.total_installments}x
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+                  transaction={transaction}
+                  onEdit={() => setEditingTransaction(transaction)}
+                  onDelete={() => setDeletingTransaction(transaction)}
+                />
+              ))}
+            </div>
           </div>
         )}
 
@@ -534,6 +516,21 @@ export default function AllTransactionsPage() {
           <Plus className="h-6 w-6" />
         </button>
       </PageContainer>
+
+      {/* Modals */}
+      <EditTransactionModal
+        isOpen={!!editingTransaction}
+        onClose={() => setEditingTransaction(null)}
+        transaction={editingTransaction}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={!!deletingTransaction}
+        onClose={() => setDeletingTransaction(null)}
+        onConfirm={handleDeleteConfirm}
+        entityName="esta transação"
+        isLoading={deleteMutation.isPending}
+      />
     </>
   );
 }
