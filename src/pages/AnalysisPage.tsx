@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MonthlyTrendChart } from '@/components/features/MonthlyTrendChart';
+import { RecentTransactionsFeed } from '@/components/features/RecentTransactionsFeed';
 import { useTransactionsByCategory, useFreeBalance, useTransactions } from '@/hooks';
 import { useMonthlyComparison } from '@/hooks/useMonthlyComparison';
 import { useSelectedMonth } from '@/stores';
@@ -31,6 +32,9 @@ export default function AnalysisPage() {
 
         {/* Monthly Comparison */}
         <MonthlyComparison />
+
+        {/* Recent Transactions Feed */}
+        <RecentTransactionsFeed limit={10} />
 
         {/* Monthly Trend Chart */}
         <MonthlyTrendChart months={6} />

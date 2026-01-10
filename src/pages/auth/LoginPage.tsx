@@ -55,14 +55,25 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col justify-center px-6 py-12 bg-slate-50 dark:bg-slate-900">
       <div className="mx-auto w-full max-w-sm">
         <div className="text-center mb-10">
-          <div className="h-16 w-16 rounded-2xl bg-primary mx-auto flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-primary/30 mb-4">
-            F
+          {/* Logo Finansix Oficial */}
+          <div className="mx-auto mb-6 flex justify-center">
+            <div className="relative">
+              <img 
+                src="/icons/icon-192x192.png" 
+                alt="Finansix Logo" 
+                className="h-24 w-24 rounded-3xl shadow-2xl shadow-primary/40"
+              />
+              {/* Decorative elements */}
+              <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-income opacity-80 animate-pulse" />
+              <div className="absolute -bottom-1 -left-1 h-4 w-4 rounded-full bg-warning opacity-60 animate-pulse delay-75" />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
             Bem-vindo de volta
           </h1>
-          <p className="text-slate-500 text-sm mt-2">
-            Entre na sua conta Finansix
+          <p className="text-slate-500 text-sm">
+            Entre na sua conta <span className="font-semibold text-primary">Finansix</span>
           </p>
         </div>
 

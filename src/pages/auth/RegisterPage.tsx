@@ -62,16 +62,23 @@ export default function RegisterPage() {
       <div className="mx-auto w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-10">
-          <img 
-            src="/icons/icon-144x144.png" 
-            alt="Finansix Logo" 
-            className="h-20 w-20 mx-auto rounded-2xl shadow-lg shadow-primary/20 mb-4"
-          />
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <div className="mx-auto mb-6 flex justify-center">
+            <div className="relative">
+              <img 
+                src="/icons/icon-192x192.png" 
+                alt="Finansix Logo" 
+                className="h-24 w-24 rounded-3xl shadow-2xl shadow-primary/40"
+              />
+              <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-income opacity-80 animate-pulse" />
+              <div className="absolute -bottom-1 -left-1 h-4 w-4 rounded-full bg-warning opacity-60 animate-pulse delay-75" />
+            </div>
+          </div>
+          
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
             Criar conta
           </h1>
-          <p className="text-slate-500 text-sm mt-2">
-            Comece a organizar suas finanças
+          <p className="text-slate-500 text-sm">
+            Comece a organizar suas finanças com <span className="font-semibold text-primary">Finansix</span>
           </p>
         </div>
 

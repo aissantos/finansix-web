@@ -31,6 +31,7 @@ const SubscriptionsPage = lazy(() => import('@/pages/wallet/SubscriptionsPage'))
 
 // Transaction pages
 const EditTransactionPage = lazy(() => import('@/pages/EditTransactionPage'));
+const AllTransactionsPage = lazy(() => import('@/pages/AllTransactionsPage'));
 
 // Settings pages
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
@@ -113,6 +114,14 @@ function AppRoutes() {
         </Route>
 
         {/* Full-screen protected routes (no bottom nav) */}
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              <AllTransactionsPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/transactions/new"
           element={

@@ -6,6 +6,7 @@ export { TransactionList } from './TransactionList';
 export { CreditCardItem } from './CreditCardItem';
 export { AccountItem } from './AccountItem';
 export { PWAInstallBanner } from './PWAInstallBanner';
+export { RecentTransactionsFeed } from './RecentTransactionsFeed';
 export * from './SubscriptionForm';
 export * from './SubscriptionItem';
 export * from './InstallmentBadge';
