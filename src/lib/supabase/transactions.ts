@@ -81,7 +81,7 @@ export async function getTransaction(id: string): Promise<TransactionWithDetails
 export async function createTransaction(
   transaction: InsertTables<'transactions'>
 ): Promise<Transaction> {
-  // Only include fields that are actually set (not null/undefined)
+  // Only include fields that are actually set (not null/undefined/empty)
   const validFields: Record<string, any> = {};
   
   // Required fields
@@ -91,16 +91,45 @@ export async function createTransaction(
   validFields.description = transaction.description;
   validFields.transaction_date = transaction.transaction_date;
   
-  // Optional fields with defaults
-  validFields.status = transaction.status ?? 'completed';
-  validFields.is_installment = transaction.is_installment ?? false;
-  validFields.total_installments = transaction.total_installments ?? 1;
-  validFields.is_reimbursable = transaction.is_reimbursable ?? false;
-  validFields.is_recurring = transaction.is_recurring ?? false;
-  validFields.reimbursed_amount = transaction.reimbursed_amount ?? 0;
+  // Optional fields with defaults (only add if explicitly set)
+  if (transaction.status !== undefined && transaction.status !== null) {
+    validFields.status = transaction.status;
+  } else {
+    validFields.status = 'completed';
+  }
   
-  // Optional fields - only add if not null/undefined
-  const optionalFields = [
+  if (transaction.is_installment !== undefined && transaction.is_installment !== null) {
+    validFields.is_installment = transaction.is_installment;
+  } else {
+    validFields.is_installment = false;
+  }
+  
+  if (transaction.total_installments !== undefined && transaction.total_installments !== null) {
+    validFields.total_installments = transaction.total_installments;
+  } else {
+    validFields.total_installments = 1;
+  }
+  
+  if (transaction.is_reimbursable !== undefined && transaction.is_reimbursable !== null) {
+    validFields.is_reimbursable = transaction.is_reimbursable;
+  } else {
+    validFields.is_reimbursable = false;
+  }
+  
+  if (transaction.is_recurring !== undefined && transaction.is_recurring !== null) {
+    validFields.is_recurring = transaction.is_recurring;
+  } else {
+    validFields.is_recurring = false;
+  }
+  
+  if (transaction.reimbursed_amount !== undefined && transaction.reimbursed_amount !== null) {
+    validFields.reimbursed_amount = transaction.reimbursed_amount;
+  } else {
+    validFields.reimbursed_amount = 0;
+  }
+  
+  // Optional fields - only add if they have actual values
+  const optionalFields: (keyof InsertTables<'transactions'>)[] = [
     'category_id',
     'account_id',
     'credit_card_id',
@@ -111,15 +140,18 @@ export async function createTransaction(
     'recurrence_type',
     'recurrence_end_date',
     'parent_transaction_id',
-    'amount_cents', // P0 migration optional column
-  ] as const;
+  ];
   
   for (const field of optionalFields) {
-    const value = transaction[field as keyof typeof transaction];
-    if (value !== null && value !== undefined) {
+    const value = transaction[field];
+    // Only add if value is truthy (not null, undefined, or empty string)
+    if (value) {
       validFields[field] = value;
     }
   }
+
+  // Debug log (temporary - remove after fixing)
+  console.log('[createTransaction] Sending to Supabase:', validFields);
 
   const { data, error } = await supabase
     .from('transactions')
@@ -127,7 +159,10 @@ export async function createTransaction(
     .select()
     .single();
 
-  if (error) handleSupabaseError(error);
+  if (error) {
+    console.error('[createTransaction] Supabase error:', error);
+    handleSupabaseError(error);
+  }
   if (!data) throw new NotFoundError('Transação criada');
   return data;
 }
