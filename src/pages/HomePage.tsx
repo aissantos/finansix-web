@@ -8,6 +8,7 @@ import {
   ReliefChart,
   TransactionList,
   DashboardSkeleton,
+  OnboardingTour,
 } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { DeleteConfirmDialog } from '@/components/ui';
@@ -87,6 +88,9 @@ export default function HomePage() {
         entityName="esta transação"
         isLoading={deleteMutation.isPending}
       />
+
+      {/* Onboarding Tour */}
+      <OnboardingTour />
     </>
   );
 }

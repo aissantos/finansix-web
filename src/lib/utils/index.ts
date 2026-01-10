@@ -10,3 +10,4 @@ export {
   calculateInstallmentTotal,
 } from './calculations';
 export * from './errors';
+export * from './smart-suggestions';

@@ -1,7 +1,7 @@
 {
   "name": "finansix-web",
   "private": true,
-  "version": "1.5.0.3",
+  "version": "1.5.1.0",
   "type": "module",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
@@ -35,10 +35,12 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
+    "framer-motion": "^11.0.0",
     "lucide-react": "^0.441.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
+    "react-joyride": "^2.8.2",
     "react-router-dom": "^6.26.2",
     "recharts": "^2.12.7",
     "tailwind-merge": "^2.5.2",
