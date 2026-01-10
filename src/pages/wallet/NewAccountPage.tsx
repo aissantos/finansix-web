@@ -35,6 +35,14 @@ const accountSchema = z.object({
   initial_balance: z.number(),
   color: z.string().optional(),
   icon: z.string().optional(),
+  // Campos bancários opcionais
+  bank_code: z.string().optional(),
+  bank_name: z.string().optional(),
+  branch_number: z.string().optional(),
+  account_number: z.string().optional(),
+  account_digit: z.string().optional(),
+  pix_key: z.string().optional(),
+  pix_key_type: z.enum(['cpf', 'cnpj', 'email', 'phone', 'random']).optional(),
 });
 
 type AccountForm = z.infer<typeof accountSchema>;
@@ -95,6 +103,12 @@ export default function NewAccountPage() {
       type: 'checking',
       initial_balance: 0,
       color: ACCOUNT_COLORS[0],
+      bank_code: '',
+      bank_name: '',
+      branch_number: '',
+      account_number: '',
+      account_digit: '',
+      pix_key: '',
     },
   });
 
@@ -322,6 +336,83 @@ export default function NewAccountPage() {
             ))}
           </div>
         </Card>
+
+        {/* Dados Bancários - Só aparecem para contas corrente, poupança ou investimento */}
+        {(accountType === 'checking' || accountType === 'savings' || accountType === 'investment') && (
+          <Card className="p-4 space-y-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Landmark className="h-4 w-4 text-slate-400" />
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dados Bancários (Opcional)</label>
+            </div>
+            
+            <div>
+              <label className="block text-xs text-slate-500 mb-1.5">Banco</label>
+              <Input 
+                {...register('bank_name')} 
+                placeholder="Ex: Nubank, Itaú, Bradesco" 
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-1">
+                <label className="block text-xs text-slate-500 mb-1.5">Código</label>
+                <Input 
+                  {...register('bank_code')} 
+                  placeholder="260"
+                  maxLength={10}
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs text-slate-500 mb-1.5">Agência</label>
+                <Input 
+                  {...register('branch_number')} 
+                  placeholder="0001"
+                  maxLength={20}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <label className="block text-xs text-slate-500 mb-1.5">Conta</label>
+                <Input 
+                  {...register('account_number')} 
+                  placeholder="12345678"
+                  maxLength={30}
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="block text-xs text-slate-500 mb-1.5">Dígito</label>
+                <Input 
+                  {...register('account_digit')} 
+                  placeholder="9"
+                  maxLength={2}
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
+              <label className="block text-xs text-slate-500 mb-1.5">Chave PIX (Opcional)</label>
+              <div className="space-y-2">
+                <select
+                  {...register('pix_key_type')}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                >
+                  <option value="">Tipo de chave</option>
+                  <option value="cpf">CPF</option>
+                  <option value="cnpj">CNPJ</option>
+                  <option value="email">E-mail</option>
+                  <option value="phone">Telefone</option>
+                  <option value="random">Chave Aleatória</option>
+                </select>
+                <Input 
+                  {...register('pix_key')} 
+                  placeholder="Chave PIX (CPF, e-mail, telefone...)"
+                />
+              </div>
+            </div>
+          </Card>
+        )}
 
         <Button type="submit" size="xl" className="w-full mt-6" isLoading={isPending}>
           <Check className="h-5 w-5 mr-2" />
