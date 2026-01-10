@@ -65,6 +65,15 @@ export default function EditAccountPage() {
   const [color, setColor] = useState(ACCOUNT_COLORS[0]);
   const [balance, setBalance] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Bank details states
+  const [bankCode, setBankCode] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [branchNumber, setBranchNumber] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountDigit, setAccountDigit] = useState('');
+  const [pixKey, setPixKey] = useState('');
+  const [pixKeyType, setPixKeyType] = useState<'cpf' | 'cnpj' | 'email' | 'phone' | 'random'>('cpf');
 
   // Carregar dados da conta
   useEffect(() => {
@@ -73,6 +82,15 @@ export default function EditAccountPage() {
       setType(account.type as AccountType);
       setColor(account.color || ACCOUNT_COLORS[0]);
       setBalance(formatCurrency(account.current_balance ?? 0).replace('R$', '').trim());
+      
+      // Load bank details
+      setBankCode(account.bank_code || '');
+      setBankName(account.bank_name || '');
+      setBranchNumber(account.branch_number || '');
+      setAccountNumber(account.account_number || '');
+      setAccountDigit(account.account_digit || '');
+      setPixKey(account.pix_key || '');
+      setPixKeyType(account.pix_key_type || 'cpf');
     }
   }, [account]);
 
@@ -102,6 +120,14 @@ export default function EditAccountPage() {
           type, 
           color,
           current_balance: numBalance,
+          // Bank details
+          bank_code: bankCode || null,
+          bank_name: bankName || null,
+          branch_number: branchNumber || null,
+          account_number: accountNumber || null,
+          account_digit: accountDigit || null,
+          pix_key: pixKey || null,
+          pix_key_type: pixKey ? pixKeyType : null,
         } 
       },
       {
@@ -295,6 +321,116 @@ export default function EditAccountPage() {
             ))}
           </div>
         </Card>
+
+        {/* Bank Details - Only for checking/savings accounts */}
+        {(type === 'checking' || type === 'savings') && (
+          <Card className="p-4 space-y-4">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-3">
+              Dados Bancários (Opcional)
+            </label>
+
+            {/* Bank Name */}
+            <div>
+              <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                Nome do Banco
+              </label>
+              <Input
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="Ex: Nubank, Itaú, Bradesco"
+              />
+            </div>
+
+            {/* Bank Code */}
+            <div>
+              <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                Código do Banco
+              </label>
+              <Input
+                value={bankCode}
+                onChange={(e) => setBankCode(e.target.value)}
+                placeholder="Ex: 260, 341, 237"
+                maxLength={10}
+              />
+            </div>
+
+            {/* Branch Number */}
+            <div>
+              <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                Agência
+              </label>
+              <Input
+                value={branchNumber}
+                onChange={(e) => setBranchNumber(e.target.value)}
+                placeholder="Ex: 0001"
+                maxLength={20}
+              />
+            </div>
+
+            {/* Account Number */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2">
+                <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                  Número da Conta
+                </label>
+                <Input
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder="Ex: 12345678"
+                  maxLength={30}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                  Dígito
+                </label>
+                <Input
+                  value={accountDigit}
+                  onChange={(e) => setAccountDigit(e.target.value)}
+                  placeholder="Ex: 9"
+                  maxLength={2}
+                />
+              </div>
+            </div>
+
+            {/* PIX Key Type */}
+            <div>
+              <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                Tipo de Chave PIX
+              </label>
+              <select
+                value={pixKeyType}
+                onChange={(e) => setPixKeyType(e.target.value as any)}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              >
+                <option value="cpf">CPF</option>
+                <option value="cnpj">CNPJ</option>
+                <option value="email">E-mail</option>
+                <option value="phone">Telefone</option>
+                <option value="random">Chave Aleatória</option>
+              </select>
+            </div>
+
+            {/* PIX Key */}
+            <div>
+              <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                Chave PIX
+              </label>
+              <Input
+                value={pixKey}
+                onChange={(e) => setPixKey(e.target.value)}
+                placeholder={
+                  pixKeyType === 'cpf' ? 'Ex: 123.456.789-00' :
+                  pixKeyType === 'cnpj' ? 'Ex: 12.345.678/0001-00' :
+                  pixKeyType === 'email' ? 'Ex: email@exemplo.com' :
+                  pixKeyType === 'phone' ? 'Ex: (11) 91234-5678' :
+                  'Chave aleatória'
+                }
+                maxLength={100}
+              />
+            </div>
+          </Card>
+        )}
 
         {/* Submit Button */}
         <Button
