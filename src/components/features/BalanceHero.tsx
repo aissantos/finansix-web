@@ -15,20 +15,11 @@ export function BalanceHero() {
     return <BalanceHeroSkeleton />;
   }
 
-  const balance = data?.freeBalance ?? 0;
+  const balance = accountBalance ?? 0; // ✅ Usar saldo em contas
   const isPositive = balance >= 0;
 
   return (
     <section className="flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
-      {/* Account Balance - Always visible */}
-      <div className="flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800">
-        <Wallet className="h-4 w-4 text-slate-500" />
-        <span className="text-xs text-slate-500 font-medium">Saldo em Contas:</span>
-        <span className="text-xs font-bold text-slate-900 dark:text-white">
-          {formatCurrency(accountBalance ?? 0)}
-        </span>
-      </div>
-
       <div className="flex items-center gap-2 mb-1">
         <span className="text-slate-500 text-sm font-medium">Saldo Livre Disponível</span>
         <button
@@ -56,7 +47,7 @@ export function BalanceHero() {
 
       <div
         className={cn(
-          'flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full border',
+          'flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full border',
           isPositive
             ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800/30'
             : 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/30'

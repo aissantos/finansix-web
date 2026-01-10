@@ -176,20 +176,22 @@ export async function calculateFreeBalance(
   // 1. Current balance from all accounts (IN CENTS)
   const { data: accounts } = await supabase
     .from('accounts')
-    .select('current_balance_cents')
+    .select('current_balance, current_balance_cents')
     .eq('household_id', householdId)
     .eq('is_active', true)
     .is('deleted_at', null);
 
-  type AccountRow = { current_balance_cents: number };
+  type AccountRow = { current_balance: number; current_balance_cents?: number };
   const currentBalanceCents = addCents(
-    ...((accounts || []) as AccountRow[]).map(a => a.current_balance_cents ?? 0)
+    ...((accounts || []) as AccountRow[]).map(a => 
+      a.current_balance_cents ?? toCents(a.current_balance)
+    )
   );
 
   // 2. Pending expenses (not on credit card) (IN CENTS)
   const { data: pendingTx } = await supabase
     .from('transactions')
-    .select('amount_cents')
+    .select('amount, amount_cents')
     .eq('household_id', householdId)
     .eq('type', 'expense')
     .eq('status', 'pending')
@@ -197,22 +199,26 @@ export async function calculateFreeBalance(
     .lte('transaction_date', targetDateStr)
     .is('deleted_at', null);
 
-  type TxAmountRow = { amount_cents: number };
+  type TxAmountRow = { amount: number; amount_cents?: number };
   const pendingExpensesCents = addCents(
-    ...((pendingTx || []) as TxAmountRow[]).map(t => t.amount_cents)
+    ...((pendingTx || []) as TxAmountRow[]).map(t => 
+      t.amount_cents ?? toCents(t.amount)
+    )
   );
 
   // 3. Credit card due (pending installments until target date) (IN CENTS)
   const { data: installments } = await supabase
     .from('installments')
-    .select('amount_cents')
+    .select('amount, amount_cents')
     .eq('household_id', householdId)
     .eq('status', 'pending')
     .lte('due_date', targetDateStr);
 
-  type InstAmountRow = { amount_cents: number };
+  type InstAmountRow = { amount: number; amount_cents?: number };
   const creditCardDueCents = addCents(
-    ...((installments || []) as InstAmountRow[]).map(i => i.amount_cents)
+    ...((installments || []) as InstAmountRow[]).map(i => 
+      i.amount_cents ?? toCents(i.amount)  // Fallback para amount se amount_cents não existir
+    )
   );
 
   // 4 & 5. Expected income and expenses (if projections enabled) (IN CENTS)
@@ -244,17 +250,18 @@ export async function calculateFreeBalance(
   // 6. Pending reimbursements (IN CENTS)
   const { data: reimbursements } = await supabase
     .from('transactions')
-    .select('amount_cents, reimbursed_amount')
+    .select('amount, amount_cents, reimbursed_amount')
     .eq('household_id', householdId)
     .eq('is_reimbursable', true)
     .in('reimbursement_status', ['pending', 'partial'])
     .is('deleted_at', null);
 
-  type ReimbRow = { amount_cents: number; reimbursed_amount: number | null };
+  type ReimbRow = { amount: number; amount_cents?: number; reimbursed_amount: number | null };
   const pendingReimbursementsCents = addCents(
-    ...((reimbursements || []) as ReimbRow[]).map(t => 
-      subtractCents(t.amount_cents, toCents(t.reimbursed_amount ?? 0))
-    )
+    ...((reimbursements || []) as ReimbRow[]).map(t => {
+      const amountCents = t.amount_cents ?? toCents(t.amount);
+      return subtractCents(amountCents, toCents(t.reimbursed_amount ?? 0));
+    })
   );
 
   // FINAL FORMULA (ALL IN CENTS - NO FLOATING POINT!)
