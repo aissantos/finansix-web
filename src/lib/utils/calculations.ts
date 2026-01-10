@@ -174,12 +174,26 @@ export async function calculateFreeBalance(
   const targetDateStr = format(targetDate, 'yyyy-MM-dd');
 
   // 1. Current balance from all accounts (IN CENTS)
-  const { data: accounts } = await supabase
-    .from('accounts')
-    .select('current_balance, current_balance_cents')
-    .eq('household_id', householdId)
-    .eq('is_active', true)
-    .is('deleted_at', null);
+  // Try with amount_cents first, fallback to amount only if column doesn't exist
+  let accounts;
+  try {
+    const result = await supabase
+      .from('accounts')
+      .select('current_balance, current_balance_cents')
+      .eq('household_id', householdId)
+      .eq('is_active', true)
+      .is('deleted_at', null);
+    accounts = result.data;
+  } catch {
+    // Fallback: column doesn't exist, use only current_balance
+    const result = await supabase
+      .from('accounts')
+      .select('current_balance')
+      .eq('household_id', householdId)
+      .eq('is_active', true)
+      .is('deleted_at', null);
+    accounts = result.data;
+  }
 
   type AccountRow = { current_balance: number; current_balance_cents?: number };
   const currentBalanceCents = addCents(
@@ -189,15 +203,30 @@ export async function calculateFreeBalance(
   );
 
   // 2. Pending expenses (not on credit card) (IN CENTS)
-  const { data: pendingTx } = await supabase
-    .from('transactions')
-    .select('amount, amount_cents')
-    .eq('household_id', householdId)
-    .eq('type', 'expense')
-    .eq('status', 'pending')
-    .is('credit_card_id', null)
-    .lte('transaction_date', targetDateStr)
-    .is('deleted_at', null);
+  let pendingTx;
+  try {
+    const result = await supabase
+      .from('transactions')
+      .select('amount, amount_cents')
+      .eq('household_id', householdId)
+      .eq('type', 'expense')
+      .eq('status', 'pending')
+      .is('credit_card_id', null)
+      .lte('transaction_date', targetDateStr)
+      .is('deleted_at', null);
+    pendingTx = result.data;
+  } catch {
+    const result = await supabase
+      .from('transactions')
+      .select('amount')
+      .eq('household_id', householdId)
+      .eq('type', 'expense')
+      .eq('status', 'pending')
+      .is('credit_card_id', null)
+      .lte('transaction_date', targetDateStr)
+      .is('deleted_at', null);
+    pendingTx = result.data;
+  }
 
   type TxAmountRow = { amount: number; amount_cents?: number };
   const pendingExpensesCents = addCents(
@@ -207,12 +236,24 @@ export async function calculateFreeBalance(
   );
 
   // 3. Credit card due (pending installments until target date) (IN CENTS)
-  const { data: installments } = await supabase
-    .from('installments')
-    .select('amount, amount_cents')
-    .eq('household_id', householdId)
-    .eq('status', 'pending')
-    .lte('due_date', targetDateStr);
+  let installments;
+  try {
+    const result = await supabase
+      .from('installments')
+      .select('amount, amount_cents')
+      .eq('household_id', householdId)
+      .eq('status', 'pending')
+      .lte('due_date', targetDateStr);
+    installments = result.data;
+  } catch {
+    const result = await supabase
+      .from('installments')
+      .select('amount')
+      .eq('household_id', householdId)
+      .eq('status', 'pending')
+      .lte('due_date', targetDateStr);
+    installments = result.data;
+  }
 
   type InstAmountRow = { amount: number; amount_cents?: number };
   const creditCardDueCents = addCents(
@@ -248,13 +289,26 @@ export async function calculateFreeBalance(
   }
 
   // 6. Pending reimbursements (IN CENTS)
-  const { data: reimbursements } = await supabase
-    .from('transactions')
-    .select('amount, amount_cents, reimbursed_amount')
-    .eq('household_id', householdId)
-    .eq('is_reimbursable', true)
-    .in('reimbursement_status', ['pending', 'partial'])
-    .is('deleted_at', null);
+  let reimbursements;
+  try {
+    const result = await supabase
+      .from('transactions')
+      .select('amount, amount_cents, reimbursed_amount')
+      .eq('household_id', householdId)
+      .eq('is_reimbursable', true)
+      .in('reimbursement_status', ['pending', 'partial'])
+      .is('deleted_at', null);
+    reimbursements = result.data;
+  } catch {
+    const result = await supabase
+      .from('transactions')
+      .select('amount, reimbursed_amount')
+      .eq('household_id', householdId)
+      .eq('is_reimbursable', true)
+      .in('reimbursement_status', ['pending', 'partial'])
+      .is('deleted_at', null);
+    reimbursements = result.data;
+  }
 
   type ReimbRow = { amount: number; amount_cents?: number; reimbursed_amount: number | null };
   const pendingReimbursementsCents = addCents(
