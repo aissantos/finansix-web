@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { useRecentTransactions } from '@/hooks';
-import { TransactionItem } from './TransactionItem';
+import { useRecentTransactions, useDeleteTransaction } from '@/hooks';
+import { SwipeableTransactionItem } from './SwipeableTransactionItem';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
+import { toast } from '@/hooks/useToast';
 import type { TransactionWithDetails } from '@/types';
 
 interface TransactionListProps {
@@ -12,6 +13,7 @@ interface TransactionListProps {
   showActions?: boolean;
   onEdit?: (transaction: TransactionWithDetails) => void;
   onDelete?: (transaction: TransactionWithDetails) => void;
+  enableSwipeGestures?: boolean; // NEW: Enable swipe gestures
 }
 
 export function TransactionList({ 
@@ -21,9 +23,11 @@ export function TransactionList({
   showActions = true,
   onEdit,
   onDelete,
+  enableSwipeGestures = true, // NEW: Default to true (v2.0 feature)
 }: TransactionListProps) {
   const navigate = useNavigate();
   const { data: transactions, isLoading } = useRecentTransactions(limit);
+  const { mutate: deleteTransaction } = useDeleteTransaction();
 
   const handleEdit = (transaction: TransactionWithDetails) => {
     if (onEdit) {
@@ -36,7 +40,44 @@ export function TransactionList({
   const handleDelete = (transaction: TransactionWithDetails) => {
     if (onDelete) {
       onDelete(transaction);
+      return;
     }
+
+    // Confirm deletion
+    if (confirm(`Excluir "${transaction.description}"?`)) {
+      deleteTransaction(transaction.id, {
+        onSuccess: () => {
+          toast({
+            title: 'Transação excluída',
+            description: `${transaction.description} foi removida.`,
+            variant: 'success',
+          });
+        },
+        onError: () => {
+          toast({
+            title: 'Erro ao excluir',
+            description: 'Tente novamente.',
+            variant: 'destructive',
+          });
+        },
+      });
+    }
+  };
+
+  const handleDuplicate = (transaction: TransactionWithDetails) => {
+    // Navigate to new transaction with prefilled data
+    const params = new URLSearchParams({
+      type: transaction.type,
+      amount: transaction.amount.toString(),
+      description: `${transaction.description} (cópia)`,
+      category_id: transaction.category_id || '',
+    });
+    navigate(`/transactions/new?${params.toString()}`);
+    
+    toast({
+      title: 'Transação duplicada',
+      description: 'Preencha os detalhes e salve.',
+    });
   };
 
   if (isLoading) {
@@ -80,12 +121,13 @@ export function TransactionList({
 
       <div className="flex flex-col gap-3">
         {transactions.map((tx) => (
-          <TransactionItem 
+          <SwipeableTransactionItem 
             key={tx.id} 
             transaction={tx}
             onClick={() => handleEdit(tx)}
-            onEdit={showActions ? () => handleEdit(tx) : undefined}
-            onDelete={showActions ? () => handleDelete(tx) : undefined}
+            onEdit={showActions && enableSwipeGestures ? () => handleEdit(tx) : undefined}
+            onDelete={showActions && enableSwipeGestures ? () => handleDelete(tx) : undefined}
+            onDuplicate={enableSwipeGestures ? () => handleDuplicate(tx) : undefined}
           />
         ))}
       </div>

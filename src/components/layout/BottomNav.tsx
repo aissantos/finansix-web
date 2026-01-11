@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, BarChart3, Wallet, User, Plus } from 'lucide-react';
+import { Home, BarChart3, Wallet, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useScrollDirection } from '@/hooks';
+import { QuickActionFAB } from '@/components/features';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home', className: 'nav-home' },
@@ -48,8 +49,9 @@ export function BottomNav() {
             />
           ))}
 
-          {/* FAB */}
+          {/* NEW v2.0: QuickActionFAB with radial menu */}
           <motion.div
+            className="relative -top-6"
             animate={{ 
               y: isHidden ? 20 : 0,
               scale: isHidden ? 0.8 : 1,
@@ -61,12 +63,9 @@ export function BottomNav() {
               damping: 25,
             }}
           >
-            <Link
-              to="/transactions/new"
-              className="fab-new-transaction relative -top-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-primary to-blue-700 text-white shadow-[0_15px_45px_-10px_rgba(19,91,236,0.6)] border-[6px] border-white dark:border-slate-900 transition-all hover:scale-110 hover:-translate-y-1 active:scale-95"
-            >
-              <Plus className="h-8 w-8" strokeWidth={2.5} />
-            </Link>
+            <div className="fab-new-transaction flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-primary to-blue-700 shadow-[0_15px_45px_-10px_rgba(19,91,236,0.6)] border-[6px] border-white dark:border-slate-900">
+              <QuickActionFAB />
+            </div>
           </motion.div>
 
           {navItems.slice(2).map((item) => (
