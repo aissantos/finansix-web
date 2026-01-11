@@ -89,7 +89,7 @@ export function BottomNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-28 left-0 right-0 z-50 px-6 max-w-md mx-auto"
+            className="fixed bottom-20 left-0 right-0 z-50 px-6 max-w-md mx-auto"
           >
             <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-6 rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800/50">
               <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6 text-center">
@@ -130,7 +130,7 @@ export function BottomNav() {
 
 	      {/* Bottom Navigation Bar */}
 	      <motion.nav
-	        className="fixed bottom-6 left-0 right-0 z-50 mx-auto max-w-[90%] md:max-w-md px-4 pb-safe"
+	        className="fixed bottom-4 left-0 right-0 z-50 mx-auto max-w-[90%] md:max-w-md px-4 pb-safe"
 	        initial={{ y: 0, opacity: 1 }}
 	        animate={{ 
             y: isHidden ? 120 : 0,
@@ -167,7 +167,7 @@ export function BottomNav() {
           </div>
 
           {/* Floating Action Button - Centered and elevated */}
-          <div className="absolute left-1/2 -translate-x-1/2 -top-8 flex flex-col items-center">
+          <div className="absolute left-1/2 -translate-x-1/2 -top-4 flex flex-col items-center">
             <motion.button
               onClick={handleFabClick}
               className={cn(

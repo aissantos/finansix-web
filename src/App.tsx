@@ -18,6 +18,8 @@ const WalletPage = lazy(() => import('@/pages/WalletPage'));
 const AnalysisPage = lazy(() => import('@/pages/AnalysisPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const NewTransactionPage = lazy(() => import('@/pages/NewTransactionPage'));
+const NewExpensePage = lazy(() => import('@/pages/NewExpensePage'));
+const NewIncomePage = lazy(() => import('@/pages/NewIncomePage'));
 const TransferPage = lazy(() => import('@/pages/TransferPage'));
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
@@ -139,6 +141,30 @@ function AnimatedRoutes() {
               element={
                 <ProtectedRoute>
                   <NewTransactionPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/expense/new"
+              element={
+                <ProtectedRoute>
+                  <NewExpensePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/income/new"
+              element={
+                <ProtectedRoute>
+                  <NewIncomePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/transfer/new"
+              element={
+                <ProtectedRoute>
+                  <TransferPage />
                 </ProtectedRoute>
               }
             />

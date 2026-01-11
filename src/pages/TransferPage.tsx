@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { CustomNumericKeypad } from '@/components/ui/CustomNumericKeypad';
 import { useAccounts, useCreateTransaction } from '@/hooks';
 import { useHouseholdId } from '@/stores';
 import { toast } from '@/hooks/useToast';
@@ -25,25 +26,24 @@ export default function TransferPage() {
   
   const [fromAccountId, setFromAccountId] = useState<string | null>(null);
   const [toAccountId, setToAccountId] = useState<string | null>(null);
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(0);
   const [description, setDescription] = useState('');
   const [step, setStep] = useState<'from' | 'to' | 'amount'>('from');
+  const [showKeypad, setShowKeypad] = useState(false);
 
   const fromAccount = accounts?.find(a => a.id === fromAccountId);
   const toAccount = accounts?.find(a => a.id === toAccountId);
-  
-  const numericAmount = useMemo(() => {
-    return parseFloat(amount.replace(/\./g, '').replace(',', '.')) || 0;
-  }, [amount]);
 
   const availableToAccounts = useMemo(() => {
     return accounts?.filter(a => a.id !== fromAccountId) ?? [];
   }, [accounts, fromAccountId]);
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    const numValue = Number(value) / 100;
-    setAmount(numValue > 0 ? formatCurrency(numValue).replace('R$', '').trim() : '');
+  const handleAmountChange = (value: number) => {
+    setAmount(value);
+  };
+
+  const handleKeypadConfirm = () => {
+    setShowKeypad(false);
   };
 
   const handleFromSelect = (account: Account) => {
@@ -63,12 +63,12 @@ export default function TransferPage() {
   };
 
   const handleSubmit = async () => {
-    if (!fromAccountId || !toAccountId || !numericAmount || !householdId) {
+    if (!fromAccountId || !toAccountId || !amount || !householdId) {
       toast({ title: 'Preencha todos os campos', variant: 'destructive' });
       return;
     }
 
-    if (numericAmount > (fromAccount?.current_balance ?? 0)) {
+    if (amount > (fromAccount?.current_balance ?? 0)) {
       toast({ 
         title: 'Saldo insuficiente', 
         description: `Saldo disponível: ${formatCurrency(fromAccount?.current_balance ?? 0)}`,
@@ -84,7 +84,7 @@ export default function TransferPage() {
       await createTransaction({
         account_id: fromAccountId,
         type: 'expense',
-        amount: numericAmount,
+        amount: amount,
         description: transferDescription,
         transaction_date: new Date().toISOString().split('T')[0],
         status: 'completed',
@@ -94,7 +94,7 @@ export default function TransferPage() {
       await createTransaction({
         account_id: toAccountId,
         type: 'income',
-        amount: numericAmount,
+        amount: amount,
         description: transferDescription,
         transaction_date: new Date().toISOString().split('T')[0],
         status: 'completed',
@@ -102,7 +102,7 @@ export default function TransferPage() {
 
       toast({ 
         title: 'Transferência realizada!', 
-        description: `${formatCurrency(numericAmount)} transferido com sucesso.`,
+        description: `${formatCurrency(amount)} transferido com sucesso.`,
         variant: 'success' 
       });
       
@@ -273,10 +273,10 @@ export default function TransferPage() {
             </div>
 
             {/* Amount Preview */}
-            {numericAmount > 0 && step === 'amount' && (
+            {amount > 0 && step === 'amount' && (
               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 text-center">
                 <p className="text-3xl font-black text-primary">
-                  {formatCurrency(numericAmount)}
+                  {formatCurrency(amount)}
                 </p>
               </div>
             )}
@@ -341,19 +341,20 @@ export default function TransferPage() {
               </p>
             </div>
             
-            {/* Amount Input */}
-            <Card className="p-6">
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-2xl font-medium text-slate-400">R$</span>
-                <input
-                  autoFocus
-                  className="text-4xl font-black bg-transparent border-none p-0 focus:ring-0 focus:outline-none text-slate-900 dark:text-white placeholder-slate-300 text-center max-w-[200px]"
-                  placeholder="0,00"
-                  value={amount}
-                  onChange={handleAmountChange}
-                  inputMode="numeric"
-                />
-              </div>
+            {/* Amount Input - Click to open keypad */}
+            <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-primary/20">
+              <p className="text-xs font-bold text-primary/70 uppercase tracking-wide mb-2">
+                Valor da Transferência
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowKeypad(true)}
+                className="w-full text-left"
+              >
+                <span className="text-4xl font-black text-primary">
+                  {amount > 0 ? formatCurrency(amount) : 'R$ 0,00'}
+                </span>
+              </button>
             </Card>
 
             {/* Description */}
@@ -371,7 +372,7 @@ export default function TransferPage() {
             </Card>
 
             {/* Insufficient Balance Warning */}
-            {numericAmount > (fromAccount?.current_balance ?? 0) && (
+            {amount > (fromAccount?.current_balance ?? 0) && (
               <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <p className="text-xs font-medium">
@@ -385,7 +386,7 @@ export default function TransferPage() {
               size="xl"
               className="w-full"
               onClick={handleSubmit}
-              disabled={!numericAmount || numericAmount > (fromAccount?.current_balance ?? 0)}
+              disabled={!amount || amount > (fromAccount?.current_balance ?? 0)}
               isLoading={isPending}
             >
               <Check className="h-5 w-5 mr-2" />
@@ -394,6 +395,35 @@ export default function TransferPage() {
           </div>
         )}
       </div>
+
+      {/* Custom Numeric Keypad Modal */}
+      {showKeypad && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowKeypad(false)}
+          />
+          <div className="glass-modal relative w-full max-w-md p-6 rounded-3xl shadow-2xl animate-in slide-in-from-bottom duration-300">
+            <button
+              type="button"
+              onClick={() => setShowKeypad(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              <X className="h-5 w-5 text-slate-400" />
+            </button>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 text-center">
+              Valor da Transferência
+            </h3>
+            <CustomNumericKeypad
+              value={amount}
+              onChange={handleAmountChange}
+              onConfirm={handleKeypadConfirm}
+              maxValue={fromAccount?.current_balance ?? 999999.99}
+              currency="BRL"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
