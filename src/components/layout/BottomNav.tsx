@@ -50,7 +50,8 @@ export function BottomNav() {
 
   if (hideNav) return null;
 
-  const isHidden = scrollDirection === 'down' && !isMenuOpen;
+	  const isHidden = scrollDirection === 'down' && !isMenuOpen;
+	  const isHomePage = location.pathname === '/';
 
   const handleFabClick = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -90,11 +91,11 @@ export function BottomNav() {
             transition={{ duration: 0.2 }}
             className="fixed bottom-28 left-0 right-0 z-50 px-6 max-w-md mx-auto"
           >
-            <div className="glass-card p-4 rounded-2xl">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 text-center">
-                Nova Transação
+            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-6 rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800/50">
+              <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6 text-center">
+                O que deseja registrar?
               </p>
-              <div className="flex justify-center gap-4">
+              <div className="flex justify-around items-center gap-2">
                 {quickActions.map((action, index) => (
                   <motion.button
                     key={action.label}
@@ -107,16 +108,16 @@ export function BottomNav() {
                   >
                     <div
                       className={cn(
-                        'h-14 w-14 rounded-2xl flex items-center justify-center',
-                        'shadow-lg transform transition-all duration-200',
-                        'group-hover:scale-110 group-active:scale-95',
+                        'h-16 w-16 rounded-[2rem] flex items-center justify-center',
+                        'shadow-xl transform transition-all duration-300',
+                        'group-hover:scale-110 group-hover:-translate-y-1 group-active:scale-95',
                         action.color,
-                        action.shadowColor
+                        'ring-4 ring-white dark:ring-slate-800'
                       )}
                     >
-                      <action.icon className="h-6 w-6 text-white" />
+                      <action.icon className="h-7 w-7 text-white" />
                     </div>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">
                       {action.label}
                     </span>
                   </motion.button>
@@ -127,17 +128,21 @@ export function BottomNav() {
         )}
       </AnimatePresence>
 
-      {/* Bottom Navigation Bar */}
-      <motion.nav
-        className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md px-4 pb-safe"
-        initial={{ y: 0 }}
-        animate={{ y: isHidden ? 100 : 0 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-      >
+	      {/* Bottom Navigation Bar */}
+	      <motion.nav
+	        className="fixed bottom-6 left-0 right-0 z-50 mx-auto max-w-[90%] md:max-w-md px-4 pb-safe"
+	        initial={{ y: 0, opacity: 1 }}
+	        animate={{ 
+            y: isHidden ? 120 : 0,
+            opacity: isHidden ? 0 : 1,
+            scale: isHidden ? 0.9 : 1
+          }}
+	        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+	      >
         <div className="relative">
           {/* Navigation Background - Solid with subtle shadow */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-slate-800">
-            <div className="flex items-center justify-between px-2 py-2">
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_-8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.2)] border border-white/20 dark:border-slate-800/50 overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-3">
               {/* Left nav items */}
               {navItems.slice(0, 2).map((item) => (
                 <NavItem
@@ -162,27 +167,31 @@ export function BottomNav() {
           </div>
 
           {/* Floating Action Button - Centered and elevated */}
-          <motion.button
-            onClick={handleFabClick}
-            className={cn(
-              'absolute left-1/2 -translate-x-1/2 -top-6',
-              'h-14 w-14 rounded-full',
-              'flex items-center justify-center',
-              'shadow-lg transition-all duration-300',
-              isMenuOpen
-                ? 'bg-slate-700 dark:bg-slate-600 shadow-slate-500/30'
-                : 'bg-gradient-to-br from-primary to-blue-600 shadow-primary/40 neon-glow-primary'
-            )}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            animate={{ rotate: isMenuOpen ? 45 : 0 }}
-          >
-            {isMenuOpen ? (
-              <X className="h-6 w-6 text-white" />
-            ) : (
-              <Plus className="h-6 w-6 text-white" strokeWidth={2.5} />
-            )}
-          </motion.button>
+          <div className="absolute left-1/2 -translate-x-1/2 -top-8 flex flex-col items-center">
+            <motion.button
+              onClick={handleFabClick}
+              className={cn(
+                'h-16 w-16 rounded-2xl',
+                'flex items-center justify-center',
+                'shadow-[0_8px_25px_-5px_rgba(19,91,236,0.4)] transition-all duration-300',
+                'border-4 border-white dark:border-slate-900',
+                isMenuOpen
+                  ? 'bg-slate-800 dark:bg-slate-700 rotate-45'
+                  : 'bg-gradient-to-br from-primary to-blue-700'
+              )}
+              whileHover={{ scale: 1.1, y: -2 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+            >
+              <Plus 
+                className={cn(
+                  "h-8 w-8 text-white transition-transform duration-300",
+                  isMenuOpen && "rotate-0"
+                )} 
+                strokeWidth={2.5} 
+              />
+            </motion.button>
+          </div>
         </div>
       </motion.nav>
     </>
@@ -204,14 +213,29 @@ function NavItem({
     <Link
       to={href}
       className={cn(
-        'flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-xl transition-all duration-200',
+        'flex flex-col items-center justify-center gap-1.5 px-3 py-2 rounded-2xl transition-all duration-300 relative group',
         isActive
-          ? 'text-primary bg-primary/10'
-          : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
+          ? 'text-primary'
+          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
       )}
     >
-      <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
-      <span className={cn('text-[10px] font-bold', isActive && 'text-primary')}>
+      {isActive && (
+        <motion.div
+          layoutId="activeNav"
+          className="absolute inset-0 bg-primary/10 dark:bg-primary/20 rounded-2xl -z-10"
+          transition={{ type: 'spring', bounce: 0.3, duration: 0.6 }}
+        />
+      )}
+      <Icon 
+        className={cn(
+          'h-6 w-6 transition-transform duration-300 group-hover:scale-110', 
+          isActive ? 'stroke-[2.5px]' : 'stroke-[2px]'
+        )} 
+      />
+      <span className={cn(
+        'text-[10px] font-bold tracking-tight transition-all duration-300',
+        isActive ? 'opacity-100 translate-y-0' : 'opacity-70 group-hover:opacity-100'
+      )}>
         {label}
       </span>
     </Link>

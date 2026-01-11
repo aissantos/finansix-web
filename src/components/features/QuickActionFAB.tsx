@@ -37,6 +37,7 @@ const quickActions: QuickAction[] = [
 ];
 
 export function QuickActionFAB() {
+  return null;
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);

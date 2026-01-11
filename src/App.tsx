@@ -22,11 +22,6 @@ const TransferPage = lazy(() => import('@/pages/TransferPage'));
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 
-// NEW v2.1: Dedicated transaction pages
-const NewExpensePage = lazy(() => import('@/pages/NewExpensePage'));
-const NewIncomePage = lazy(() => import('@/pages/NewIncomePage'));
-const NewTransferPage = lazy(() => import('@/pages/NewTransferPage'));
-
 // Wallet sub-pages
 const NewCardPage = lazy(() => import('@/pages/wallet/NewCardPage'));
 const EditCardPage = lazy(() => import('@/pages/wallet/EditCardPage'));
@@ -144,32 +139,6 @@ function AnimatedRoutes() {
               element={
                 <ProtectedRoute>
                   <NewTransactionPage />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* NEW v2.1: Dedicated transaction pages */}
-            <Route
-              path="/expense/new"
-              element={
-                <ProtectedRoute>
-                  <NewExpensePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/income/new"
-              element={
-                <ProtectedRoute>
-                  <NewIncomePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/transfer/new"
-              element={
-                <ProtectedRoute>
-                  <NewTransferPage />
                 </ProtectedRoute>
               }
             />
