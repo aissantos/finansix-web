@@ -19,7 +19,7 @@ export function BalanceHero() {
   const isPositive = balance >= 0;
 
   return (
-    <section className="flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
+    <section className="balance-hero flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-slate-500 text-sm font-medium">Saldo Livre Disponível</span>
         <button

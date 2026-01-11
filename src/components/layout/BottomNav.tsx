@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BarChart3, Wallet, User, Plus, X, TrendingDown, TrendingUp, ArrowRightLeft } from 'lucide-react';
+import { Home, BarChart3, Wallet, User, Plus, TrendingDown, TrendingUp, ArrowRightLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useScrollDirection } from '@/hooks';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
-  { href: '/analysis', icon: BarChart3, label: 'Análise' },
+  { href: '/analysis', icon: BarChart3, label: 'Análise', className: 'nav-analysis' },
   // FAB goes here (index 2)
-  { href: '/wallet', icon: Wallet, label: 'Carteira' },
+  { href: '/wallet', icon: Wallet, label: 'Carteira', className: 'nav-wallet' },
   { href: '/profile', icon: User, label: 'Perfil' },
 ];
 
@@ -50,8 +50,7 @@ export function BottomNav() {
 
   if (hideNav) return null;
 
-	  const isHidden = scrollDirection === 'down' && !isMenuOpen;
-	  const isHomePage = location.pathname === '/';
+  const isHidden = scrollDirection === 'down' && !isMenuOpen;
 
   const handleFabClick = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -127,17 +126,17 @@ export function BottomNav() {
         )}
       </AnimatePresence>
 
-	      {/* Bottom Navigation Bar */}
-	      <motion.nav
-	        className="fixed bottom-4 left-0 right-0 z-50 mx-auto max-w-[90%] md:max-w-md px-4 pb-safe"
-	        initial={{ y: 0, opacity: 1 }}
-	        animate={{ 
-            y: isHidden ? 120 : 0,
-            opacity: isHidden ? 0 : 1,
-            scale: isHidden ? 0.9 : 1
-          }}
-	        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-	      >
+      {/* Bottom Navigation Bar */}
+      <motion.nav
+        className="fixed bottom-4 left-0 right-0 z-50 mx-auto max-w-[90%] md:max-w-md px-4 pb-safe"
+        initial={{ y: 0, opacity: 1 }}
+        animate={{ 
+          y: isHidden ? 120 : 0,
+          opacity: isHidden ? 0 : 1,
+          scale: isHidden ? 0.9 : 1
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      >
         <div className="relative">
           {/* Navigation Background - Solid with subtle shadow */}
           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_-8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.2)] border border-white/20 dark:border-slate-800/50 overflow-hidden">
@@ -170,6 +169,7 @@ export function BottomNav() {
             <motion.button
               onClick={handleFabClick}
               className={cn(
+                'fab-new-transaction',
                 'h-16 w-16 rounded-2xl',
                 'flex items-center justify-center',
                 'shadow-[0_8px_25px_-5px_rgba(19,91,236,0.4)] transition-all duration-300',
@@ -202,11 +202,13 @@ function NavItem({
   icon: Icon,
   label,
   isActive,
+  className,
 }: {
   href: string;
   icon: typeof Home;
   label: string;
   isActive: boolean;
+  className?: string;
 }) {
   return (
     <Link
@@ -215,7 +217,8 @@ function NavItem({
         'flex flex-col items-center justify-center gap-1.5 px-3 py-2 rounded-2xl transition-all duration-300 relative group',
         isActive
           ? 'text-primary'
-          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200',
+        className
       )}
     >
       {isActive && (

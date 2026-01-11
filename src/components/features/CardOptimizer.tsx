@@ -15,7 +15,7 @@ export function CardOptimizer() {
 
   if (!recommendation) {
     return (
-      <Card className="p-5">
+      <Card className="card-optimizer p-5">
         <p className="text-sm text-slate-500 text-center">
           Adicione um cartão de crédito para ver a melhor opção de compra.
         </p>
@@ -28,7 +28,7 @@ export function CardOptimizer() {
   const daysUntilDue = differenceInDays(recommendation.dueDate, today);
 
   return (
-    <section>
+    <section className="card-optimizer">
       <div className="flex items-center justify-between mb-3 px-1">
         <h3 className="text-base font-bold text-slate-900 dark:text-white">
           Otimizador de Cartão
@@ -121,7 +121,7 @@ export function CardOptimizer() {
 
 function CardOptimizerSkeleton() {
   return (
-    <section>
+    <section className="card-optimizer">
       <div className="flex items-center justify-between mb-3 px-1">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-4 w-16" />
