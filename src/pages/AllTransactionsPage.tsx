@@ -14,7 +14,8 @@ import {
   ArrowDownLeft,
   Calendar,
   X,
-  Plus
+  Plus,
+  PieChart
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -28,8 +29,7 @@ import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
 import { TransactionItem } from '@/components/features/TransactionItem';
 import { useTransactions, useCategories, useDeleteTransaction } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { format } from 'date-fns';
 import { toast } from '@/hooks/useToast';
 import type { TransactionWithDetails } from '@/types';
 
@@ -477,18 +477,17 @@ export default function AllTransactionsPage() {
         {/* Transactions List */}
         {filteredTransactions.length === 0 ? (
           <EmptyState
-            icon={Calendar}
+            icon={<Calendar className="h-12 w-12" />}
             title="Nenhuma transação encontrada"
             description={hasActiveFilters 
               ? "Tente ajustar os filtros para ver mais resultados"
               : "Você ainda não tem transações cadastradas"
             }
-            action={
-              <Button onClick={() => navigate('/transactions/new')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Transação
-              </Button>
-            }
+            action={{
+              label: "Nova Transação",
+              onClick: () => navigate('/transactions/new'),
+              icon: <Plus className="h-4 w-4" />
+            }}
           />
         ) : (
           <div className="space-y-2">

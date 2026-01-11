@@ -77,7 +77,6 @@ export default function TransferPage() {
       return;
     }
 
-    const transferId = `transfer_${Date.now()}`;
     const transferDescription = description.trim() || `Transferência: ${fromAccount?.name} → ${toAccount?.name}`;
 
     try {

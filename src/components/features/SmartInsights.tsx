@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
-  TrendingDown,
   AlertTriangle,
   Lightbulb,
   Target,
@@ -131,7 +130,6 @@ function generateInsights(transactions: any[], categories: any[]): Insight[] {
   // Week analysis
   const thisWeekStart = startOfWeek(now);
   const thisWeekEnd = endOfWeek(now);
-  const lastWeekStart = startOfWeek(subMonths(now, 0));
   
   const thisWeekExpenses = transactions.filter(tx => {
     const date = new Date(tx.transaction_date);

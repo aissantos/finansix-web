@@ -4,7 +4,7 @@
  */
 
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, ArrowLeftRight } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ContextualFAB() {

@@ -81,81 +81,37 @@ export async function getTransaction(id: string): Promise<TransactionWithDetails
 export async function createTransaction(
   transaction: InsertTables<'transactions'>
 ): Promise<Transaction> {
-  // Only include fields that are actually set (not null/undefined/empty)
-  const validFields: Record<string, any> = {};
+  // Build the insert object with proper typing
+  const insertData: InsertTables<'transactions'> = {
+    household_id: transaction.household_id,
+    type: transaction.type,
+    amount: transaction.amount,
+    description: transaction.description,
+    transaction_date: transaction.transaction_date ?? new Date().toISOString().split('T')[0],
+    status: transaction.status ?? 'completed',
+    is_installment: transaction.is_installment ?? false,
+    total_installments: transaction.total_installments ?? 1,
+    is_reimbursable: transaction.is_reimbursable ?? false,
+    is_recurring: transaction.is_recurring ?? false,
+    reimbursed_amount: transaction.reimbursed_amount ?? 0,
+  };
   
-  // Required fields
-  validFields.household_id = transaction.household_id;
-  validFields.type = transaction.type;
-  validFields.amount = transaction.amount;
-  validFields.description = transaction.description;
-  validFields.transaction_date = transaction.transaction_date;
-  
-  // Optional fields with defaults (only add if explicitly set)
-  if (transaction.status !== undefined && transaction.status !== null) {
-    validFields.status = transaction.status;
-  } else {
-    validFields.status = 'completed';
-  }
-  
-  if (transaction.is_installment !== undefined && transaction.is_installment !== null) {
-    validFields.is_installment = transaction.is_installment;
-  } else {
-    validFields.is_installment = false;
-  }
-  
-  if (transaction.total_installments !== undefined && transaction.total_installments !== null) {
-    validFields.total_installments = transaction.total_installments;
-  } else {
-    validFields.total_installments = 1;
-  }
-  
-  if (transaction.is_reimbursable !== undefined && transaction.is_reimbursable !== null) {
-    validFields.is_reimbursable = transaction.is_reimbursable;
-  } else {
-    validFields.is_reimbursable = false;
-  }
-  
-  if (transaction.is_recurring !== undefined && transaction.is_recurring !== null) {
-    validFields.is_recurring = transaction.is_recurring;
-  } else {
-    validFields.is_recurring = false;
-  }
-  
-  if (transaction.reimbursed_amount !== undefined && transaction.reimbursed_amount !== null) {
-    validFields.reimbursed_amount = transaction.reimbursed_amount;
-  } else {
-    validFields.reimbursed_amount = 0;
-  }
-  
-  // Optional fields - only add if they have actual values
-  const optionalFields: (keyof InsertTables<'transactions'>)[] = [
-    'category_id',
-    'account_id',
-    'credit_card_id',
-    'currency',
-    'notes',
-    'reimbursement_status',
-    'reimbursement_source',
-    'recurrence_type',
-    'recurrence_end_date',
-    'parent_transaction_id',
-  ];
-  
-  for (const field of optionalFields) {
-    const value = transaction[field];
-    // Only add if value is truthy (not null, undefined, or empty string)
-    if (value) {
-      validFields[field] = value;
-    }
-  }
-
-  // Debug log (temporary - remove after fixing)
-  console.log('[createTransaction] Sending to Supabase:', validFields);
+  // Add optional fields if they have values
+  if (transaction.category_id) insertData.category_id = transaction.category_id;
+  if (transaction.account_id) insertData.account_id = transaction.account_id;
+  if (transaction.credit_card_id) insertData.credit_card_id = transaction.credit_card_id;
+  if (transaction.currency) insertData.currency = transaction.currency;
+  if (transaction.notes) insertData.notes = transaction.notes;
+  if (transaction.reimbursement_status) insertData.reimbursement_status = transaction.reimbursement_status;
+  if (transaction.reimbursement_source) insertData.reimbursement_source = transaction.reimbursement_source;
+  if (transaction.recurrence_type) insertData.recurrence_type = transaction.recurrence_type;
+  if (transaction.recurrence_end_date) insertData.recurrence_end_date = transaction.recurrence_end_date;
+  if (transaction.parent_transaction_id) insertData.parent_transaction_id = transaction.parent_transaction_id;
+  if (transaction.current_installment) insertData.current_installment = transaction.current_installment;
 
   const { data, error } = await supabase
     .from('transactions')
-    .insert(validFields)
+    .insert(insertData)
     .select()
     .single();
 

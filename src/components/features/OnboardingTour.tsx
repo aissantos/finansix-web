@@ -56,8 +56,9 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
 
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status, action } = data;
+    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    if (finishedStatuses.includes(status)) {
       setRun(false);
       localStorage.setItem('onboarding_completed', 'true');
       

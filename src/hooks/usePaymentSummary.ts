@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isBefore } from 'date-fns';
 import { supabase } from '@/lib/supabase/client';
 import { useHouseholdId, useSelectedMonth } from '@/stores';
 
@@ -24,81 +24,84 @@ export function usePaymentSummary() {
 
       const monthStart = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
       const monthEnd = format(endOfMonth(selectedMonth), 'yyyy-MM-dd');
+      const today = new Date();
 
-      // Get pending bills for selected month
+      // Get pending expenses for selected month (status = pending)
       const { data: pendingTx } = await supabase
+        .from('transactions')
+        .select('amount, transaction_date')
+        .eq('household_id', householdId)
+        .eq('type', 'expense')
+        .eq('status', 'pending')
+        .is('credit_card_id', null)
+        .gte('transaction_date', monthStart)
+        .lte('transaction_date', monthEnd)
+        .is('deleted_at', null);
+
+      // Separate pending into on-time and overdue
+      let pending = 0;
+      let overdue = 0;
+      
+      for (const tx of pendingTx ?? []) {
+        const txDate = new Date(tx.transaction_date);
+        if (isBefore(txDate, today)) {
+          overdue += tx.amount ?? 0;
+        } else {
+          pending += tx.amount ?? 0;
+        }
+      }
+
+      // Get completed (paid) expenses for selected month
+      const { data: paidTx } = await supabase
         .from('transactions')
         .select('amount')
         .eq('household_id', householdId)
         .eq('type', 'expense')
+        .eq('status', 'completed')
         .is('credit_card_id', null)
         .gte('transaction_date', monthStart)
         .lte('transaction_date', monthEnd)
-        .or('payment_status.is.null,payment_status.eq.pending')
         .is('deleted_at', null);
 
-      const pending = (pendingTx ?? []).reduce((sum, t) => sum + (t.amount ?? 0), 0);
+      const paid = (paidTx ?? []).reduce((sum, t) => sum + (t.amount ?? 0), 0);
 
-      // Get paid bills for selected month
-      const { data: paidTx } = await supabase
-        .from('transactions')
-        .select('paid_amount, amount')
-        .eq('household_id', householdId)
-        .eq('type', 'expense')
-        .is('credit_card_id', null)
-        .gte('transaction_date', monthStart)
-        .lte('transaction_date', monthEnd)
-        .in('payment_status', ['paid', 'partial'])
-        .is('deleted_at', null);
-
-      const paid = (paidTx ?? []).reduce((sum, t) => sum + (t.paid_amount ?? t.amount ?? 0), 0);
-
-      // Get overdue bills for selected month
-      const { data: overdueTx } = await supabase
-        .from('transactions')
-        .select('amount, paid_amount')
-        .eq('household_id', householdId)
-        .eq('type', 'expense')
-        .is('credit_card_id', null)
-        .gte('transaction_date', monthStart)
-        .lte('transaction_date', monthEnd)
-        .eq('payment_status', 'overdue')
-        .is('deleted_at', null);
-
-      const overdue = (overdueTx ?? []).reduce((sum, t) => 
-        sum + ((t.amount ?? 0) - (t.paid_amount ?? 0)), 0);
-
-      // Get partial payment remaining balance for selected month
-      const { data: partialTx } = await supabase
-        .from('transactions')
-        .select('amount, paid_amount')
-        .eq('household_id', householdId)
-        .eq('type', 'expense')
-        .gte('transaction_date', monthStart)
-        .lte('transaction_date', monthEnd)
-        .eq('payment_status', 'partial')
-        .is('deleted_at', null);
-
-      const partial_balance = (partialTx ?? []).reduce((sum, t) => 
-        sum + ((t.amount ?? 0) - (t.paid_amount ?? 0)), 0);
-
-      // Add pending installments for selected month
-      const billingMonth = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
+      // Get pending installments for selected month
       const { data: pendingInst } = await supabase
+        .from('installments')
+        .select('amount, due_date')
+        .eq('household_id', householdId)
+        .eq('status', 'pending')
+        .gte('due_date', monthStart)
+        .lte('due_date', monthEnd)
+        .is('deleted_at', null);
+
+      // Separate installments into pending and overdue
+      for (const inst of pendingInst ?? []) {
+        const dueDate = new Date(inst.due_date);
+        if (isBefore(dueDate, today)) {
+          overdue += inst.amount ?? 0;
+        } else {
+          pending += inst.amount ?? 0;
+        }
+      }
+
+      // Get paid installments for selected month
+      const { data: paidInst } = await supabase
         .from('installments')
         .select('amount')
         .eq('household_id', householdId)
-        .eq('billing_month', billingMonth)
-        .eq('status', 'pending')
+        .eq('status', 'paid')
+        .gte('due_date', monthStart)
+        .lte('due_date', monthEnd)
         .is('deleted_at', null);
 
-      const pendingInstallments = (pendingInst ?? []).reduce((sum, i) => sum + (i.amount ?? 0), 0);
+      const paidInstallments = (paidInst ?? []).reduce((sum, i) => sum + (i.amount ?? 0), 0);
 
       return {
-        pending: pending + pendingInstallments,
-        paid,
+        pending,
+        paid: paid + paidInstallments,
         overdue,
-        partial_balance,
+        partial_balance: 0, // Will be implemented when payment_status is added
       };
     },
     enabled: !!householdId,

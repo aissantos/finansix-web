@@ -185,13 +185,13 @@ export default function CardDetailPage() {
     }
   };
 
-  // Group installments by status - FIX: filter by billing month correctly
+  // Group installments by status - using due_date for filtering
   const currentBillInstallments = cardInstallments.filter(i => {
     const dueDate = new Date(i.due_date);
-    const billingMonth = new Date(i.billing_month);
-    // Current bill: billing_month matches current billing cycle
-    const currentBillingMonth = startOfMonth(closingDate);
-    return billingMonth.getTime() === currentBillingMonth.getTime() && i.status === 'pending';
+    const dueMonth = startOfMonth(dueDate);
+    // Current bill: due_date month matches current billing cycle
+    const targetMonth = startOfMonth(closingDate);
+    return dueMonth.getTime() === targetMonth.getTime() && i.status === 'pending';
   });
   
   // Overdue installments: past due_date but still pending (separate section)
@@ -201,12 +201,14 @@ export default function CardDetailPage() {
   });
   
   const currentBillTotal = currentBillInstallments.reduce((sum, i) => sum + i.amount, 0);
-  const overdueTotal = overdueInstallments.reduce((sum, i) => sum + i.amount, 0);
+  // Note: overdueTotal available for future use in UI
+  void overdueInstallments.reduce((sum, i) => sum + i.amount, 0);
   
   const upcomingInstallments = cardInstallments.filter(i => {
-    const billingMonth = new Date(i.billing_month);
+    const dueDate = new Date(i.due_date);
+    const dueMonth = startOfMonth(dueDate);
     const nextBillingMonth = startOfMonth(nextClosingDate);
-    return billingMonth.getTime() === nextBillingMonth.getTime() && i.status === 'pending';
+    return dueMonth.getTime() === nextBillingMonth.getTime() && i.status === 'pending';
   });
   
   const upcomingTotal = upcomingInstallments.reduce((sum, i) => sum + i.amount, 0);

@@ -1,4 +1,4 @@
-import { Bell, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAppStore, useSelectedMonth } from '@/stores';

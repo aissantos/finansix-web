@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { X, Check, CreditCard, DollarSign, AlertCircle, Calendar } from 'lucide-react';
+import { X, Check, CreditCard, DollarSign, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format } from 'date-fns';

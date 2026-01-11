@@ -1,4 +1,4 @@
-import { Eye, EyeOff, TrendingUp, TrendingDown, Info, Wallet } from 'lucide-react';
+import { Eye, EyeOff, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { useState } from 'react';
 import { useFreeBalance, useTotalBalance } from '@/hooks';
 import { formatCurrency, cn, getBalanceColor } from '@/lib/utils';

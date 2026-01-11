@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useTransactions, useAccounts, useInstallments } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
-import { addDays, format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { addDays, format, endOfMonth, eachDayOfInterval } from 'date-fns';
 
 interface BalancePrediction {
   date: Date;
