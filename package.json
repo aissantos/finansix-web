@@ -1,7 +1,7 @@
 {
   "name": "finansix-web",
   "private": true,
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "type": "module",
   "packageManager": "pnpm@9.15.0",
   "scripts": {

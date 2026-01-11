@@ -70,10 +70,10 @@ export function BalanceHero() {
         </p>
       </div>
 
-      {/* Breakdown Card */}
+      {/* Breakdown Card - NOW WITH GLASSMORPHISM */}
       {showBreakdown && data && isVisible && (
-        <Card className="mt-4 p-4 w-full max-w-sm text-left animate-in fade-in slide-in-from-top-2 duration-200">
-          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+        <Card className="glass-card mt-4 p-4 w-full max-w-sm text-left animate-in fade-in slide-in-from-top-2 duration-200">
+          <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
             Composição do Saldo
           </h4>
           <div className="space-y-2">

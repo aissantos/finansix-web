@@ -101,7 +101,7 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
           <Card
             key={item.label}
             className={cn(
-              "p-4 border",
+              "glass-card p-4 border",
               item.bgColor,
               item.borderColor,
               item.highlight && "ring-2 ring-red-500 ring-offset-2"
@@ -109,7 +109,7 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-slate-500 font-medium mb-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">
                   {item.label}
                 </p>
                 <p className={cn("text-lg font-bold", item.color)}>

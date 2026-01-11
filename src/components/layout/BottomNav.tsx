@@ -39,7 +39,8 @@ export function BottomNav() {
         damping: 30,
       }}
     >
-      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-6 pb-safe">
+      {/* NEW v2.0: Glass navigation */}
+      <div className="glass-nav px-6 pb-safe">
         <div className="flex items-center justify-between py-2">
           {navItems.slice(0, 2).map((item) => (
             <NavItem 
@@ -63,7 +64,7 @@ export function BottomNav() {
               damping: 25,
             }}
           >
-            <div className="fab-new-transaction flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-primary to-blue-700 shadow-[0_15px_45px_-10px_rgba(19,91,236,0.6)] border-[6px] border-white dark:border-slate-900">
+            <div className="fab-new-transaction flex h-16 w-16 items-center justify-center rounded-full bg-gradient-primary shadow-[0_15px_45px_-10px_rgba(19,91,236,0.6)] border-[6px] border-white dark:border-slate-900 neon-glow-primary">
               <QuickActionFAB />
             </div>
           </motion.div>
