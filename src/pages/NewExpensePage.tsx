@@ -1,43 +1,70 @@
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { format } from 'date-fns';
-import { X, TrendingDown, Calendar, CreditCard, Check, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { CustomNumericKeypad } from '@/components/ui/CustomNumericKeypad';
-import { InstallmentConfirmDialog } from '@/components/features/InstallmentConfirmDialog';
-import { useCreateTransaction, useCategories, useCreditCards, useAccounts, useSmartCategorySearch } from '@/hooks';
-import { toast } from '@/hooks/useToast';
-import { formatCurrency, cn } from '@/lib/utils';
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { format } from "date-fns";
+import {
+  X,
+  TrendingDown,
+  Calendar,
+  CreditCard,
+  Check,
+  Search,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { CustomNumericKeypad } from "@/components/ui/CustomNumericKeypad";
+import { InstallmentConfirmDialog } from "@/components/features/InstallmentConfirmDialog";
+import {
+  useCreateTransaction,
+  useCategories,
+  useCreditCards,
+  useAccounts,
+  useSmartCategorySearch,
+} from "@/hooks";
+import { toast } from "@/hooks/useToast";
+import { formatCurrency, cn } from "@/lib/utils";
 
-const expenseSchema = z.object({
-  amount: z.number().positive('Valor deve ser maior que zero'),
-  description: z.string().min(1, 'Descrição é obrigatória'),
-  category_id: z.string().optional(),
-  credit_card_id: z.string().optional(),
-  account_id: z.string().optional(),
-  transaction_date: z.string(),
-  is_installment: z.boolean(),
-  total_installments: z.number().min(1).max(48),
-  is_reimbursable: z.boolean(),
-  reimbursement_source: z.string().optional(),
-});
+const expenseSchema = z
+  .object({
+    amount: z.number().positive("Valor deve ser maior que zero"),
+    description: z.string().min(1, "Descrição é obrigatória"),
+    category_id: z.string().optional(),
+    credit_card_id: z.string().optional(),
+    account_id: z.string().optional(),
+    transaction_date: z.string(),
+    is_installment: z.boolean(),
+    total_installments: z.number().min(1).max(48),
+    is_reimbursable: z.boolean(),
+    reimbursement_source: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Se for parcelado, exige cartão de crédito
+    if (data.is_installment && !data.credit_card_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione um cartão de crédito para parcelamento",
+        path: ["credit_card_id"],
+      });
+    }
+  });
 
 type ExpenseForm = z.infer<typeof expenseSchema>;
 
 export default function NewExpensePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const preselectedCategory = searchParams.get('category');
+  const preselectedCategory = searchParams.get("category");
 
-  const [paymentMethod, setPaymentMethod] = useState<'credit' | 'debit' | 'pix'>('credit');
+  const [paymentMethod, setPaymentMethod] = useState<
+    "credit" | "debit" | "pix"
+  >("credit");
   const [showKeypad, setShowKeypad] = useState(false);
-  const [categorySearch, setCategorySearch] = useState('');
+  const [categorySearch, setCategorySearch] = useState("");
   const [showInstallmentConfirm, setShowInstallmentConfirm] = useState(false);
-  const [pendingSubmitData, setPendingSubmitData] = useState<ExpenseForm | null>(null);
+  const [pendingSubmitData, setPendingSubmitData] =
+    useState<ExpenseForm | null>(null);
 
   const { mutate: createTransaction, isPending } = useCreateTransaction();
   const { data: categories } = useCategories();
@@ -54,26 +81,26 @@ export default function NewExpensePage() {
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       amount: 0,
-      description: '',
+      description: "",
       category_id: preselectedCategory || undefined,
-      transaction_date: format(new Date(), 'yyyy-MM-dd'),
+      transaction_date: format(new Date(), "yyyy-MM-dd"),
       is_installment: false,
       total_installments: 1,
       is_reimbursable: false,
     },
   });
 
-  const isInstallment = watch('is_installment');
-  const totalInstallments = watch('total_installments');
-  const amount = watch('amount');
+  const isInstallment = watch("is_installment");
+  const totalInstallments = watch("total_installments");
+  const amount = watch("amount");
 
   const smartCategories = useSmartCategorySearch(categorySearch, amount);
   const displayCategories = categorySearch
-    ? smartCategories.filter(c => !c.type || c.type === 'expense')
-    : categories?.filter(c => !c.type || c.type === 'expense') ?? [];
+    ? smartCategories.filter((c) => !c.type || c.type === "expense")
+    : categories?.filter((c) => !c.type || c.type === "expense") ?? [];
 
   const handleAmountChange = (value: number) => {
-    setValue('amount', value, { shouldDirty: true });
+    setValue("amount", value, { shouldDirty: true });
   };
 
   const handleKeypadConfirm = () => {
@@ -92,35 +119,40 @@ export default function NewExpensePage() {
   const submitTransaction = (data: ExpenseForm) => {
     createTransaction(
       {
-        type: 'expense',
+        type: "expense",
         amount: data.amount,
         description: data.description,
         category_id: data.category_id || null,
-        credit_card_id: paymentMethod === 'credit' ? data.credit_card_id : null,
-        account_id: paymentMethod !== 'credit' ? data.account_id : null,
+        credit_card_id: paymentMethod === "credit" ? data.credit_card_id : null,
+        account_id: paymentMethod !== "credit" ? data.account_id : null,
         transaction_date: data.transaction_date,
         is_installment: data.is_installment,
         total_installments: data.is_installment ? data.total_installments : 1,
         is_reimbursable: data.is_reimbursable,
-        reimbursement_source: data.is_reimbursable ? data.reimbursement_source : null,
+        reimbursement_source: data.is_reimbursable
+          ? data.reimbursement_source
+          : null,
       },
       {
         onSuccess: () => {
-          const installmentText = data.is_installment && data.total_installments > 1 
-            ? ` em ${data.total_installments}x` 
-            : '';
+          const installmentText =
+            data.is_installment && data.total_installments > 1
+              ? ` em ${data.total_installments}x`
+              : "";
           toast({
-            title: 'Despesa criada!',
-            description: `Despesa de ${formatCurrency(data.amount)}${installmentText} registrada.`,
-            variant: 'success',
+            title: "Despesa criada!",
+            description: `Despesa de ${formatCurrency(
+              data.amount
+            )}${installmentText} registrada.`,
+            variant: "success",
           });
-          navigate('/');
+          navigate("/");
         },
         onError: () => {
           toast({
-            title: 'Erro ao criar despesa',
-            description: 'Tente novamente.',
-            variant: 'destructive',
+            title: "Erro ao criar despesa",
+            description: "Tente novamente.",
+            variant: "destructive",
           });
         },
       }
@@ -161,7 +193,10 @@ export default function NewExpensePage() {
         <div className="w-10" />
       </header>
 
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="flex-1 px-4 pb-8">
+      <form
+        onSubmit={handleSubmit(handleFormSubmit)}
+        className="flex-1 px-4 pb-8"
+      >
         {/* Amount Card */}
         <Card className="p-6 mb-4 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-expense/20">
           <p className="text-xs font-bold text-expense/70 uppercase tracking-wide mb-2">
@@ -173,7 +208,7 @@ export default function NewExpensePage() {
             className="w-full text-left"
           >
             <span className="text-4xl font-black text-expense">
-              {amount > 0 ? formatCurrency(amount) : 'R$ 0,00'}
+              {amount > 0 ? formatCurrency(amount) : "R$ 0,00"}
             </span>
           </button>
           {errors.amount && (
@@ -187,13 +222,15 @@ export default function NewExpensePage() {
             Descrição
           </label>
           <input
-            {...register('description')}
+            {...register("description")}
             type="text"
             className="w-full bg-transparent border-none p-0 text-lg font-medium focus:ring-0 focus:outline-none text-slate-900 dark:text-white placeholder-slate-400"
             placeholder="Ex: Mercado, Uber, iFood..."
           />
           {errors.description && (
-            <p className="text-xs text-red-500 mt-2">{errors.description.message}</p>
+            <p className="text-xs text-red-500 mt-2">
+              {errors.description.message}
+            </p>
           )}
         </Card>
 
@@ -205,7 +242,7 @@ export default function NewExpensePage() {
           <div className="flex items-center gap-3">
             <Calendar className="h-5 w-5 text-slate-400" />
             <input
-              {...register('transaction_date')}
+              {...register("transaction_date")}
               type="date"
               className="flex-1 bg-transparent border-none p-0 focus:ring-0 focus:outline-none text-slate-900 dark:text-white"
             />
@@ -229,17 +266,17 @@ export default function NewExpensePage() {
           </div>
           <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
             {displayCategories.map((cat) => {
-              const isSelected = watch('category_id') === cat.id;
+              const isSelected = watch("category_id") === cat.id;
               return (
                 <button
                   key={cat.id}
                   type="button"
-                  onClick={() => setValue('category_id', cat.id)}
+                  onClick={() => setValue("category_id", cat.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
                     isSelected
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                      ? "bg-primary text-white"
+                      : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
                   )}
                 >
                   {cat.icon} {cat.name}
@@ -255,38 +292,42 @@ export default function NewExpensePage() {
             Forma de Pagamento
           </label>
           <div className="bg-slate-100 dark:bg-slate-700 p-1 rounded-xl flex mb-4">
-            {(['credit', 'debit', 'pix'] as const).map((method) => (
+            {(["credit", "debit", "pix"] as const).map((method) => (
               <button
                 key={method}
                 type="button"
                 onClick={() => setPaymentMethod(method)}
                 className={cn(
-                  'flex-1 py-2 rounded-lg text-xs font-bold transition-all',
+                  "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
                   paymentMethod === method
-                    ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500'
+                    ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm"
+                    : "text-slate-500"
                 )}
               >
-                {method === 'credit' ? 'Crédito' : method === 'debit' ? 'Débito' : 'Pix'}
+                {method === "credit"
+                  ? "Crédito"
+                  : method === "debit"
+                  ? "Débito"
+                  : "Pix"}
               </button>
             ))}
           </div>
 
           {/* Card Selection */}
-          {paymentMethod === 'credit' && cards?.length ? (
+          {paymentMethod === "credit" && cards?.length ? (
             <div className="flex gap-3 overflow-x-auto hide-scrollbar">
               {cards.map((card) => {
-                const isSelected = watch('credit_card_id') === card.id;
+                const isSelected = watch("credit_card_id") === card.id;
                 return (
                   <button
                     key={card.id}
                     type="button"
-                    onClick={() => setValue('credit_card_id', card.id)}
+                    onClick={() => setValue("credit_card_id", card.id)}
                     className={cn(
-                      'flex-shrink-0 w-40 h-24 rounded-xl p-3 flex flex-col justify-between text-white shadow-md relative overflow-hidden transition-all',
-                      isSelected ? 'ring-2 ring-primary ring-offset-2' : ''
+                      "flex-shrink-0 w-40 h-24 rounded-xl p-3 flex flex-col justify-between text-white shadow-md relative overflow-hidden transition-all",
+                      isSelected ? "ring-2 ring-primary ring-offset-2" : ""
                     )}
-                    style={{ backgroundColor: card.color || '#6366f1' }}
+                    style={{ backgroundColor: card.color || "#6366f1" }}
                   >
                     <div className="flex justify-between items-start text-xs font-bold">
                       {card.name}
@@ -300,24 +341,26 @@ export default function NewExpensePage() {
                 );
               })}
             </div>
-          ) : paymentMethod !== 'credit' && accounts?.length ? (
+          ) : paymentMethod !== "credit" && accounts?.length ? (
             <div className="flex gap-3 overflow-x-auto hide-scrollbar">
               {accounts.map((acc) => {
-                const isSelected = watch('account_id') === acc.id;
+                const isSelected = watch("account_id") === acc.id;
                 return (
                   <button
                     key={acc.id}
                     type="button"
-                    onClick={() => setValue('account_id', acc.id)}
+                    onClick={() => setValue("account_id", acc.id)}
                     className={cn(
-                      'flex-shrink-0 px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 transition-all',
-                      isSelected ? 'ring-2 ring-primary' : ''
+                      "flex-shrink-0 px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 transition-all",
+                      isSelected ? "ring-2 ring-primary" : ""
                     )}
                   >
                     <p className="text-sm font-bold text-slate-900 dark:text-white">
                       {acc.name}
                     </p>
-                    <p className="text-xs text-slate-500">{formatCurrency(acc.current_balance ?? 0)}</p>
+                    <p className="text-xs text-slate-500">
+                      {formatCurrency(acc.current_balance ?? 0)}
+                    </p>
                   </button>
                 );
               })}
@@ -326,23 +369,21 @@ export default function NewExpensePage() {
         </Card>
 
         {/* Installments - only for credit card */}
-        {paymentMethod === 'credit' && (
+        {paymentMethod === "credit" && (
           <Card className="p-4 mb-4">
             <label className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-sm font-bold text-slate-900 dark:text-white">
                   Parcelar
                 </p>
-                <p className="text-xs text-slate-500">
-                  Dividir em até 48x
-                </p>
+                <p className="text-xs text-slate-500">Dividir em até 48x</p>
               </div>
               <input
                 type="checkbox"
                 checked={isInstallment}
                 onChange={(e) => {
-                  setValue('is_installment', e.target.checked);
-                  if (!e.target.checked) setValue('total_installments', 1);
+                  setValue("is_installment", e.target.checked);
+                  if (!e.target.checked) setValue("total_installments", 1);
                 }}
                 className="rounded border-slate-300 text-primary focus:ring-primary h-5 w-5"
               />
@@ -351,15 +392,21 @@ export default function NewExpensePage() {
             {isInstallment && (
               <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs text-slate-500">Número de parcelas</span>
-                  <span className="text-lg font-bold text-primary">{totalInstallments}x</span>
+                  <span className="text-xs text-slate-500">
+                    Número de parcelas
+                  </span>
+                  <span className="text-lg font-bold text-primary">
+                    {totalInstallments}x
+                  </span>
                 </div>
                 <input
                   type="range"
                   min="2"
                   max="48"
                   value={totalInstallments}
-                  onChange={(e) => setValue('total_installments', Number(e.target.value))}
+                  onChange={(e) =>
+                    setValue("total_installments", Number(e.target.value))
+                  }
                   className="w-full accent-primary"
                 />
                 <div className="flex justify-between text-xs text-slate-400 mt-1">
@@ -369,7 +416,7 @@ export default function NewExpensePage() {
                 </div>
                 {amount > 0 && (
                   <p className="text-center text-xs text-slate-500 mt-3">
-                    {totalInstallments}x de{' '}
+                    {totalInstallments}x de{" "}
                     <span className="font-bold text-slate-900 dark:text-white">
                       {formatCurrency(amount / totalInstallments)}
                     </span>
@@ -393,7 +440,7 @@ export default function NewExpensePage() {
             </div>
             <input
               type="checkbox"
-              {...register('is_reimbursable')}
+              {...register("is_reimbursable")}
               className="rounded border-slate-300 text-primary focus:ring-primary h-5 w-5"
             />
           </label>
@@ -418,16 +465,22 @@ export default function NewExpensePage() {
         onConfirm={handleInstallmentConfirm}
         totalAmount={pendingSubmitData?.amount ?? 0}
         installments={pendingSubmitData?.total_installments ?? 1}
-        cardName={cards?.find(c => c.id === pendingSubmitData?.credit_card_id)?.name}
-        startDate={pendingSubmitData?.transaction_date ? new Date(pendingSubmitData.transaction_date) : undefined}
-        description={pendingSubmitData?.description ?? ''}
+        cardName={
+          cards?.find((c) => c.id === pendingSubmitData?.credit_card_id)?.name
+        }
+        startDate={
+          pendingSubmitData?.transaction_date
+            ? new Date(pendingSubmitData.transaction_date)
+            : undefined
+        }
+        description={pendingSubmitData?.description ?? ""}
         isLoading={isPending}
       />
 
       {/* Custom Numeric Keypad Modal */}
       {showKeypad && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
-          <div 
+          <div
             className="absolute inset-0 bg-black/60"
             onClick={() => setShowKeypad(false)}
           />

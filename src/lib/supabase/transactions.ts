@@ -119,7 +119,12 @@ export async function createTransaction(
     .single();
 
   if (error) {
-    console.error('[createTransaction] Supabase error:', error);
+    console.error('[createTransaction] Supabase error:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
     handleSupabaseError(error);
   }
   if (!data) throw new NotFoundError('Transação criada');
