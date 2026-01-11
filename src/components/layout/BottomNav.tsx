@@ -89,13 +89,13 @@ export function BottomNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-20 left-0 right-0 z-50 px-6 max-w-md mx-auto"
+            className="fixed bottom-24 left-4 right-4 z-50 mx-auto max-w-sm"
           >
-            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-6 rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800/50">
-              <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6 text-center">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800">
+              <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-5 text-center">
                 O que deseja registrar?
               </p>
-              <div className="flex justify-around items-center gap-2">
+              <div className="flex justify-between items-center px-2">
                 {quickActions.map((action, index) => (
                   <motion.button
                     key={action.label}
@@ -108,14 +108,13 @@ export function BottomNav() {
                   >
                     <div
                       className={cn(
-                        'h-16 w-16 rounded-[2rem] flex items-center justify-center',
-                        'shadow-xl transform transition-all duration-300',
-                        'group-hover:scale-110 group-hover:-translate-y-1 group-active:scale-95',
-                        action.color,
-                        'ring-4 ring-white dark:ring-slate-800'
+                        'h-14 w-14 rounded-2xl flex items-center justify-center',
+                        'shadow-lg transform transition-all duration-300',
+                        'group-hover:scale-110 group-active:scale-95',
+                        action.color
                       )}
                     >
-                      <action.icon className="h-7 w-7 text-white" />
+                      <action.icon className="h-6 w-6 text-white" />
                     </div>
                     <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">
                       {action.label}

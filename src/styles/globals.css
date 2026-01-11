@@ -1,9 +1,9 @@
+/* NEW v2.0: Glassmorphism Effects */
+@import './glassmorphism.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* NEW v2.0: Glassmorphism Effects */
-@import './glassmorphism.css';
 
 /* =============================================================================
    DESIGN TOKENS - Finansix Design System v2.0

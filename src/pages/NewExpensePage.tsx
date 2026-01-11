@@ -427,20 +427,21 @@ export default function NewExpensePage() {
 
       {/* Custom Numeric Keypad Modal */}
       {showKeypad && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
           <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60"
             onClick={() => setShowKeypad(false)}
           />
-          <div className="glass-modal relative w-full max-w-md p-6 rounded-3xl shadow-2xl animate-in slide-in-from-bottom duration-300">
+          <div className="relative w-full bg-white dark:bg-slate-900 p-6 pt-8 rounded-t-[2rem] shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-hidden">
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
             <button
               type="button"
               onClick={() => setShowKeypad(false)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="h-5 w-5 text-slate-400" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 text-center">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 text-center">
               Valor da Despesa
             </h3>
             <CustomNumericKeypad

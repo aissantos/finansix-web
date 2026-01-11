@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { useCategories, useRecentTransactions } from '@/hooks';
+import { useCategories } from './useCategories';
+import { useRecentTransactions } from './useTransactions';
 import type { Category } from '@/types';
 
 interface CategoryScore extends Category {
