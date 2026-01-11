@@ -72,7 +72,9 @@ export default function HomePage() {
             {/* NEW v2.0: Balance Forecaster - ML prediction */}
             <BalanceForecaster />
             
+            {/* v2.1: Payment Summary as horizontal carousel - positioned under forecast */}
             <PaymentSummaryCards />
+            
             <CardOptimizer />
             <SubscriptionsSummary />
             <ReliefChart />

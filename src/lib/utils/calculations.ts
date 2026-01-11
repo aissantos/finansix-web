@@ -1,8 +1,6 @@
 import { 
   differenceInDays, 
-  getDaysInMonth, 
-  startOfMonth,
-  format 
+  getDaysInMonth 
 } from 'date-fns';
 import type { 
   CreditCardWithLimits, 
@@ -10,7 +8,6 @@ import type {
   FreeBalanceResult,
   BalanceBreakdownItem 
 } from '@/types';
-import { supabase } from '@/lib/supabase/client';
 
 // ============================================
 // MONETARY UTILITIES (CENTS-BASED)
@@ -165,68 +162,72 @@ export function getBestCard(
 // FREE BALANCE CALCULATION (CENTS-BASED)
 // ============================================
 
-export async function calculateFreeBalance(
-  householdId: string,
-  targetDate: Date,
+/**
+ * Input data for free balance calculation
+ * This separates the data fetching concern from the calculation logic
+ */
+export interface FreeBalanceInput {
+  accounts: { current_balance: number | null }[];
+  pendingTransactions: { amount: number | null }[];
+  pendingInstallments: { amount: number | null }[];
+  expectedTransactions?: { 
+    amount: number | null; 
+    confidence_percent: number | null; 
+    type: 'income' | 'expense' 
+  }[];
+  reimbursableTransactions: { 
+    amount: number | null; 
+    reimbursed_amount: number | null 
+  }[];
+}
+
+/**
+ * Pure function to calculate free balance
+ * 
+ * IMPORTANT: This is a pure function that receives pre-fetched data.
+ * Data fetching should be handled by a React Query hook (useFreeBalance).
+ * This ensures:
+ * 1. Testability (no mocking needed)
+ * 2. Separation of concerns
+ * 3. UI control over caching and refetch timing
+ * 
+ * @param input - Pre-fetched data from database
+ * @param includeProjections - Whether to include expected transactions
+ * @returns Calculated free balance result
+ */
+export function calculateFreeBalance(
+  input: FreeBalanceInput,
   includeProjections = true
-): Promise<FreeBalanceResult> {
-  const today = startOfMonth(new Date());
-  const targetDateStr = format(targetDate, 'yyyy-MM-dd');
+): FreeBalanceResult {
+  const { 
+    accounts, 
+    pendingTransactions, 
+    pendingInstallments, 
+    expectedTransactions, 
+    reimbursableTransactions 
+  } = input;
 
   // 1. Current balance from all accounts
-  const { data: accounts } = await supabase
-    .from('accounts')
-    .select('current_balance')
-    .eq('household_id', householdId)
-    .eq('is_active', true)
-    .is('deleted_at', null);
-
   const currentBalanceCents = addCents(
     ...(accounts ?? []).map(a => toCents(a.current_balance ?? 0))
   );
 
   // 2. Pending expenses (not on credit card)
-  const { data: pendingTx } = await supabase
-    .from('transactions')
-    .select('amount')
-    .eq('household_id', householdId)
-    .eq('type', 'expense')
-    .eq('status', 'pending')
-    .is('credit_card_id', null)
-    .lte('transaction_date', targetDateStr)
-    .is('deleted_at', null);
-
   const pendingExpensesCents = addCents(
-    ...(pendingTx ?? []).map(t => toCents(t.amount ?? 0))
+    ...(pendingTransactions ?? []).map(t => toCents(t.amount ?? 0))
   );
 
   // 3. Credit card due (pending installments until target date)
-  const { data: installments } = await supabase
-    .from('installments')
-    .select('amount')
-    .eq('household_id', householdId)
-    .eq('status', 'pending')
-    .lte('due_date', targetDateStr)
-    .is('deleted_at', null);
-
   const creditCardDueCents = addCents(
-    ...(installments ?? []).map(i => toCents(i.amount ?? 0))
+    ...(pendingInstallments ?? []).map(i => toCents(i.amount ?? 0))
   );
 
   // 4 & 5. Expected income and expenses (if projections enabled)
   let expectedIncomeCents = 0;
   let expectedExpensesCents = 0;
 
-  if (includeProjections) {
-    const { data: expectations } = await supabase
-      .from('expected_transactions')
-      .select('amount, confidence_percent, type')
-      .eq('household_id', householdId)
-      .eq('is_active', true)
-      .lte('start_date', targetDateStr)
-      .or(`end_date.is.null,end_date.gte.${format(today, 'yyyy-MM-dd')}`);
-
-    for (const exp of (expectations ?? [])) {
+  if (includeProjections && expectedTransactions) {
+    for (const exp of expectedTransactions) {
       const amountCents = toCents(exp.amount ?? 0);
       const projectedCents = multiplyCents(amountCents, (exp.confidence_percent ?? 0) / 100);
 
@@ -239,16 +240,8 @@ export async function calculateFreeBalance(
   }
 
   // 6. Pending reimbursements
-  const { data: reimbursements } = await supabase
-    .from('transactions')
-    .select('amount, reimbursed_amount')
-    .eq('household_id', householdId)
-    .eq('is_reimbursable', true)
-    .in('reimbursement_status', ['pending', 'partial'])
-    .is('deleted_at', null);
-
   const pendingReimbursementsCents = addCents(
-    ...(reimbursements ?? []).map(t => {
+    ...(reimbursableTransactions ?? []).map(t => {
       const amountCents = toCents(t.amount ?? 0);
       return subtractCents(amountCents, toCents(t.reimbursed_amount ?? 0));
     })

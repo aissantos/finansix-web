@@ -8,6 +8,7 @@ export {
   calculatePercentageChange,
   calculateMonthlyAverage,
   calculateInstallmentTotal,
+  type FreeBalanceInput,
 } from './calculations';
 export * from './errors';
 export * from './smart-suggestions';
