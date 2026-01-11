@@ -2,7 +2,7 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.5.4.6-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.4.7-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
@@ -74,38 +74,39 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 
 ### Core Features
 
-| Feature | Descrição | Status |
-|---------|-----------|--------|
-| Saldo Livre | Cálculo real-time do saldo disponível | ✅ |
-| Card Optimizer | Recomendação inteligente de cartões | ✅ |
-| Relief Chart | Visualização de alívio financeiro futuro | ✅ |
-| Multi-household | Suporte a múltiplas famílias | ✅ |
-| Installment Explosion | Projeção automática de parcelas | ✅ |
-| Bill Payment | Pagamento/baixa de contas a pagar | ✅ **NEW** |
-| Invoice Payment | Pagamento de fatura de cartão | ✅ **NEW** |
-| Overdue Tracking | Identificação de contas vencidas | ✅ **NEW** |
-| PWA | Instalável com suporte offline | ✅ |
+| Feature               | Descrição                                | Status     |
+| --------------------- | ---------------------------------------- | ---------- |
+| Saldo Livre           | Cálculo real-time do saldo disponível    | ✅         |
+| Card Optimizer        | Recomendação inteligente de cartões      | ✅         |
+| Relief Chart          | Visualização de alívio financeiro futuro | ✅         |
+| Multi-household       | Suporte a múltiplas famílias             | ✅         |
+| Installment Explosion | Projeção automática de parcelas          | ✅         |
+| Bill Payment          | Pagamento/baixa de contas a pagar        | ✅ **NEW** |
+| Invoice Payment       | Pagamento de fatura de cartão            | ✅ **NEW** |
+| Overdue Tracking      | Identificação de contas vencidas         | ✅ **NEW** |
+| PWA                   | Instalável com suporte offline           | ✅         |
 
 ### Bill Status System
 
-| Status | Descrição | Cor |
-|--------|-----------|-----|
-| `pending` | Conta em aberto | 🟡 Amarelo |
-| `paid` | Conta paga | 🟢 Verde |
-| `overdue` | Conta vencida | 🔴 Vermelho |
-| `partial` | Pagamento parcial | 🔵 Azul |
+| Status    | Descrição         | Cor         |
+| --------- | ----------------- | ----------- |
+| `pending` | Conta em aberto   | 🟡 Amarelo  |
+| `paid`    | Conta paga        | 🟢 Verde    |
+| `overdue` | Conta vencida     | 🔴 Vermelho |
+| `partial` | Pagamento parcial | 🔵 Azul     |
 
 ### Invoice Payment Types
 
-| Tipo | Descrição |
-|------|-----------|
-| **Total** | Paga toda a fatura |
-| **Parcial** | Paga parte da fatura |
-| **Mínimo** | Paga o valor mínimo (15%) |
+| Tipo        | Descrição                 |
+| ----------- | ------------------------- |
+| **Total**   | Paga toda a fatura        |
+| **Parcial** | Paga parte da fatura      |
+| **Mínimo**  | Paga o valor mínimo (15%) |
 
 ## 🛠 Tech Stack
 
 ### Frontend
+
 - **React 18.3** - UI Framework
 - **TypeScript 5.6** - Type Safety
 - **Vite 5** - Build Tool
@@ -119,6 +120,7 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 - **Lucide React** - Icons
 
 ### Backend (Supabase)
+
 - **PostgreSQL 15** - Database
 - **Row Level Security** - Multi-tenancy
 - **Edge Functions** - Serverless
@@ -161,6 +163,37 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
+> **Windows Users (PowerShell):**
+> Se criar o arquivo `.env.local` via PowerShell (`echo "..." > .env.local`), certifique-se de que a codificação seja **UTF-8** ou **ASCII**. O PowerShell por padrão pode criar arquivos em UTF-16, que o Vite não consegue ler corretamente.
+>
+> Comando recomendado:
+>
+> ```powershell
+> Set-Content .env.local "VITE_SUPABASE_URL=..." -Encoding Utf8
+> ```
+
+### Database Types
+
+Para manter o TypeScript sincronizado com o banco de dados:
+
+1. Login na CLI (primeira vez):
+
+```bash
+pnpm supabase login
+```
+
+2. Vincular projeto:
+
+```bash
+pnpm supabase link --project-ref <project-id>
+```
+
+3. Gerar tipos:
+
+```bash
+pnpm supabase gen types typescript --project-id <project-id> > src/types/database.remote.ts
+```
+
 ## 📜 Scripts Disponíveis
 
 ```bash
@@ -170,7 +203,9 @@ pnpm preview      # Preview production build
 pnpm lint         # Run ESLint
 pnpm typecheck    # Run TypeScript type checking
 pnpm test         # Run tests
+pnpm test         # Run tests
 pnpm supabase db push  # Apply migrations
+pnpm typegen      # Generate types from Supabase (requires project-id configured)
 ```
 
 ## 📁 Estrutura do Projeto
@@ -183,7 +218,7 @@ finansix-web/
 ├── src/
 │   ├── components/
 │   │   ├── ui/           # Base UI components
-│   │   ├── features/     
+│   │   ├── features/
 │   │   │   ├── PaymentDialog.tsx  # NEW: Payment confirmation
 │   │   │   └── ...
 │   │   └── layout/       # Layout components
@@ -206,18 +241,21 @@ finansix-web/
 ## 🗺 Roadmap
 
 ### v1.5.4.x (Atual) - Bill Payments
+
 - [x] Hotfix parcelas retroativas
 - [x] Sistema de pagamento de contas
 - [x] Pagamento de fatura de cartão
 - [x] Status de contas vencidas
 
 ### v1.6.0 - Testing & Dashboard
+
 - [ ] Test coverage 40%+
 - [ ] Dashboard widgets configuráveis
 - [ ] Category Insights
 - [ ] Spending Alerts
 
 ### v1.7.0 - Open Finance MVP
+
 - [ ] Integração Pluggy
 - [ ] Sincronização de transações
 - [ ] Haptic feedback

@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -7,39 +7,26 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
       accounts: {
         Row: {
+          account_digit: string | null
+          account_number: string | null
+          balance_cents: number | null
+          bank_code: string | null
+          bank_name: string | null
+          branch_number: string | null
           color: string | null
           created_at: string | null
           currency: string | null
           current_balance: number | null
+          current_balance_cents: number
           deleted_at: string | null
           household_id: string
           icon: string | null
@@ -47,14 +34,23 @@ export type Database = {
           initial_balance: number | null
           is_active: boolean | null
           name: string
+          pix_key: string | null
+          pix_key_type: string | null
           type: Database["public"]["Enums"]["account_type"]
           updated_at: string | null
         }
         Insert: {
+          account_digit?: string | null
+          account_number?: string | null
+          balance_cents?: number | null
+          bank_code?: string | null
+          bank_name?: string | null
+          branch_number?: string | null
           color?: string | null
           created_at?: string | null
           currency?: string | null
           current_balance?: number | null
+          current_balance_cents?: number
           deleted_at?: string | null
           household_id: string
           icon?: string | null
@@ -62,14 +58,23 @@ export type Database = {
           initial_balance?: number | null
           is_active?: boolean | null
           name: string
+          pix_key?: string | null
+          pix_key_type?: string | null
           type: Database["public"]["Enums"]["account_type"]
           updated_at?: string | null
         }
         Update: {
+          account_digit?: string | null
+          account_number?: string | null
+          balance_cents?: number | null
+          bank_code?: string | null
+          bank_name?: string | null
+          branch_number?: string | null
           color?: string | null
           created_at?: string | null
           currency?: string | null
           current_balance?: number | null
+          current_balance_cents?: number
           deleted_at?: string | null
           household_id?: string
           icon?: string | null
@@ -77,10 +82,19 @@ export type Database = {
           initial_balance?: number | null
           is_active?: boolean | null
           name?: string
+          pix_key?: string | null
+          pix_key_type?: string | null
           type?: Database["public"]["Enums"]["account_type"]
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "accounts_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
           {
             foreignKeyName: "accounts_household_id_fkey"
             columns: ["household_id"]
@@ -138,6 +152,13 @@ export type Database = {
             foreignKeyName: "categories_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "categories_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
             referencedRelation: "households"
             referencedColumns: ["id"]
           },
@@ -161,8 +182,10 @@ export type Database = {
           id: string
           is_closed: boolean | null
           is_paid: boolean | null
+          minimum_amount: number | null
           paid_amount: number | null
           paid_at: string | null
+          status: string
           total_amount: number | null
           updated_at: string | null
         }
@@ -176,8 +199,10 @@ export type Database = {
           id?: string
           is_closed?: boolean | null
           is_paid?: boolean | null
+          minimum_amount?: number | null
           paid_amount?: number | null
           paid_at?: string | null
+          status?: string
           total_amount?: number | null
           updated_at?: string | null
         }
@@ -191,8 +216,10 @@ export type Database = {
           id?: string
           is_closed?: boolean | null
           is_paid?: boolean | null
+          minimum_amount?: number | null
           paid_amount?: number | null
           paid_at?: string | null
+          status?: string
           total_amount?: number | null
           updated_at?: string | null
         }
@@ -215,6 +242,13 @@ export type Database = {
             foreignKeyName: "credit_card_statements_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "credit_card_statements_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
             referencedRelation: "households"
             referencedColumns: ["id"]
           },
@@ -223,11 +257,13 @@ export type Database = {
       credit_cards: {
         Row: {
           account_id: string | null
+          available_limit_cents: number | null
           brand: string | null
           closing_day: number
           color: string | null
           created_at: string | null
           credit_limit: number
+          credit_limit_cents: number | null
           deleted_at: string | null
           due_day: number
           grace_period_days: number | null
@@ -241,11 +277,13 @@ export type Database = {
         }
         Insert: {
           account_id?: string | null
+          available_limit_cents?: number | null
           brand?: string | null
           closing_day: number
           color?: string | null
           created_at?: string | null
           credit_limit: number
+          credit_limit_cents?: number | null
           deleted_at?: string | null
           due_day: number
           grace_period_days?: number | null
@@ -259,11 +297,13 @@ export type Database = {
         }
         Update: {
           account_id?: string | null
+          available_limit_cents?: number | null
           brand?: string | null
           closing_day?: number
           color?: string | null
           created_at?: string | null
           credit_limit?: number
+          credit_limit_cents?: number | null
           deleted_at?: string | null
           due_day?: number
           grace_period_days?: number | null
@@ -282,6 +322,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "accounts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_cards_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
           },
           {
             foreignKeyName: "credit_cards_household_id_fkey"
@@ -366,6 +413,64 @@ export type Database = {
             foreignKeyName: "expected_transactions_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "expected_transactions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          email: string
+          expires_at: string
+          household_id: string
+          id: string
+          invited_by: string
+          role: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email: string
+          expires_at: string
+          household_id: string
+          id?: string
+          invited_by: string
+          role?: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          household_id?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_invites_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "household_invites_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
             referencedRelation: "households"
             referencedColumns: ["id"]
           },
@@ -397,6 +502,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
           {
             foreignKeyName: "household_members_household_id_fkey"
             columns: ["household_id"]
@@ -433,6 +545,7 @@ export type Database = {
       installments: {
         Row: {
           amount: number
+          amount_cents: number
           billing_month: string
           created_at: string | null
           credit_card_id: string | null
@@ -444,11 +557,14 @@ export type Database = {
           paid_amount: number | null
           paid_at: string | null
           status: Database["public"]["Enums"]["installment_status"] | null
+          total_amount_cents: number | null
           total_installments: number
           transaction_id: string
+          updated_at: string | null
         }
         Insert: {
           amount: number
+          amount_cents: number
           billing_month: string
           created_at?: string | null
           credit_card_id?: string | null
@@ -460,11 +576,14 @@ export type Database = {
           paid_amount?: number | null
           paid_at?: string | null
           status?: Database["public"]["Enums"]["installment_status"] | null
+          total_amount_cents?: number | null
           total_installments: number
           transaction_id: string
+          updated_at?: string | null
         }
         Update: {
           amount?: number
+          amount_cents?: number
           billing_month?: string
           created_at?: string | null
           credit_card_id?: string | null
@@ -476,8 +595,10 @@ export type Database = {
           paid_amount?: number | null
           paid_at?: string | null
           status?: Database["public"]["Enums"]["installment_status"] | null
+          total_amount_cents?: number | null
           total_installments?: number
           transaction_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -498,6 +619,13 @@ export type Database = {
             foreignKeyName: "installments_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "installments_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
             referencedRelation: "households"
             referencedColumns: ["id"]
           },
@@ -506,6 +634,13 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions_with_installments_expanded"
             referencedColumns: ["id"]
           },
         ]
@@ -572,6 +707,13 @@ export type Database = {
             foreignKeyName: "subscriptions_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "subscriptions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
             referencedRelation: "households"
             referencedColumns: ["id"]
           },
@@ -581,6 +723,8 @@ export type Database = {
         Row: {
           account_id: string | null
           amount: number
+          amount_cents: number | null
+          attachment_url: string | null
           billing_month: string | null
           category_id: string | null
           created_at: string | null
@@ -596,7 +740,10 @@ export type Database = {
           is_recurring: boolean | null
           is_reimbursable: boolean | null
           notes: string | null
+          paid_amount: number | null
+          paid_at: string | null
           parent_transaction_id: string | null
+          payment_status: string | null
           recurrence_end_date: string | null
           recurrence_type: Database["public"]["Enums"]["recurrence_type"] | null
           reimbursed_amount: number | null
@@ -613,6 +760,8 @@ export type Database = {
         Insert: {
           account_id?: string | null
           amount: number
+          amount_cents?: number | null
+          attachment_url?: string | null
           billing_month?: string | null
           category_id?: string | null
           created_at?: string | null
@@ -628,7 +777,10 @@ export type Database = {
           is_recurring?: boolean | null
           is_reimbursable?: boolean | null
           notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
           parent_transaction_id?: string | null
+          payment_status?: string | null
           recurrence_end_date?: string | null
           recurrence_type?:
             | Database["public"]["Enums"]["recurrence_type"]
@@ -647,6 +799,8 @@ export type Database = {
         Update: {
           account_id?: string | null
           amount?: number
+          amount_cents?: number | null
+          attachment_url?: string | null
           billing_month?: string | null
           category_id?: string | null
           created_at?: string | null
@@ -662,7 +816,10 @@ export type Database = {
           is_recurring?: boolean | null
           is_reimbursable?: boolean | null
           notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
           parent_transaction_id?: string | null
+          payment_status?: string | null
           recurrence_end_date?: string | null
           recurrence_type?:
             | Database["public"]["Enums"]["recurrence_type"]
@@ -711,6 +868,13 @@ export type Database = {
             foreignKeyName: "transactions_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "transactions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
             referencedRelation: "households"
             referencedColumns: ["id"]
           },
@@ -721,6 +885,13 @@ export type Database = {
             referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "transactions_parent_transaction_id_fkey"
+            columns: ["parent_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions_with_installments_expanded"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -728,29 +899,23 @@ export type Database = {
       credit_card_limits: {
         Row: {
           available_limit: number | null
+          available_limit_cents: number | null
           credit_limit: number | null
+          credit_limit_cents: number | null
           household_id: string | null
           id: string | null
           name: string | null
           used_limit: number | null
-        }
-        Insert: {
-          available_limit?: never
-          credit_limit?: number | null
-          household_id?: string | null
-          id?: string | null
-          name?: string | null
-          used_limit?: never
-        }
-        Update: {
-          available_limit?: never
-          credit_limit?: number | null
-          household_id?: string | null
-          id?: string | null
-          name?: string | null
-          used_limit?: never
+          used_limit_cents: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "credit_cards_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
           {
             foreignKeyName: "credit_cards_household_id_fkey"
             columns: ["household_id"]
@@ -759,6 +924,19 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      household_free_balance: {
+        Row: {
+          credit_card_due: number | null
+          current_balance: number | null
+          expected_expenses: number | null
+          expected_income: number | null
+          free_balance: number | null
+          household_id: string | null
+          household_name: string | null
+          pending_expenses: number | null
+        }
+        Relationships: []
       }
       monthly_summary: {
         Row: {
@@ -773,6 +951,96 @@ export type Database = {
             foreignKeyName: "transactions_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "transactions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions_with_installments_expanded: {
+        Row: {
+          account_id: string | null
+          account_name: string | null
+          amount: number | null
+          amount_cents: number | null
+          category_color: string | null
+          category_icon: string | null
+          category_id: string | null
+          category_name: string | null
+          created_at: string | null
+          credit_card_id: string | null
+          deleted_at: string | null
+          description: string | null
+          due_date: string | null
+          household_id: string | null
+          id: string | null
+          installment_amount: number | null
+          installment_amount_cents: number | null
+          installment_id: string | null
+          installment_number: number | null
+          installment_status:
+            | Database["public"]["Enums"]["installment_status"]
+            | null
+          is_recurring: boolean | null
+          is_reimbursable: boolean | null
+          notes: string | null
+          reimbursed_amount: number | null
+          reimbursed_amount_cents: number | null
+          reimbursement_status:
+            | Database["public"]["Enums"]["reimbursement_status"]
+            | null
+          status: Database["public"]["Enums"]["transaction_status"] | null
+          total_installments: number | null
+          transaction_date: string | null
+          type: Database["public"]["Enums"]["transaction_type"] | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_credit_card_id_fkey"
+            columns: ["credit_card_id"]
+            isOneToOne: false
+            referencedRelation: "credit_card_limits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_credit_card_id_fkey"
+            columns: ["credit_card_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household_free_balance"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "transactions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
             referencedRelation: "households"
             referencedColumns: ["id"]
           },
@@ -780,6 +1048,51 @@ export type Database = {
       }
     }
     Functions: {
+      cents_to_reais: { Args: { amount_cents: number }; Returns: number }
+      clean_expired_invites: { Args: never; Returns: undefined }
+      create_transaction_with_installments: {
+        Args: { p_generate_installments?: boolean; p_transaction: Json }
+        Returns: string
+      }
+      delete_transaction_cascade: {
+        Args: { p_transaction_id: string }
+        Returns: boolean
+      }
+      get_household_free_balance: {
+        Args: { p_household_id: string; p_target_date?: string }
+        Returns: {
+          credit_card_due: number
+          current_balance: number
+          expected_expenses: number
+          expected_income: number
+          free_balance: number
+          household_id: string
+          household_name: string
+          pending_expenses: number
+        }[]
+      }
+      get_monthly_transactions: {
+        Args: { p_household_id: string; p_month: number; p_year: number }
+        Returns: {
+          account_id: string
+          amount: number
+          billing_month: string
+          category_id: string
+          credit_card_id: string
+          description: string
+          due_date: string
+          household_id: string
+          installment_number: number
+          is_installment: boolean
+          status: string
+          total_installments: number
+          transaction_date: string
+          transaction_id: string
+          type: string
+          virtual_id: string
+        }[]
+      }
+      get_payment_summary: { Args: { p_household_id: string }; Returns: Json }
       get_subscription_total: {
         Args: { p_household_id: string }
         Returns: number
@@ -795,11 +1108,35 @@ export type Database = {
           name: string
         }[]
       }
+      get_user_household_id: { Args: never; Returns: string }
       get_user_household_ids: { Args: never; Returns: string[] }
+      pay_bill: {
+        Args: {
+          p_paid_amount: number
+          p_payment_type?: string
+          p_transaction_id: string
+        }
+        Returns: Json
+      }
+      pay_credit_card_invoice: {
+        Args: {
+          p_billing_month: string
+          p_card_id: string
+          p_paid_amount: number
+          p_payment_type?: string
+        }
+        Returns: Json
+      }
+      setup_user_household: { Args: { user_name?: string }; Returns: string }
     }
     Enums: {
       account_type: "checking" | "savings" | "cash" | "investment"
-      installment_status: "pending" | "paid" | "overdue"
+      installment_status:
+        | "pending"
+        | "paid"
+        | "overdue"
+        | "partial"
+        | "cancelled"
       recurrence_type: "daily" | "weekly" | "biweekly" | "monthly" | "yearly"
       reimbursement_status: "pending" | "partial" | "received" | "written_off"
       transaction_status: "pending" | "completed" | "cancelled"
@@ -929,13 +1266,16 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       account_type: ["checking", "savings", "cash", "investment"],
-      installment_status: ["pending", "paid", "overdue"],
+      installment_status: [
+        "pending",
+        "paid",
+        "overdue",
+        "partial",
+        "cancelled",
+      ],
       recurrence_type: ["daily", "weekly", "biweekly", "monthly", "yearly"],
       reimbursement_status: ["pending", "partial", "received", "written_off"],
       transaction_status: ["pending", "completed", "cancelled"],
@@ -943,4 +1283,3 @@ export const Constants = {
     },
   },
 } as const
-
