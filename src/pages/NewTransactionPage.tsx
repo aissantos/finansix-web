@@ -4,12 +4,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { X, TrendingDown, TrendingUp, Calendar, CreditCard, Check } from 'lucide-react';
+import { X, TrendingDown, TrendingUp, Calendar, CreditCard, Check, Edit3, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { CustomNumericKeypad } from '@/components/ui/CustomNumericKeypad';
 import { InstallmentConfirmDialog } from '@/components/features/InstallmentConfirmDialog';
-import { useCreateTransaction, useCategories, useCreditCards, useAccounts } from '@/hooks';
+import { useCreateTransaction, useCategories, useCreditCards, useAccounts, useSmartCategorySearch } from '@/hooks';
 import { toast } from '@/hooks/useToast';
 import { formatCurrency, cn } from '@/lib/utils';
 import type { TransactionType } from '@/types';
@@ -36,7 +37,8 @@ export default function NewTransactionPage() {
   const preselectedCategory = searchParams.get('category');
 
   const [paymentMethod, setPaymentMethod] = useState<'credit' | 'debit' | 'pix'>('credit');
-  const [amountDisplay, setAmountDisplay] = useState('');
+  const [showKeypad, setShowKeypad] = useState(false); // NEW v2.0: Modal keypad control
+  const [categorySearch, setCategorySearch] = useState(''); // NEW v2.0: Smart search
   const [showInstallmentConfirm, setShowInstallmentConfirm] = useState(false);
   const [pendingSubmitData, setPendingSubmitData] = useState<TransactionForm | null>(null);
 
@@ -70,15 +72,22 @@ export default function NewTransactionPage() {
   const totalInstallments = watch('total_installments');
   const amount = watch('amount');
 
-  const filteredCategories = categories?.filter(
-    (c) => !c.type || c.type === transactionType
-  );
+  // NEW v2.0: Smart category search with ML scoring
+  const smartCategories = useSmartCategorySearch(categorySearch, amount);
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    const numValue = Number(value) / 100;
-    setAmountDisplay(numValue > 0 ? formatCurrency(numValue).replace('R$', '').trim() : '');
-    setValue('amount', numValue);
+  // NEW v2.0: Use smart categories if searching, otherwise filter by type
+  const displayCategories = categorySearch
+    ? smartCategories.filter(c => !c.type || c.type === transactionType)
+    : categories?.filter(c => !c.type || c.type === transactionType) ?? [];
+
+  // NEW v2.0: Handler for keypad value change
+  const handleAmountChange = (value: number) => {
+    setValue('amount', value, { shouldDirty: true });
+  };
+
+  // NEW v2.0: Handler for keypad confirm
+  const handleKeypadConfirm = () => {
+    setShowKeypad(false);
   };
 
   const handleFormSubmit = (data: TransactionForm) => {
@@ -194,22 +203,22 @@ export default function NewTransactionPage() {
           </button>
         </div>
 
-        {/* Amount Input */}
+        {/* NEW v2.0: Amount Display with Keypad Button */}
         <div className="flex flex-col items-center justify-center mb-10">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
             Valor
           </label>
-          <div className="flex items-baseline gap-1 relative">
+          <button
+            type="button"
+            onClick={() => setShowKeypad(true)}
+            className="flex items-baseline gap-2 px-6 py-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+          >
             <span className="text-3xl font-medium text-slate-400">R$</span>
-            <input
-              autoFocus
-              className="text-5xl font-bold bg-transparent border-none p-0 w-48 text-center focus:ring-0 focus:outline-none text-slate-900 dark:text-white placeholder-slate-200"
-              placeholder="0,00"
-              value={amountDisplay}
-              onChange={handleAmountChange}
-              inputMode="numeric"
-            />
-          </div>
+            <span className="text-5xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              {amount > 0 ? formatCurrency(amount).replace('R$', '').trim() : '0,00'}
+            </span>
+            <Edit3 className="h-5 w-5 text-slate-300 group-hover:text-primary transition-colors ml-2" />
+          </button>
           {errors.amount && (
             <p className="text-xs text-expense mt-2">{errors.amount.message}</p>
           )}
@@ -229,32 +238,76 @@ export default function NewTransactionPage() {
             />
           </Card>
 
-          {/* Category */}
+          {/* Category - NEW v2.0: With Smart Search */}
           <Card className="p-4">
             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-3">
               Categoria
             </label>
+            
+            {/* Search Input */}
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                placeholder="Buscar categoria..."
+                className="pl-10 text-sm"
+              />
+              {categorySearch && (
+                <button
+                  type="button"
+                  onClick={() => setCategorySearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full"
+                >
+                  <X className="h-3 w-3 text-slate-400" />
+                </button>
+              )}
+            </div>
+            
+            {/* Categories Grid */}
             <div className="flex flex-wrap gap-2">
-              {filteredCategories?.slice(0, 8).map((cat) => {
+              {displayCategories?.slice(0, 8).map((cat) => {
                 const isSelected = watch('category_id') === cat.id;
+                const hasScore = 'score' in cat && 'reason' in cat;
+                
                 return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setValue('category_id', cat.id)}
-                    className={cn(
-                      'px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2',
-                      isSelected
-                        ? 'bg-primary text-white shadow-md'
-                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                  <div key={cat.id} className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setValue('category_id', cat.id);
+                        setCategorySearch('');
+                      }}
+                      className={cn(
+                        'px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2',
+                        isSelected
+                          ? 'bg-primary text-white shadow-md'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      )}
+                    >
+                      {cat.name}
+                      {isSelected && <Check className="h-3 w-3" />}
+                      {hasScore && !isSelected && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+                          {(cat as any).score}%
+                        </span>
+                      )}
+                    </button>
+                    {hasScore && categorySearch && (
+                      <span className="text-[9px] text-slate-400 mt-0.5 px-1">
+                        {(cat as any).reason}
+                      </span>
                     )}
-                  >
-                    {cat.name}
-                    {isSelected && <Check className="h-3 w-3" />}
-                  </button>
+                  </div>
                 );
               })}
             </div>
+            
+            {categorySearch && displayCategories.length === 0 && (
+              <p className="text-xs text-slate-400 text-center py-4">
+                Nenhuma categoria encontrada
+              </p>
+            )}
           </Card>
 
           {/* Date */}
@@ -354,41 +407,56 @@ export default function NewTransactionPage() {
             </Card>
           )}
 
-          {/* Installments (only for credit card) */}
-          {transactionType === 'expense' && paymentMethod === 'credit' && (
+          {/* Installments - only for credit card */}
+          {paymentMethod === 'credit' && transactionType === 'expense' && (
             <Card className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                  Parcelamento
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    {...register('is_installment')}
-                    className="rounded border-slate-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              <label className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
                     Parcelar
-                  </span>
-                </label>
-              </div>
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Dividir em até 48x
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isInstallment}
+                  onChange={(e) => {
+                    setValue('is_installment', e.target.checked);
+                    if (!e.target.checked) setValue('total_installments', 1);
+                  }}
+                  className="rounded border-slate-300 text-primary focus:ring-primary h-5 w-5"
+                />
+              </label>
 
               {isInstallment && (
-                <div className="space-y-3">
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-slate-500">Número de parcelas</span>
+                    <span className="text-lg font-bold text-primary">{totalInstallments}x</span>
+                  </div>
                   <input
                     type="range"
                     min="2"
-                    max="12"
-                    {...register('total_installments', { valueAsNumber: true })}
+                    max="48"
+                    value={totalInstallments}
+                    onChange={(e) => setValue('total_installments', Number(e.target.value))}
                     className="w-full accent-primary"
                   />
-                  <div className="flex justify-between text-xs text-slate-500">
+                  <div className="flex justify-between text-xs text-slate-400 mt-1">
                     <span>2x</span>
-                    <span className="text-primary font-bold">
-                      {totalInstallments}x de {formatCurrency(amount / totalInstallments)}
-                    </span>
-                    <span>12x</span>
+                    <span>24x</span>
+                    <span>48x</span>
                   </div>
+                  {amount > 0 && (
+                    <p className="text-center text-xs text-slate-500 mt-3">
+                      {totalInstallments}x de{' '}
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {formatCurrency(amount / totalInstallments)}
+                      </span>
+                    </p>
+                  )}
                 </div>
               )}
             </Card>
@@ -438,6 +506,40 @@ export default function NewTransactionPage() {
         description={pendingSubmitData?.description ?? ''}
         isLoading={isPending}
       />
+
+      {/* NEW v2.0: Custom Numeric Keypad Modal */}
+      {showKeypad && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          {/* Overlay */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowKeypad(false)}
+          />
+          
+          {/* Modal */}
+          <div className="glass-modal relative w-full max-w-md p-6 rounded-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 sm:slide-in-from-bottom-0">
+            <button
+              type="button"
+              onClick={() => setShowKeypad(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              <X className="h-5 w-5 text-slate-400" />
+            </button>
+            
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 text-center">
+              Digite o Valor
+            </h3>
+            
+            <CustomNumericKeypad
+              value={amount}
+              onChange={handleAmountChange}
+              onConfirm={handleKeypadConfirm}
+              maxValue={999999.99}
+              currency="BRL"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

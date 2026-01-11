@@ -37,7 +37,7 @@ export function ReliefChart() {
         </button>
       </div>
 
-      <Card className="p-5">
+      <Card className="glass-card p-5">
         {/* Bar chart */}
         <div className="flex items-end justify-between h-32 gap-2 w-full pt-4">
           {projection.slice(0, 6).map((month, i) => {
@@ -51,8 +51,8 @@ export function ReliefChart() {
                     className={cn(
                       'absolute bottom-0 w-full rounded-t-lg transition-all duration-500 group-hover:opacity-100',
                       isLastMonth
-                        ? 'bg-emerald-400'
-                        : 'bg-blue-500 opacity-70'
+                        ? 'gradient-success'
+                        : 'gradient-primary opacity-70'
                     )}
                     style={{ height: `${Math.max(height, 5)}%` }}
                   />
