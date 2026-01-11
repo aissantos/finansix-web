@@ -87,7 +87,6 @@ export default function TransferPage() {
         amount: amount,
         description: transferDescription,
         transaction_date: new Date().toISOString().split('T')[0],
-        status: 'completed',
       });
 
       // 2. Criar receita na conta de destino
@@ -97,7 +96,6 @@ export default function TransferPage() {
         amount: amount,
         description: transferDescription,
         transaction_date: new Date().toISOString().split('T')[0],
-        status: 'completed',
       });
 
       toast({ 

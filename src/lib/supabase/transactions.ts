@@ -81,14 +81,13 @@ export async function getTransaction(id: string): Promise<TransactionWithDetails
 export async function createTransaction(
   transaction: InsertTables<'transactions'>
 ): Promise<Transaction> {
-  // Build the insert object with proper typing
+  // Build the insert object with proper typing - let DB handle defaults
   const insertData: InsertTables<'transactions'> = {
     household_id: transaction.household_id,
     type: transaction.type,
     amount: transaction.amount,
     description: transaction.description,
     transaction_date: transaction.transaction_date ?? new Date().toISOString().split('T')[0],
-    status: transaction.status ?? 'completed',
     is_installment: transaction.is_installment ?? false,
     total_installments: transaction.total_installments ?? 1,
     is_reimbursable: transaction.is_reimbursable ?? false,

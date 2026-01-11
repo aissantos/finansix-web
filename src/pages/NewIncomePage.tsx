@@ -74,7 +74,6 @@ export default function NewIncomePage() {
         category_id: data.category_id || null,
         account_id: data.account_id || null,
         transaction_date: data.transaction_date,
-        status: 'completed',
       },
       {
         onSuccess: () => {

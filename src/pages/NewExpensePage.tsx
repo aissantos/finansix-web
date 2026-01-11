@@ -103,7 +103,6 @@ export default function NewExpensePage() {
         total_installments: data.is_installment ? data.total_installments : 1,
         is_reimbursable: data.is_reimbursable,
         reimbursement_source: data.is_reimbursable ? data.reimbursement_source : null,
-        status: 'completed',
       },
       {
         onSuccess: () => {

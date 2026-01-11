@@ -145,7 +145,6 @@ export default function CardDetailPage() {
         description: formData.description || 'Compra no cartão',
         credit_card_id: card.id,
         transaction_date: new Date().toISOString().split('T')[0],
-        status: 'completed' as const,
         is_installment: totalInstallments > 1,
         total_installments: totalInstallments,
       };
