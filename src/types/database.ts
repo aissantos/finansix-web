@@ -1,8 +1,7 @@
 /**
  * Finansix Database Types
  * Compatible with Supabase client
- * 
- * Run `npx supabase gen types typescript --project-id YOUR_PROJECT_ID > src/types/database.ts`
+ * * Run `npx supabase gen types typescript --project-id YOUR_PROJECT_ID > src/types/database.ts`
  * to regenerate from live database
  */
 
@@ -197,6 +196,7 @@ export interface Database {
           color: string | null
           icon: string | null
           credit_limit: number
+          credit_limit_cents: number
           closing_day: number
           due_day: number
           grace_period_days: number
@@ -215,6 +215,7 @@ export interface Database {
           color?: string | null
           icon?: string | null
           credit_limit: number
+          credit_limit_cents?: number
           closing_day: number
           due_day: number
           grace_period_days?: number
@@ -231,6 +232,7 @@ export interface Database {
           color?: string | null
           icon?: string | null
           credit_limit?: number
+          credit_limit_cents?: number
           closing_day?: number
           due_day?: number
           grace_period_days?: number
@@ -292,6 +294,7 @@ export interface Database {
           type: TransactionType
           status: TransactionStatus
           amount: number
+          amount_cents: number
           currency: string
           description: string
           notes: string | null
@@ -322,6 +325,7 @@ export interface Database {
           type: TransactionType
           status?: TransactionStatus
           amount: number
+          amount_cents?: number
           currency?: string
           description: string
           notes?: string | null
@@ -350,6 +354,7 @@ export interface Database {
           type?: TransactionType
           status?: TransactionStatus
           amount?: number
+          amount_cents?: number
           currency?: string
           description?: string
           notes?: string | null
@@ -380,6 +385,7 @@ export interface Database {
           installment_number: number
           total_installments: number
           amount: number
+          amount_cents: number
           due_date: string
           status: InstallmentStatus
           paid_at: string | null
@@ -395,6 +401,7 @@ export interface Database {
           installment_number: number
           total_installments: number
           amount: number
+          amount_cents?: number
           due_date: string
           status?: InstallmentStatus
           paid_at?: string | null
@@ -407,6 +414,7 @@ export interface Database {
           installment_number?: number
           total_installments?: number
           amount?: number
+          amount_cents?: number
           due_date?: string
           status?: InstallmentStatus
           paid_at?: string | null
@@ -558,8 +566,11 @@ export interface Database {
           id: string
           household_id: string
           credit_limit: number
+          credit_limit_cents: number
           used_limit: number
+          used_limit_cents: number
           available_limit: number
+          available_limit_cents: number
         }
         Insert: never
         Update: never

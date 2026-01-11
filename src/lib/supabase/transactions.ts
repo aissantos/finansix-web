@@ -79,13 +79,17 @@ export async function getTransaction(id: string): Promise<TransactionWithDetails
 }
 
 export async function createTransaction(
-  transaction: InsertTables<'transactions'>
+  transaction: Omit<InsertTables<'transactions'>, 'amount_cents'> & { amount_cents?: number }
 ): Promise<Transaction> {
   // Build the insert object with proper typing - let DB handle defaults
+  // FIX: Calculate cents explicitly to satisfy database trigger
+  const amountCents = transaction.amount_cents ?? Math.round(transaction.amount * 100);
+
   const insertData: InsertTables<'transactions'> = {
     household_id: transaction.household_id,
     type: transaction.type,
     amount: transaction.amount,
+    amount_cents: amountCents, // Required for installment trigger
     description: transaction.description,
     transaction_date: transaction.transaction_date ?? new Date().toISOString().split('T')[0],
     is_installment: transaction.is_installment ?? false,
@@ -126,9 +130,15 @@ export async function updateTransaction(
   id: string,
   updates: UpdateTables<'transactions'>
 ): Promise<Transaction> {
+  // If amount is updated, ensure amount_cents is updated too
+  const updatesWithCents = { ...updates };
+  if (updates.amount !== undefined && updates.amount_cents === undefined) {
+    updatesWithCents.amount_cents = Math.round(updates.amount * 100);
+  }
+
   const { data, error } = await supabase
     .from('transactions')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update({ ...updatesWithCents, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();
