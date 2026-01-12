@@ -119,12 +119,6 @@ SELECT
   c.color AS category_color,
   COALESCE(cc.name, a.name) AS account_name,
   t.notes,
-  t.is_essential,
-  t.is_recurring,
-  t.is_reimbursable,
-  t.reimbursement_status,
-  t.reimbursed_amount,
-  t.reimbursed_amount * 100 AS reimbursed_amount_cents,  -- NEW
   t.created_at,
   t.updated_at,
   t.deleted_at
