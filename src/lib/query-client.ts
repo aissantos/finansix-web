@@ -4,9 +4,20 @@ import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persist
 
 // Custom error handler for global query errors
 const handleQueryError = (error: unknown) => {
-  // Log to console in development, Sentry in production
+  // Log to console in development
   if (process.env.NODE_ENV === 'development') {
     console.error('[Query Error]', error);
+  }
+  
+  // Send to Sentry in production
+  if (import.meta.env.PROD && typeof window !== 'undefined') {
+    const Sentry = (window as unknown as { Sentry?: { captureException: (error: unknown, options?: Record<string, unknown>) => void } }).Sentry;
+    if (Sentry) {
+      Sentry.captureException(error, {
+        tags: { type: 'query-error' },
+        level: 'error',
+      });
+    }
   }
 };
 
