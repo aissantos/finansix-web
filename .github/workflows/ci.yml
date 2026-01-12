@@ -119,13 +119,19 @@ jobs:
           pnpm exec supabase start -x analytics,realtime,storage-api &
 
           # Wait for Postgres port 54322 to be open
-          for i in {1..60}; do
+          for i in {1..120}; do
             if nc -z 127.0.0.1 54322; then
               echo "Postgres is up"; break
             fi
             echo "Waiting for Postgres... ($i)"
             sleep 2
           done
+
+          # Debug: Show logs if failed
+          if ! nc -z 127.0.0.1 54322; then
+            echo "Postgres failed to start. Showing logs:"
+            docker logs supabase_db_finansix-web
+          fi
 
           # Verify status
           pnpm exec supabase status
