@@ -38,6 +38,7 @@ export function Header({ title, showMonthSelector = false, showBack, onBack, sho
             <button
               onClick={onBack}
               className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Voltar"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -73,6 +74,7 @@ export function Header({ title, showMonthSelector = false, showBack, onBack, sho
               <button
                 onClick={goToPreviousMonth}
                 className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Mês anterior"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -85,6 +87,8 @@ export function Header({ title, showMonthSelector = false, showBack, onBack, sho
                     ? 'bg-primary/10 text-primary'
                     : 'hover:bg-slate-100 dark:hover:bg-slate-800'
                 )}
+                aria-label={`Ir para ${format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}`}
+                aria-current={isCurrentMonth ? 'date' : undefined}
               >
                 {format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}
               </button>
@@ -92,6 +96,7 @@ export function Header({ title, showMonthSelector = false, showBack, onBack, sho
               <button
                 onClick={goToNextMonth}
                 className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Próximo mês"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -111,7 +116,10 @@ export function Header({ title, showMonthSelector = false, showBack, onBack, sho
               Offline
             </div>
           )}
-          <button className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <button 
+            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Notificações"
+          >
             <Bell className="h-5 w-5 text-slate-600 dark:text-slate-400" />
           </button>
         </div>
