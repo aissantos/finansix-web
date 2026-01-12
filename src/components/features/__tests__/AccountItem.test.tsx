@@ -76,7 +76,7 @@ describe('AccountItem', () => {
 
     render(<AccountItem account={account} />);
     
-    const balanceElement = screen.getByText(/-500,00/);
+    const balanceElement = screen.getByText(/-R\$ 500,00/);
     expect(balanceElement).toHaveClass('text-expense');
   });
 
@@ -195,6 +195,8 @@ describe('AccountItem', () => {
 
     render(<AccountItem account={account} />);
     
-    expect(screen.getByText(/0,00/)).toBeInTheDocument();
+    // Use getAllByText since there might be multiple "0,00" (current and initial balance)
+    const balanceElements = screen.getAllByText(/0,00/);
+    expect(balanceElements.length).toBeGreaterThan(0);
   });
 });
