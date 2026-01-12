@@ -12,6 +12,7 @@ export default defineConfig({
       gzipSize: true,
       brotliSize: true,
       filename: 'dist/stats.html',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any,
   ],
   resolve: {

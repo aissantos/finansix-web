@@ -1,6 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { getBestCard, getBalanceColor, calculatePercentageChange } from '@/lib/utils/calculations';
 import type { CreditCardWithLimits } from '@/types';
+
+// Mock Supabase client to avoid "Missing Supabase environment variables" error
+vi.mock('@/lib/supabase/client', () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: () => ({ data: null, error: null }),
+        }),
+      }),
+    }),
+  },
+}));
 
 describe('getBestCard', () => {
   const mockCards: CreditCardWithLimits[] = [
@@ -23,6 +36,7 @@ describe('getBestCard', () => {
       icon: null,
       last_four_digits: '1234',
       grace_period_days: 0,
+      credit_limit_cents: 1000000,
     },
     {
       id: '2',
@@ -43,6 +57,7 @@ describe('getBestCard', () => {
       icon: null,
       last_four_digits: '5678',
       grace_period_days: 0,
+      credit_limit_cents: 1500000,
     },
   ];
 

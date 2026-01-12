@@ -13,6 +13,7 @@ import { useTransactions, useCategories } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 import { startOfWeek, endOfWeek, startOfMonth, subMonths } from 'date-fns';
 import { useState } from 'react';
+import type { TransactionWithDetails, Category } from '@/types';
 
 interface Insight {
   id: string;
@@ -123,7 +124,7 @@ export function SmartInsights() {
 /**
  * Generate contextual insights using pattern recognition
  */
-function generateInsights(transactions: any[], categories: any[]): Insight[] {
+function generateInsights(transactions: TransactionWithDetails[], categories: Category[]): Insight[] {
   const insights: Insight[] = [];
   const now = new Date();
 

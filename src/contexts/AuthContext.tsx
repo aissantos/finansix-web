@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase, getOrCreateHousehold } from '@/lib/supabase';
 import { useAppStore } from '@/stores';
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 1. Timeout de Segurança (CRÍTICO: Destrava a tela após 3s se a rede falhar)
     const safetyTimeout = setTimeout(() => {
       if (mounted && state.isLoading) {
-        setState(prev => ({ ...prev, isLoading: false }));
+        setState((prev: AuthState) => ({ ...prev, isLoading: false }));
       }
     }, 3000);
 
@@ -114,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
-  }, [setHouseholdId]); // Dependências estáveis
+  }, [setHouseholdId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });

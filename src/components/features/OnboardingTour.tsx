@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
+import Joyride, { type CallBackProps, STATUS, type Step } from 'react-joyride';
 import { useNavigate } from 'react-router-dom';
 
 const ONBOARDING_STEPS: Step[] = [

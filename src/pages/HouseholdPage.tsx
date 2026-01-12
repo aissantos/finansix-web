@@ -399,7 +399,7 @@ function InviteForm({ onClose }: { onClose: () => void }) {
 // Invite Item
 // ============================================================================
 
-function InviteItem({ invite }: { invite: any }) {
+function InviteItem({ invite }: { invite: { id: string; email: string; expires_at: string } }) {
   const { mutate: cancelInvite, isPending } = useCancelInvite();
 
   const handleCancel = () => {
@@ -444,7 +444,12 @@ function MemberItem({
   isCurrentUser,
   canManage,
 }: { 
-  member: any;
+  member: {
+    id: string;
+    role: string;
+    display_name?: string;
+    user_id: string;
+  };
   isCurrentUser: boolean;
   canManage: boolean;
 }) {

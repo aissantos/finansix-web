@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useCategories } from './useCategories';
 import { useRecentTransactions } from './useTransactions';
-import type { Category } from '@/types';
+import type { Category, TransactionWithDetails } from '@/types';
 
 interface CategoryScore extends Category {
   score: number;
@@ -104,7 +104,7 @@ function calculateTextMatch(text: string, query: string): number {
 /**
  * Calculate usage frequency in recent transactions
  */
-function calculateUsageFrequency(category: Category, recentTransactions: any[]): number {
+function calculateUsageFrequency(category: Category, recentTransactions: TransactionWithDetails[]): number {
   const usageCount = recentTransactions.filter(
     (tx) => tx.category_id === category.id
   ).length;
@@ -117,7 +117,7 @@ function calculateUsageFrequency(category: Category, recentTransactions: any[]):
 /**
  * Calculate if category is commonly used at this time of day
  */
-function calculateTimeContext(category: Category, recentTransactions: any[]): number {
+function calculateTimeContext(category: Category, recentTransactions: TransactionWithDetails[]): number {
   const currentHour = new Date().getHours();
   
   const categoryTransactions = recentTransactions.filter(
@@ -142,7 +142,7 @@ function calculateTimeContext(category: Category, recentTransactions: any[]): nu
 function calculateAmountContext(
   category: Category,
   amount: number,
-  recentTransactions: any[]
+  recentTransactions: TransactionWithDetails[]
 ): number {
   const categoryTransactions = recentTransactions.filter(
     (tx) => tx.category_id === category.id
@@ -166,7 +166,7 @@ function calculateAmountContext(
 /**
  * Sort categories by usage frequency when no query
  */
-function sortByUsageFrequency(categories: Category[], recentTransactions: any[]): CategoryScore[] {
+function sortByUsageFrequency(categories: Category[], recentTransactions: TransactionWithDetails[]): CategoryScore[] {
   return categories
     .map((category) => ({
       ...category,

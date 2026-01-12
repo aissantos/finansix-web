@@ -29,7 +29,7 @@ export async function getAccount(id: string): Promise<Account> {
 
 export async function createAccount(account: InsertTables<'accounts'>): Promise<Account> {
   // Filter only valid database columns
-  const validFields: any = {
+  const validFields: Record<string, unknown> = {
     household_id: account.household_id,
     name: account.name,
     type: account.type,
@@ -57,7 +57,7 @@ export async function createAccount(account: InsertTables<'accounts'>): Promise<
 
   const { data, error } = await supabase
     .from('accounts')
-    .insert(validFields)
+    .insert(validFields as unknown as InsertTables<'accounts'>)
     .select()
     .single();
 

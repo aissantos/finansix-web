@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { useTransactions, useAccounts, useInstallments } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 import { addDays, format, endOfMonth, eachDayOfInterval } from 'date-fns';
+import type { Account, Transaction, Installment } from '@/types';
 
 interface BalancePrediction {
   date: Date;
@@ -156,9 +157,9 @@ export function BalanceForecaster() {
  * 4. Historical spending patterns
  */
 function calculateBalanceForecast(
-  accounts: any[],
-  transactions: any[],
-  installments: any[]
+  accounts: Account[],
+  transactions: Transaction[],
+  installments: Installment[]
 ): BalancePrediction[] {
   const currentBalance = accounts.reduce((sum, acc) => sum + acc.current_balance, 0);
   const today = new Date();

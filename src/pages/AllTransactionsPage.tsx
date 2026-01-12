@@ -36,7 +36,7 @@ import type { TransactionWithDetails } from '@/types';
 type FilterType = 'all' | 'income' | 'expense';
 
 // Category Distribution Chart Component
-function CategoryDistributionChart({ transactions }: { transactions: any[] }) {
+function CategoryDistributionChart({ transactions }: { transactions: TransactionWithDetails[] }) {
   const categoryTotals = useMemo(() => {
     const totals = new Map<string, { name: string; amount: number; color: string; count: number }>();
     

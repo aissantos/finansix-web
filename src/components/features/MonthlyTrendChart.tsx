@@ -87,7 +87,7 @@ export function MonthlyTrendChart({
     );
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ color: string; name: string; value: number }>; label?: string }) => {
     if (!active || !payload) return null;
     
     return (
@@ -95,7 +95,7 @@ export function MonthlyTrendChart({
         <p className="font-bold text-sm text-slate-900 dark:text-white mb-2">
           {label}
         </p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index) => (
           <div key={index} className="flex items-center gap-2 text-xs">
             <div 
               className="h-2 w-2 rounded-full" 

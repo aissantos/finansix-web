@@ -106,11 +106,13 @@ export function AvatarUploader({
       onUpload?.(publicUrl);
       setSelectedFile(null);
       setPreviewUrl(null);
-    } catch (error: any) {
+      setPreviewUrl(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
       console.error('Upload error:', error);
       toast({ 
         title: 'Erro ao enviar foto', 
-        description: error.message,
+        description: message,
         variant: 'destructive' 
       });
     } finally {

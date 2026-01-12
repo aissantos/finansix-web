@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, X, Bell } from 'lucide-react';
 import { format } from 'date-fns';
@@ -99,7 +99,7 @@ export function PageHeader({
             <MonthSelector
               selectedMonth={selectedMonth}
               isCurrentMonth={isCurrentMonth}
-              onPrevious={goToPreviousMonth}
+              onPrevious={goToPreviousMonth as unknown as () => void}
               onNext={goToNextMonth}
               onCurrent={goToCurrentMonth}
             />

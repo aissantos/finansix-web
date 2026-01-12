@@ -400,7 +400,7 @@ export default function EditAccountPage() {
               </label>
               <select
                 value={pixKeyType}
-                onChange={(e) => setPixKeyType(e.target.value as any)}
+                onChange={(e) => setPixKeyType(e.target.value as 'cpf' | 'cnpj' | 'email' | 'phone' | 'random')}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
               >
                 <option value="cpf">CPF</option>

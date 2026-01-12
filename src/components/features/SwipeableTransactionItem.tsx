@@ -1,5 +1,5 @@
 import { memo, useState, useRef } from 'react';
-import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
+import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import * as Icons from 'lucide-react';
 import { Trash2, Edit3, Copy } from 'lucide-react';
 import { formatCurrency, formatDateRelative, cn } from '@/lib/utils';
@@ -77,7 +77,7 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
     ['rgba(59, 130, 246, 0)', 'rgba(59, 130, 246, 1)']
   );
 
-  const handleDragEnd = (_event: any, info: PanInfo) => {
+  const handleDragEnd = (_event: unknown, info: PanInfo) => {
     const threshold = 100;
 
     if (info.offset.x < -threshold) {

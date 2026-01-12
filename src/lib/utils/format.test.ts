@@ -40,7 +40,7 @@ describe('formatDate', () => {
   });
 
   it('should handle string dates', () => {
-    expect(formatDate('2024-01-15')).toBe('15/01/2024');
+    expect(formatDate('2024-01-15T12:00:00')).toBe('15/01/2024');
   });
 });
 

@@ -58,7 +58,7 @@ export function initSentry() {
         // Remove dados sensíveis dos breadcrumbs
         if (breadcrumb.category === 'console' && breadcrumb.data) {
           if (breadcrumb.data.arguments) {
-            breadcrumb.data.arguments = breadcrumb.data.arguments.map((arg: any) =>
+            breadcrumb.data.arguments = breadcrumb.data.arguments.map((arg: unknown) =>
               typeof arg === 'string' ? arg : '[Object]'
             );
           }
@@ -76,6 +76,7 @@ export function initSentry() {
 
 // Helper to set user context (chamado após login)
 export function setSentryUser(userId: string, householdId?: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (import.meta.env.PROD && (window as any).Sentry) {
     Sentry.setUser({
       id: userId,
@@ -92,13 +93,15 @@ export function setSentryUser(userId: string, householdId?: string) {
 
 // Helper to clear user context (chamado no logout)
 export function clearSentryUser() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (import.meta.env.PROD && (window as any).Sentry) {
     Sentry.setUser(null);
   }
 }
 
 // Helper to add breadcrumb
-export function addBreadcrumb(message: string, category: string, data?: Record<string, any>) {
+export function addBreadcrumb(message: string, category: string, data?: Record<string, unknown>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((window as any).Sentry) {
     Sentry.addBreadcrumb({
       message,

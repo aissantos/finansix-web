@@ -1,4 +1,5 @@
-import { ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { MoreVertical, Edit3, Trash2, ChevronRight } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 

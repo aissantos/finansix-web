@@ -288,13 +288,13 @@ export default function NewTransactionPage() {
                       {isSelected && <Check className="h-3 w-3" />}
                       {hasScore && !isSelected && (
                         <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
-                          {(cat as any).score}%
+                          {(cat as typeof cat & { score: number; reason: string }).score}%
                         </span>
                       )}
                     </button>
                     {hasScore && categorySearch && (
                       <span className="text-[9px] text-slate-400 mt-0.5 px-1">
-                        {(cat as any).reason}
+                        {(cat as typeof cat & { score: number; reason: string }).reason}
                       </span>
                     )}
                   </div>

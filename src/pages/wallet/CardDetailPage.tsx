@@ -24,7 +24,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useCreditCards, useInstallments } from '@/hooks';
 import { useToast } from '@/hooks/useToast';
-import { formatCurrency, formatCardNumber} from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
+import type { Installment } from '@/types';
 import { format, addMonths, differenceInDays, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase/client';
@@ -218,7 +219,7 @@ export default function CardDetailPage() {
     onEdit, 
     onDelete 
   }: { 
-    installment: any; 
+    installment: Installment; 
     onEdit: () => void; 
     onDelete: () => void;
   }) {

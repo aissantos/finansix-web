@@ -35,6 +35,7 @@ export function CustomNumericKeypad({
     } else {
       setDisplayValue('0,00');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleKeyPress = (key: string) => {
