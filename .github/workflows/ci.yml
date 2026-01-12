@@ -115,22 +115,26 @@ jobs:
 
       - name: Start Supabase and apply DB migrations
         run: |
-          # Start Supabase in the background (analytics ignored if not supported)
-          pnpm exec supabase start -x analytics,realtime,storage-api &
+          # Start Supabase synchronously (wait for it to finish)
+          pnpm exec supabase start -x analytics,realtime,storage-api
 
-          # Wait for Postgres port 54322 to be open
-          for i in {1..120}; do
-            if nc -z 127.0.0.1 54322; then
-              echo "Postgres is up"; break
-            fi
-            echo "Waiting for Postgres... ($i)"
-            sleep 2
-          done
+          # Quick health check
+          if ! nc -z 127.0.0.1 54322; then
+            echo "Postgres port 54322 not open immediately. Waiting briefy..."
+            for i in {1..30}; do
+              if nc -z 127.0.0.1 54322; then
+                 echo "Postgres is up"; break
+              fi
+              echo "Waiting for Postgres... ($i)"
+              sleep 1
+            done
+          fi
 
-          # Debug: Show logs if failed
+          # Debug: Show logs if still failed
           if ! nc -z 127.0.0.1 54322; then
             echo "Postgres failed to start. Showing logs:"
             docker logs supabase_db_finansix-web
+            exit 1
           fi
 
           # Verify status
