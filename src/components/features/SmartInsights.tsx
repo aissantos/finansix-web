@@ -145,8 +145,9 @@ function generateInsights(transactions: TransactionWithDetails[], categories: Ca
   // Category spending analysis
   const categorySpending = new Map<string, number>();
   thisWeekExpenses.forEach(tx => {
-    const current = categorySpending.get(tx.category_id) || 0;
-    categorySpending.set(tx.category_id, current + tx.amount);
+    const catId = tx.category_id ?? 'unknown';
+    const current = categorySpending.get(catId) || 0;
+    categorySpending.set(catId, current + tx.amount);
   });
 
   // Previous period for comparison
@@ -158,8 +159,9 @@ function generateInsights(transactions: TransactionWithDetails[], categories: Ca
 
   const lastMonthCategorySpending = new Map<string, number>();
   lastMonthExpenses.forEach(tx => {
-    const current = lastMonthCategorySpending.get(tx.category_id) || 0;
-    lastMonthCategorySpending.set(tx.category_id, current + tx.amount);
+    const catId = tx.category_id ?? 'unknown';
+    const current = lastMonthCategorySpending.get(catId) || 0;
+    lastMonthCategorySpending.set(catId, current + tx.amount);
   });
 
   // Insight 1: Spending spike detection

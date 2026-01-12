@@ -199,7 +199,11 @@ export default function HouseholdPage() {
               {members.map((member) => (
                 <MemberItem 
                   key={member.id} 
-                  member={member} 
+                  member={{ 
+                    ...member, 
+                    role: member.role ?? 'member',
+                    display_name: member.display_name ?? undefined
+                  }} 
                   isCurrentUser={member.user_id === user?.id}
                   canManage={isOwner && member.user_id !== user?.id}
                 />
