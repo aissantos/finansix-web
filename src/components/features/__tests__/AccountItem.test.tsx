@@ -11,13 +11,23 @@ describe('AccountItem', () => {
     household_id: 'household-1',
     name: 'Conta Corrente Principal',
     type: 'checking',
+    currency: 'BRL',
     initial_balance: 1000,
     current_balance: 1500,
+    current_balance_cents: 150000,
     color: '#3B82F6',
+    icon: null,
     is_active: true,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
     deleted_at: null,
+    bank_code: null,
+    bank_name: null,
+    branch_number: null,
+    account_number: null,
+    account_digit: null,
+    pix_key: null,
+    pix_key_type: null,
   };
 
   it('should render account name', () => {
