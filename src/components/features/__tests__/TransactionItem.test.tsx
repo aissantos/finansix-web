@@ -39,19 +39,19 @@ describe('TransactionItem', () => {
   };
 
   it('should render transaction description', () => {
-    render(\u003cTransactionItem transaction={mockTransaction} /\u003e);
+    render(<TransactionItem transaction={mockTransaction} />);
     
     expect(screen.getByText('Supermercado')).toBeInTheDocument();
   });
 
   it('should render transaction category', () => {
-    render(\u003cTransactionItem transaction={mockTransaction} /\u003e);
+    render(<TransactionItem transaction={mockTransaction} />);
     
     expect(screen.getByText('Alimentação')).toBeInTheDocument();
   });
 
   it('should render transaction amount with expense formatting', () => {
-    render(\u003cTransactionItem transaction={mockTransaction} /\u003e);
+    render(<TransactionItem transaction={mockTransaction} />);
     
     const amountElement = screen.getByText(/150,50/);
     expect(amountElement).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('TransactionItem', () => {
       amount: 3000,
     };
 
-    render(\u003cTransactionItem transaction={incomeTransaction} /\u003e);
+    render(<TransactionItem transaction={incomeTransaction} />);
     
     const amountElement = screen.getByText(/3\.000,00/);
     expect(amountElement.textContent).toContain('+'); // Income should have plus sign
@@ -75,7 +75,7 @@ describe('TransactionItem', () => {
     const handleClick = vi.fn();
     const user = userEvent.setup();
     
-    render(\u003cTransactionItem transaction={mockTransaction} onClick={handleClick} /\u003e);
+    render(<TransactionItem transaction={mockTransaction} onClick={handleClick} />);
     
     const item = screen.getByText('Supermercado').closest('div.list-card');
     if (item) {
@@ -89,18 +89,18 @@ describe('TransactionItem', () => {
     const handleDelete = vi.fn();
     
     render(
-      \u003cTransactionItem 
+      <TransactionItem 
         transaction={mockTransaction} 
         onEdit={handleEdit}
         onDelete={handleDelete}
-      /\u003e
+      />
     );
     
     expect(screen.getByLabelText('Opções da transação')).toBeInTheDocument();
   });
 
   it('should not show menu button when no actions are provided', () => {
-    render(\u003cTransactionItem transaction={mockTransaction} /\u003e);
+    render(<TransactionItem transaction={mockTransaction} />);
     
     expect(screen.queryByLabelText('Opções da transação')).not.toBeInTheDocument();
   });
@@ -128,7 +128,7 @@ describe('TransactionItem', () => {
       ],
     };
 
-    render(\u003cTransactionItem transaction={installmentTransaction} /\u003e);
+    render(<TransactionItem transaction={installmentTransaction} />);
     
     expect(screen.getByText('3/12')).toBeInTheDocument();
   });
@@ -140,7 +140,7 @@ describe('TransactionItem', () => {
       category_id: null,
     };
 
-    render(\u003cTransactionItem transaction={transactionWithoutCategory} /\u003e);
+    render(<TransactionItem transaction={transactionWithoutCategory} />);
     
     expect(screen.getByText('Sem categoria')).toBeInTheDocument();
   });
@@ -150,10 +150,10 @@ describe('TransactionItem', () => {
     const handleEdit = vi.fn();
     
     render(
-      \u003cTransactionItem 
+      <TransactionItem 
         transaction={mockTransaction} 
         onEdit={handleEdit}
-      /\u003e
+      />
     );
     
     const menuButton = screen.getByLabelText('Opções da transação');
@@ -167,10 +167,10 @@ describe('TransactionItem', () => {
     const handleEdit = vi.fn();
     
     render(
-      \u003cTransactionItem 
+      <TransactionItem 
         transaction={mockTransaction} 
         onEdit={handleEdit}
-      /\u003e
+      />
     );
     
     // Open menu
@@ -189,10 +189,10 @@ describe('TransactionItem', () => {
     const handleDelete = vi.fn();
     
     render(
-      \u003cTransactionItem 
+      <TransactionItem 
         transaction={mockTransaction} 
         onDelete={handleDelete}
-      /\u003e
+      />
     );
     
     // Open menu
