@@ -76,7 +76,7 @@ describe('AccountItem', () => {
 
     render(<AccountItem account={account} />);
     
-    const balanceElement = screen.getByText(/-R\$ 500,00/);
+    const balanceElement = screen.getByText('-R$ 500,00');
     expect(balanceElement).toHaveClass('text-expense');
   });
 
