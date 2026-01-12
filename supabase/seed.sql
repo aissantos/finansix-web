@@ -44,6 +44,7 @@ INSERT INTO auth.identities (
     user_id,
     identity_data,
     provider,
+    provider_id,
     last_sign_in_at,
     created_at,
     updated_at
@@ -52,6 +53,7 @@ INSERT INTO auth.identities (
     'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     '{"sub":"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11","email":"admin@finansix.com"}',
     'email',
+    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     '2024-01-01 00:00:00+00',
     '2024-01-01 00:00:00+00',
     '2024-01-01 00:00:00+00'
