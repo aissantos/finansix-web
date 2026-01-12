@@ -19,7 +19,7 @@ describe('TransactionItem', () => {
     status: 'completed',
     notes: null,
     is_installment: false,
-    total_installments: null,
+    total_installments: 1,
     created_at: '2026-01-12T10:00:00Z',
     updated_at: '2026-01-12T10:00:00Z',
     deleted_at: null,
@@ -32,8 +32,6 @@ describe('TransactionItem', () => {
       household_id: 'household-1',
       is_favorite: false,
       created_at: '2026-01-01T00:00:00Z',
-      updated_at: '2026-01-01T00:00:00Z',
-      deleted_at: null,
     },
     installments: [],
   };
@@ -117,8 +115,9 @@ describe('TransactionItem', () => {
           household_id: 'household-1',
           credit_card_id: null,
           installment_number: 3,
+          total_installments: 12,
           amount: 50,
-          billing_month: '2026-01-01',
+          amount_cents: 5000,
           due_date: '2026-01-15',
           status: 'pending',
           created_at: '2026-01-01T00:00:00Z',
@@ -136,7 +135,7 @@ describe('TransactionItem', () => {
   it('should render "Sem categoria" when category is null', () => {
     const transactionWithoutCategory: TransactionWithDetails = {
       ...mockTransaction,
-      category: null,
+      category: undefined,
       category_id: null,
     };
 
