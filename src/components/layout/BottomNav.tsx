@@ -104,6 +104,7 @@ export function BottomNav() {
                     transition={{ delay: index * 0.05 }}
                     onClick={() => handleActionClick(action.route)}
                     className="flex flex-col items-center gap-2 group"
+                    aria-label={`Registrar ${action.label.toLowerCase()}`}
                   >
                     <div
                       className={cn(
@@ -136,6 +137,7 @@ export function BottomNav() {
           scale: isHidden ? 0.9 : 1
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        aria-label="Navegação principal"
       >
         <div className="relative">
           {/* Navigation Background - Solid with subtle shadow */}
@@ -181,6 +183,9 @@ export function BottomNav() {
               whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              aria-label={isMenuOpen ? 'Fechar menu de ações' : 'Abrir menu de ações'}
+              aria-expanded={isMenuOpen}
+              aria-haspopup="menu"
             >
               <Plus 
                 className={cn(
@@ -220,6 +225,8 @@ function NavItem({
           : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200',
         className
       )}
+      aria-label={`Navegar para ${label}`}
+      aria-current={isActive ? 'page' : undefined}
     >
       {isActive && (
         <motion.div
