@@ -109,7 +109,7 @@ export default function EditTransactionPage() {
     updateTransaction(
       {
         id,
-        updates: {
+        data: {
           type: data.type as TransactionType,
           amount: data.amount,
           description: data.description,

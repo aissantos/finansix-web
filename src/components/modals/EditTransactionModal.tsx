@@ -70,7 +70,7 @@ export function EditTransactionModal({
     try {
       await updateMutation.mutateAsync({
         id: transaction.id,
-        updates: {
+        data: {
           description: data.description,
           amount: data.amount,
           category_id: data.category_id || null,
