@@ -80,7 +80,7 @@ export default function HomePage() {
             {/* v2.0: Now with swipe gestures! */}
             <TransactionList
               limit={5}
-              onViewAll={() => navigate('/analysis')}
+              onViewAll={() => navigate('/transactions')}
               onEdit={setEditingTransaction}
               onDelete={setDeletingTransaction}
               enableSwipeGestures={true}
