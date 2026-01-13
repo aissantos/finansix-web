@@ -1,55 +1,25 @@
-import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Calendar, TrendingUp, TrendingDown, PieChart, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, PieChart, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MonthlyTrendChart } from '@/components/features/MonthlyTrendChart';
-import { TransactionList } from '@/components/features/TransactionList';
 import { useTransactionsByCategory, useFreeBalance, usePaymentSummary } from '@/hooks';
 import { useMonthlyComparison } from '@/hooks/useMonthlyComparison';
-import { useSelectedMonth, useAppStore } from '@/stores';
 import { formatCurrency, cn } from '@/lib/utils';
 
 export default function AnalysisPage() {
-  const navigate = useNavigate();
-  const selectedMonth = useSelectedMonth();
-  const setSelectedMonth = useAppStore((state) => state.setSelectedMonth);
-
-  const handleResetToCurrentMonth = () => {
-    setSelectedMonth(new Date());
-  };
 
   return (
     <>
       <Header title="Dashboard Analítico" showMonthSelector />
       <PageContainer className="space-y-6 pt-4">
-        {/* Month Selector Button - Click to reset to current month */}
-        <div className="flex items-center justify-center">
-          <button 
-            onClick={handleResetToCurrentMonth}
-            className="flex items-center gap-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm text-sm font-semibold text-primary border border-slate-100 dark:border-slate-700 active:scale-95 transition-all hover:shadow-md hover:border-primary"
-          >
-            <Calendar className="h-5 w-5" />
-            {format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}
-          </button>
-        </div>
 
         {/* Summary Cards - Horizontal Scroll */}
         <SummaryCards />
 
         {/* Monthly Comparison */}
         <MonthlyComparison />
-
-        {/* Recent Transactions with Swipe Gestures */}
-        <TransactionList 
-          limit={10}
-          showTitle={true}
-          onViewAll={() => navigate('/transactions')}
-          enableSwipeGestures={true}
-        />
 
         {/* Monthly Trend Chart */}
         <MonthlyTrendChart months={6} />

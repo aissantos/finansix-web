@@ -387,6 +387,7 @@ export interface Database {
           amount: number
           amount_cents: number
           due_date: string
+          billing_month: string
           status: InstallmentStatus
           paid_at: string | null
           created_at: string
