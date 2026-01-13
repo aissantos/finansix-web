@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 
 export function ReliefChart() {
-  const { data: projection, isLoading } = useInstallmentProjection(6);
+  const { data: projection, isLoading } = useInstallmentProjection(12);
 
   if (isLoading) {
     return <ReliefChartSkeleton />;
@@ -15,13 +15,41 @@ export function ReliefChart() {
     return null;
   }
 
+  // Filter out months with zero installments for better visualization
+  const nonZeroProjection = projection.filter(p => p.totalInstallments > 0);
+  
+  // If no installments at all, don't show the component
+  if (nonZeroProjection.length === 0) {
+    return null;
+  }
+
   // Find max value for scaling
   const maxValue = Math.max(...projection.map((p) => p.totalInstallments), 1);
 
-  // Calculate relief (difference between first and last month)
-  const firstMonth = projection[0]?.totalInstallments ?? 0;
-  const lastMonth = projection[projection.length - 1]?.totalInstallments ?? 0;
-  const reliefAmount = firstMonth - lastMonth;
+  // Find the last month that actually has installments
+  let lastMonthIndex = projection.length - 1;
+  while (lastMonthIndex >= 0 && projection[lastMonthIndex].totalInstallments === 0) {
+    lastMonthIndex--;
+  }
+  
+  // If no month with installments found, don't show
+  if (lastMonthIndex < 0) {
+    return null;
+  }
+  
+  // Calculate relief
+  const lastMonthWithInstallments = projection[lastMonthIndex].totalInstallments;
+  
+  // The relief month is the NEXT month after the last installment
+  // If last installment is in index 4 (mai), relief is in index 5 (jun)
+  const reliefMonthIndex = lastMonthIndex + 1;
+  const hasReliefMonth = reliefMonthIndex < projection.length;
+  
+  // Relief amount is the amount from the last month with installments
+  const reliefAmount = lastMonthWithInstallments;
+  
+  // Show relief message if there's a relief month within our projection
+  const shouldShowRelief = hasReliefMonth && reliefAmount > 0;
 
   return (
     <section>
@@ -30,7 +58,7 @@ export function ReliefChart() {
           <h3 className="text-base font-bold text-slate-900 dark:text-white">
             Projeção de Alívio
           </h3>
-          <p className="text-xs text-slate-500">Queda nas parcelas (6 meses)</p>
+          <p className="text-xs text-slate-500">Queda nas parcelas (12 meses)</p>
         </div>
         <button className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 transition-colors">
           <MoreHorizontal className="h-4 w-4" />
@@ -39,38 +67,41 @@ export function ReliefChart() {
 
       <Card className="glass-card p-5">
         {/* Bar chart */}
-        <div className="flex items-end justify-between h-32 gap-2 w-full pt-4">
-          {projection.slice(0, 6).map((month, i) => {
+        <div className="flex justify-between h-36 gap-2 w-full pt-4">
+          {projection.slice(0, 12).map((month, i) => {
             const height = (month.totalInstallments / maxValue) * 100;
             const isLastMonth = i === projection.length - 1;
+            const hasInstallments = month.totalInstallments > 0;
 
             return (
-              <div key={i} className="flex flex-col items-center gap-2 flex-1 group">
-                <div className="relative w-full bg-slate-100 dark:bg-slate-700 rounded-t-lg h-full overflow-hidden">
-                  <div
-                    className={cn(
-                      'absolute bottom-0 w-full rounded-t-lg transition-all duration-500 group-hover:opacity-100',
-                      isLastMonth
-                        ? 'gradient-success'
-                        : 'gradient-primary opacity-70'
-                    )}
-                    style={{ height: `${Math.max(height, 5)}%` }}
-                  />
+              <div key={i} className="flex flex-col items-center gap-2 flex-1 h-full group">
+                <div className="relative w-full bg-slate-100 dark:bg-slate-700 rounded-t-lg flex-1 overflow-hidden">
+                  {hasInstallments && (
+                    <div
+                      className={cn(
+                        'absolute bottom-0 w-full rounded-t-lg transition-all duration-500',
+                        isLastMonth
+                          ? 'bg-gradient-to-t from-emerald-600 to-emerald-400'
+                          : 'bg-gradient-to-t from-blue-700 to-blue-500 opacity-80'
+                      )}
+                      style={{ height: `${Math.max(height, 5)}%` }}
+                    />
+                  )}
                 </div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  {formatMonthShort(month.month)}
+                  {formatMonthShort(month.month).charAt(0)}
                 </span>
               </div>
             );
           })}
         </div>
 
-        {/* Relief message */}
-        {reliefAmount > 0 && (
+        {/* Relief message - shows the first month WITHOUT installments */}
+        {shouldShowRelief && (
           <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0" />
             <p className="text-xs text-slate-500">
-              Em {formatMonthShort(projection[projection.length - 1]?.month ?? new Date())}, você terá{' '}
+              Em {formatMonthShort(projection[reliefMonthIndex]?.month ?? new Date())}, você terá{' '}
               <strong className="text-slate-900 dark:text-white">
                 {formatCurrency(reliefAmount)}
               </strong>{' '}

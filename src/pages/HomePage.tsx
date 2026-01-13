@@ -12,7 +12,6 @@ import {
   PaymentSummaryCards,
   // NEW v2.0: Elite features
   SmartInsights,
-  BalanceForecaster,
 } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { DeleteConfirmDialog } from '@/components/ui';
@@ -68,9 +67,6 @@ export default function HomePage() {
             
             {/* NEW v2.0: Smart Insights - Context-aware tips */}
             <SmartInsights />
-            
-            {/* NEW v2.0: Balance Forecaster - ML prediction */}
-            <BalanceForecaster />
             
             <PaymentSummaryCards />
             <CardOptimizer />

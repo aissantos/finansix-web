@@ -54,7 +54,7 @@ export async function getInstallmentProjection(
       credit_card:credit_cards(id, name, color)
     `)
     .eq('household_id', householdId)
-    .eq('status', 'pending')
+    // Removed .eq('status', 'pending') to show history of paid installments as well
     .is('deleted_at', null)
     .gte('billing_month', format(startMonth, 'yyyy-MM-dd'))
     .lt('billing_month', format(endMonth, 'yyyy-MM-dd'));

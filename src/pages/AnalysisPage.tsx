@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MonthlyTrendChart } from '@/components/features/MonthlyTrendChart';
+import { BalanceForecaster } from '@/components/features';
 import { useTransactionsByCategory, useFreeBalance, usePaymentSummary } from '@/hooks';
 import { useMonthlyComparison } from '@/hooks/useMonthlyComparison';
 import { formatCurrency, cn } from '@/lib/utils';
@@ -17,6 +18,9 @@ export default function AnalysisPage() {
 
         {/* Summary Cards - Horizontal Scroll */}
         <SummaryCards />
+
+        {/* Balance Forecaster - ML prediction */}
+        <BalanceForecaster />
 
         {/* Monthly Comparison */}
         <MonthlyComparison />
