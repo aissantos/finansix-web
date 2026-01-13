@@ -28,7 +28,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { DeleteConfirmDialog } from '@/components/ui';
 import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
 import { SwipeableTransactionItem } from '@/components/features/SwipeableTransactionItem';
-import { useTransactions, useCategories, useDeleteTransaction } from '@/hooks';
+import { useAllTransactions, useCategories, useDeleteTransaction } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/useToast';
@@ -145,7 +145,7 @@ export default function AllTransactionsPage() {
   const [editingTransaction, setEditingTransaction] = useState<TransactionWithDetails | null>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<TransactionWithDetails | null>(null);
 
-  const { data: transactions, isLoading } = useTransactions();
+  const { data: transactions, isLoading } = useAllTransactions();
   const { data: categories } = useCategories();
 
   // Filter transactions

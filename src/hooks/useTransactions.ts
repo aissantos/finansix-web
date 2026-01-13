@@ -9,6 +9,7 @@ import {
   getRecentTransactions,
   getTransactionsByCategory,
 } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { queryKeys } from '@/lib/query-client';
 import { useHouseholdId, useSelectedMonth } from '@/stores';
 import type { InsertTables, UpdateTables, TransactionWithDetails } from '@/types';
@@ -59,7 +60,7 @@ export function useTransactionsByCategory() {
   const monthKey = format(selectedMonth, 'yyyy-MM');
 
   return useQuery({
-    queryKey: queryKeys.transactions.byCategory(householdId!, monthKey),
+    queryKey: [...queryKeys.transactions.all, 'by-category', householdId, monthKey],
     queryFn: () => getTransactionsByCategory(householdId!, selectedMonth),
     enabled: !!householdId,
   });
@@ -75,31 +76,39 @@ export function useCreateTransaction() {
     mutationFn: (data: Omit<InsertTables<'transactions'>, 'household_id'>) =>
       createTransaction({ ...data, household_id: householdId! }),
 
-    onMutate: async (newTx) => {
-      await queryClient.cancelQueries({
-        queryKey: queryKeys.transactions.list(householdId!, monthKey),
-      });
+    onMutate: async (newTransaction) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
 
-      const previous = queryClient.getQueryData<TransactionWithDetails[]>(
+      // Snapshot previous value
+      const previousTransactions = queryClient.getQueryData(
         queryKeys.transactions.list(householdId!, monthKey)
       );
 
+      // Optimistically update
       queryClient.setQueryData(
         queryKeys.transactions.list(householdId!, monthKey),
         (old: TransactionWithDetails[] = []) => [
-          { ...newTx, id: `temp-${Date.now()}`, household_id: householdId } as TransactionWithDetails,
+          {
+            ...newTransaction,
+            id: 'temp-id',
+            household_id: householdId!,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as TransactionWithDetails,
           ...old,
         ]
       );
 
-      return { previous };
+      return { previousTransactions };
     },
 
-    onError: (_err, _newTx, context) => {
-      if (context?.previous) {
+    onError: (_err, _newTransaction, context) => {
+      // Rollback on error
+      if (context?.previousTransactions) {
         queryClient.setQueryData(
           queryKeys.transactions.list(householdId!, monthKey),
-          context.previous
+          context.previousTransactions
         );
       }
     },
@@ -117,12 +126,14 @@ export function useUpdateTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: UpdateTables<'transactions'> }) =>
-      updateTransaction(id, updates),
+    mutationFn: ({ id, data }: { id: string; data: UpdateTables<'transactions'> }) =>
+      updateTransaction(id, data),
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
       queryClient.invalidateQueries({ queryKey: ['freeBalance'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.installments.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards.all });
     },
   });
 }
@@ -139,5 +150,35 @@ export function useDeleteTransaction() {
       queryClient.invalidateQueries({ queryKey: queryKeys.installments.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.all });
     },
+  });
+}
+
+/**
+ * Hook to fetch ALL transactions without month filter
+ * Used in AllTransactionsPage to show complete transaction history
+ */
+export function useAllTransactions() {
+  const householdId = useHouseholdId();
+
+  return useQuery({
+    queryKey: [...queryKeys.transactions.all, 'complete', householdId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          category:categories(id, name, icon, color, type),
+          credit_card:credit_cards(id, name, last_four_digits, brand, credit_limit),
+          account:accounts(id, name, type, current_balance),
+          installments:installments(*)
+        `)
+        .eq('household_id', householdId!)
+        .is('deleted_at', null)
+        .order('transaction_date', { ascending: false });
+
+      if (error) throw error;
+      return (data ?? []) as unknown as TransactionWithDetails[];
+    },
+    enabled: !!householdId,
   });
 }
