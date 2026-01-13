@@ -26,7 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DeleteConfirmDialog } from '@/components/ui';
 import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
-import { TransactionItem } from '@/components/features/TransactionItem';
+import { SwipeableTransactionItem } from '@/components/features/SwipeableTransactionItem';
 import { useTransactions, useCategories, useDeleteTransaction } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -496,9 +496,10 @@ export default function AllTransactionsPage() {
             </p>
             <div className="flex flex-col gap-3">
               {filteredTransactions.map((transaction) => (
-                <TransactionItem
+                <SwipeableTransactionItem
                   key={transaction.id}
                   transaction={transaction}
+                  onClick={() => setEditingTransaction(transaction)}
                   onEdit={() => setEditingTransaction(transaction)}
                   onDelete={() => setDeletingTransaction(transaction)}
                 />
