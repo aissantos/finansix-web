@@ -88,6 +88,7 @@ export async function createTransaction(
   const insertData: InsertTables<'transactions'> = {
     household_id: transaction.household_id,
     type: transaction.type,
+    status: transaction.status ?? 'completed', // Ensure status is set
     amount: transaction.amount,
     amount_cents: amountCents, // Required for installment trigger
     description: transaction.description,
