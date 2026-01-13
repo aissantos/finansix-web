@@ -15,7 +15,8 @@ import {
   Calendar,
   X,
   Plus,
-  PieChart
+  PieChart,
+  Repeat
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -33,7 +34,7 @@ import { format } from 'date-fns';
 import { toast } from '@/hooks/useToast';
 import type { TransactionWithDetails } from '@/types';
 
-type FilterType = 'all' | 'income' | 'expense';
+type FilterType = 'all' | 'income' | 'expense' | 'transfer';
 
 // Category Distribution Chart Component
 function CategoryDistributionChart({ transactions }: { transactions: TransactionWithDetails[] }) {
@@ -328,6 +329,7 @@ export default function AllTransactionsPage() {
                   { value: 'all' as const, label: 'Todas', icon: Calendar },
                   { value: 'income' as const, label: 'Receitas', icon: ArrowDownLeft },
                   { value: 'expense' as const, label: 'Despesas', icon: ArrowUpRight },
+                  { value: 'transfer' as const, label: 'Transferências', icon: Repeat },
                 ].map(({ value, label, icon: Icon }) => (
                   <button
                     key={value}

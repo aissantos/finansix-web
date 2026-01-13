@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MonthlyTrendChart } from '@/components/features/MonthlyTrendChart';
-import { RecentTransactionsFeed } from '@/components/features/RecentTransactionsFeed';
+import { TransactionList } from '@/components/features/TransactionList';
 import { useTransactionsByCategory, useFreeBalance, usePaymentSummary } from '@/hooks';
 import { useMonthlyComparison } from '@/hooks/useMonthlyComparison';
 import { useSelectedMonth } from '@/stores';
@@ -33,8 +33,13 @@ export default function AnalysisPage() {
         {/* Monthly Comparison */}
         <MonthlyComparison />
 
-        {/* Recent Transactions Feed */}
-        <RecentTransactionsFeed limit={10} />
+        {/* Recent Transactions with Swipe Gestures */}
+        <TransactionList 
+          limit={10}
+          showTitle={true}
+          onViewAll={() => navigate('/transactions')}
+          enableSwipeGestures={true}
+        />
 
         {/* Monthly Trend Chart */}
         <MonthlyTrendChart months={6} />
