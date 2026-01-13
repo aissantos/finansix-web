@@ -10,20 +10,28 @@ import { MonthlyTrendChart } from '@/components/features/MonthlyTrendChart';
 import { TransactionList } from '@/components/features/TransactionList';
 import { useTransactionsByCategory, useFreeBalance, usePaymentSummary } from '@/hooks';
 import { useMonthlyComparison } from '@/hooks/useMonthlyComparison';
-import { useSelectedMonth } from '@/stores';
+import { useSelectedMonth, useAppStore } from '@/stores';
 import { formatCurrency, cn } from '@/lib/utils';
 
 export default function AnalysisPage() {
   const navigate = useNavigate();
   const selectedMonth = useSelectedMonth();
+  const setSelectedMonth = useAppStore((state) => state.setSelectedMonth);
+
+  const handleResetToCurrentMonth = () => {
+    setSelectedMonth(new Date());
+  };
 
   return (
     <>
       <Header title="Dashboard Analítico" showMonthSelector />
       <PageContainer className="space-y-6 pt-4">
-        {/* Month Selector Button */}
+        {/* Month Selector Button - Click to reset to current month */}
         <div className="flex items-center justify-center">
-          <button className="flex items-center gap-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm text-sm font-semibold text-primary border border-slate-100 dark:border-slate-700 active:scale-95 transition-transform">
+          <button 
+            onClick={handleResetToCurrentMonth}
+            className="flex items-center gap-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm text-sm font-semibold text-primary border border-slate-100 dark:border-slate-700 active:scale-95 transition-all hover:shadow-md hover:border-primary"
+          >
             <Calendar className="h-5 w-5" />
             {format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}
           </button>

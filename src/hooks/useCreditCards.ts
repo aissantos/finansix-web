@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import {
   getCreditCards,
   getCreditCard,
@@ -9,7 +10,7 @@ import {
 } from '@/lib/supabase';
 import { getBestCard } from '@/lib/utils/calculations';
 import { queryKeys } from '@/lib/query-client';
-import { useHouseholdId } from '@/stores';
+import { useHouseholdId, useSelectedMonth } from '@/stores';
 import type { InsertTables, UpdateTables, CreditCardWithLimits } from '@/types';
 
 export function useCreditCards() {
@@ -42,12 +43,14 @@ export function useCreditUsage() {
 
 export function useBestCard(minimumLimit = 0) {
   const householdId = useHouseholdId();
+  const selectedMonth = useSelectedMonth();
+  const monthKey = format(selectedMonth, 'yyyy-MM');
 
   return useQuery({
-    queryKey: [...queryKeys.bestCard(householdId!), minimumLimit],
+    queryKey: [...queryKeys.bestCard(householdId!), minimumLimit, monthKey],
     queryFn: async () => {
       const cards = await getCreditCards(householdId!);
-      return getBestCard(cards, new Date(), minimumLimit);
+      return getBestCard(cards, selectedMonth, minimumLimit);
     },
     enabled: !!householdId,
   });

@@ -57,7 +57,27 @@ export async function getTransactions(
 
   if (error) handleSupabaseError(error);
   
-  return (data ?? []) as unknown as TransactionWithDetails[];
+  let transactions = (data ?? []) as unknown as TransactionWithDetails[];
+
+  // For month filtering, we need to filter installment transactions by billing_month
+  // instead of transaction_date to show only installments that bill in the selected month
+  if (options?.month) {
+    const selectedMonthStr = format(startOfMonth(options.month), 'yyyy-MM-01');
+    
+    transactions = transactions.filter(tx => {
+      // Non-installment transactions: already filtered by transaction_date
+      if (!tx.is_installment || !tx.installments?.length) {
+        return true;
+      }
+      
+      // Installment transactions: check if any installment bills in the selected month
+      return tx.installments.some(inst => 
+        inst.billing_month === selectedMonthStr
+      );
+    });
+  }
+
+  return transactions;
 }
 
 export async function getTransaction(id: string): Promise<TransactionWithDetails> {
