@@ -1,5 +1,5 @@
 import { memo, useState, useRef } from 'react';
-import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
+import { motion, useMotionValue, type PanInfo } from 'framer-motion';
 import * as Icons from 'lucide-react';
 import { Trash2, Edit3, Copy } from 'lucide-react';
 import { formatCurrency, formatDateRelative, cn } from '@/lib/utils';
@@ -64,72 +64,54 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
 
   const installmentNumber = currentInstallment?.installment_number || 1;
 
-  // Background colors for swipe actions
-  const backgroundLeft = useTransform(
-    x,
-    [-150, 0],
-    ['rgba(239, 68, 68, 1)', 'rgba(239, 68, 68, 0)']
-  );
-
-  const backgroundRight = useTransform(
-    x,
-    [0, 150],
-    ['rgba(59, 130, 246, 0)', 'rgba(59, 130, 246, 1)']
-  );
-
   const handleDragEnd = (_event: unknown, info: PanInfo) => {
     const threshold = 100;
 
     if (info.offset.x < -threshold) {
       // Swipe left - Delete
-      setIsRevealed('left');
       if (onDelete) {
         // Haptic feedback if available
         if (navigator.vibrate) {
           navigator.vibrate(50);
         }
-        setTimeout(() => onDelete(), 300);
+        // Just call the callback - parent will handle confirmation
+        onDelete();
       }
     } else if (info.offset.x > threshold) {
       // Swipe right - Edit
-      setIsRevealed('right');
       if (onEdit) {
         if (navigator.vibrate) {
           navigator.vibrate(30);
         }
-        setTimeout(() => onEdit(), 300);
+        // Just call the callback
+        onEdit();
       }
-    } else {
-      setIsRevealed(null);
     }
+    
+    // Reset position
+    setIsRevealed(null);
   };
 
   return (
-    <div ref={constraintsRef} className="relative overflow-hidden rounded-2xl">
-      {/* Background Actions */}
-      {/* Delete Action (Left) */}
-      <motion.div
-        className="absolute inset-0 flex items-center justify-start px-6 rounded-2xl"
-        style={{ backgroundColor: backgroundLeft }}
-      >
+    <div ref={constraintsRef} className="relative overflow-hidden rounded-2xl h-[72px]">
+      {/* Background Actions - BEHIND the card */}
+      {/* Delete Action (Left) - Red background - LEFT HALF ONLY */}
+      <div className="absolute inset-y-0 left-0 right-1/2 flex items-center justify-start px-6 bg-red-500 rounded-l-2xl">
         <div className="flex items-center gap-2 text-white">
           <Trash2 className="h-5 w-5" />
           <span className="font-semibold">Excluir</span>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Edit Action (Right) */}
-      <motion.div
-        className="absolute inset-0 flex items-center justify-end px-6 rounded-2xl"
-        style={{ backgroundColor: backgroundRight }}
-      >
+      {/* Edit Action (Right) - Blue background - RIGHT HALF ONLY */}
+      <div className="absolute inset-y-0 left-1/2 right-0 flex items-center justify-end px-6 bg-blue-500 rounded-r-2xl">
         <div className="flex items-center gap-2 text-white">
           <span className="font-semibold">Editar</span>
           <Edit3 className="h-5 w-5" />
         </div>
-      </motion.div>
+      </div>
 
-      {/* Main Card */}
+      {/* Main Card - COVERS the backgrounds */}
       <motion.div
         drag="x"
         dragConstraints={{ left: -150, right: 150 }}
@@ -138,7 +120,7 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
         onTap={() => onClick?.()} 
         style={{ x, touchAction: 'none' }}
         className={cn(
-          'list-card flex items-center justify-between bg-white dark:bg-slate-800',
+          'absolute inset-0 list-card flex items-center justify-between bg-white dark:bg-slate-800 rounded-2xl',
           onClick && 'cursor-pointer'
         )}
         whileTap={{ scale: 0.98 }}
