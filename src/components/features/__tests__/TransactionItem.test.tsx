@@ -136,6 +136,7 @@ describe('TransactionItem', () => {
           amount: 50,
           amount_cents: 5000,
           due_date: '2026-01-15',
+          billing_month: '2026-01-01',
           status: 'pending',
           paid_at: null,
           created_at: '2026-01-01T00:00:00Z',
