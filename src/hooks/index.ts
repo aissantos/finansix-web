@@ -3,6 +3,7 @@ export { useScrollDirection } from './useScrollDirection';
 export { usePaymentSummary } from './usePaymentSummary';
 export {
   useTransactions,
+  useAllTransactions,
   useTransaction,
   useRecentTransactions,
   useTransactionsByCategory,
