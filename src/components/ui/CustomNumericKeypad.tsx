@@ -158,9 +158,18 @@ export function CustomNumericKeypad({
           <motion.button
             key={amount}
             onClick={() => {
-              const newValue = amount.toFixed(2).replace('.', ',');
-              setDisplayValue(newValue);
-              onChange(amount);
+              // Add to current value instead of replacing
+              const currentValue = parseFloat(displayValue.replace(',', '.'));
+              const newValue = currentValue + amount;
+              
+              // Check max value
+              if (newValue > maxValue) {
+                return;
+              }
+              
+              const formatted = newValue.toFixed(2).replace('.', ',');
+              setDisplayValue(formatted);
+              onChange(newValue);
             }}
             whileTap={{ scale: 0.95 }}
             className="h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
