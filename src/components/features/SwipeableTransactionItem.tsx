@@ -105,10 +105,11 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
   };
 
   return (
-    <div ref={constraintsRef} className="relative overflow-hidden">
+    <div ref={constraintsRef} className="relative overflow-hidden rounded-2xl">
       {/* Background Actions */}
+      {/* Delete Action (Left) */}
       <motion.div
-        className="absolute inset-0 flex items-center justify-between px-6"
+        className="absolute inset-0 flex items-center justify-start px-6 rounded-2xl"
         style={{ backgroundColor: backgroundLeft }}
       >
         <div className="flex items-center gap-2 text-white">
@@ -117,11 +118,12 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
         </div>
       </motion.div>
 
+      {/* Edit Action (Right) */}
       <motion.div
-        className="absolute inset-0 flex items-center justify-between px-6"
+        className="absolute inset-0 flex items-center justify-end px-6 rounded-2xl"
         style={{ backgroundColor: backgroundRight }}
       >
-        <div className="ml-auto flex items-center gap-2 text-white">
+        <div className="flex items-center gap-2 text-white">
           <span className="font-semibold">Editar</span>
           <Edit3 className="h-5 w-5" />
         </div>
