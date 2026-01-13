@@ -133,7 +133,8 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
         dragConstraints={{ left: -150, right: 150 }}
         dragElastic={0.2}
         onDragEnd={handleDragEnd}
-        style={{ x }}
+        onTap={() => onClick?.()} 
+        style={{ x, touchAction: 'none' }}
         className={cn(
           'list-card flex items-center justify-between bg-white dark:bg-slate-800',
           onClick && 'cursor-pointer'
@@ -148,7 +149,7 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
         }
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
-        <div className="flex items-center gap-4 flex-1 min-w-0" onClick={onClick}>
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           {/* Icon */}
           <div
             className="icon-container-lg flex-shrink-0"
