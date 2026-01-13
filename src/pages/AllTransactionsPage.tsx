@@ -271,7 +271,7 @@ export default function AllTransactionsPage() {
     return (
       <>
         <Header title="Todas Transações" showBack onBack={() => navigate(-1)} />
-        <PageContainer className="space-y-4">
+        <PageContainer className="space-y-4 pt-6">
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-24 w-full" />
           {Array.from({ length: 8 }).map((_, i) => (
@@ -285,7 +285,7 @@ export default function AllTransactionsPage() {
   return (
     <>
       <Header title="Todas Transações" showBack onBack={() => navigate(-1)} />
-      <PageContainer className="space-y-4 pb-24">
+      <PageContainer className="space-y-4 pt-6 pb-24">
         {/* Search Bar */}
         <div className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 pb-4">
           <div className="relative">
