@@ -13,6 +13,7 @@ import {
   Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { Card } from "@/components/ui/card";
 import { CustomNumericKeypad } from "@/components/ui/CustomNumericKeypad";
 import { InstallmentConfirmDialog } from "@/components/features/InstallmentConfirmDialog";
@@ -279,7 +280,7 @@ export default function NewExpensePage() {
                       : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
                   )}
                 >
-                  {cat.icon} {cat.name}
+                  <Icon name={cat.icon} className="h-3 w-3 mr-1.5" /> {cat.name}
                 </button>
               );
             })}

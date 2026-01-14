@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 import { X, TrendingDown, TrendingUp, Calendar, CreditCard, Check, Edit3, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { CustomNumericKeypad } from '@/components/ui/CustomNumericKeypad';
@@ -24,7 +25,7 @@ const transactionSchema = z.object({
   account_id: z.string().optional(),
   transaction_date: z.string(),
   is_installment: z.boolean(),
-  total_installments: z.number().min(1).max(48),
+  total_installments: z.number().min(1).max(360), // Increased for subscriptions (ad eternum)
   is_reimbursable: z.boolean(),
   reimbursement_source: z.string().optional(),
 });
@@ -104,8 +105,7 @@ export default function NewTransactionPage() {
   };
 
   const submitTransaction = (data: TransactionForm) => {
-    createTransaction(
-      {
+    const payload = {
         type: data.type as TransactionType,
         amount: data.amount,
         description: data.description,
@@ -117,7 +117,21 @@ export default function NewTransactionPage() {
         total_installments: data.is_installment ? data.total_installments : 1,
         is_reimbursable: data.is_reimbursable,
         reimbursement_source: data.is_reimbursable ? data.reimbursement_source : null,
-      },
+    };
+
+    // CHECK: Is it a Subscription (Assinatura)?
+    if (data.category_id && payload.type === 'expense') {
+      const category = categories?.find(c => c.id === data.category_id);
+      if (category && (category.name.toLowerCase().includes('assinatura') || category.name.toLowerCase() === 'assinaturas')) {
+        // FORCE "Ad Eternum" behavior via long-term installments
+        // This triggers the 'explode_installments' DB function to create future records
+        payload.is_installment = true;
+        payload.total_installments = 120; // 10 years of projections
+      }
+    }
+
+    createTransaction(
+      payload,
       {
         onSuccess: () => {
           // CHECK: Can we create a subscription automatically?
@@ -307,6 +321,7 @@ export default function NewTransactionPage() {
                           : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                       )}
                     >
+                      <Icon name={cat.icon} className="h-3 w-3" />
                       {cat.name}
                       {isSelected && <Check className="h-3 w-3" />}
                       {hasScore && !isSelected && (

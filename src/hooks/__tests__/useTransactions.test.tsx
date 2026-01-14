@@ -3,9 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useTransactions, useTransaction, useCreateTransaction, useUpdateTransaction, useDeleteTransaction } from '@/hooks/useTransactions';
 import { getTransactions, getTransaction, createTransaction, updateTransaction, deleteTransaction } from '@/lib/supabase';
 import { useHouseholdId, useSelectedMonth } from '@/stores';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { createWrapper } from '@/test/utils'; // Assuming this exists or I'll create a local wrapper
-
+import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 // Mock stores
 vi.mock('@/stores', () => ({
   useHouseholdId: vi.fn(),
@@ -52,14 +50,14 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 describe('useTransactions Hooks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useHouseholdId as any).mockReturnValue('household-123');
-    (useSelectedMonth as any).mockReturnValue(new Date('2026-01-01'));
+    (useHouseholdId as unknown as Mock).mockReturnValue('household-123');
+    (useSelectedMonth as unknown as Mock).mockReturnValue(new Date('2026-01-01'));
   });
 
   describe('useTransactions', () => {
     it('should fetch transactions list', async () => {
       const mockTransactions = [{ id: '1', description: 'Test', amount: 100 }];
-      (getTransactions as any).mockResolvedValue(mockTransactions);
+      (getTransactions as unknown as Mock).mockResolvedValue(mockTransactions);
 
       const { result } = renderHook(() => useTransactions(), { wrapper });
 
@@ -75,7 +73,7 @@ describe('useTransactions Hooks', () => {
   describe('useTransaction', () => {
     it('should fetch single transaction details', async () => {
       const mockTransaction = { id: '1', description: 'Test', amount: 100 };
-      (getTransaction as any).mockResolvedValue(mockTransaction);
+      (getTransaction as unknown as Mock).mockResolvedValue(mockTransaction);
 
       const { result } = renderHook(() => useTransaction('1'), { wrapper });
 
@@ -89,11 +87,11 @@ describe('useTransactions Hooks', () => {
   describe('useCreateTransaction', () => {
     it('should create a transaction successfully', async () => {
       const newTransaction = { description: 'New', amount: 50, date: '2026-01-01' };
-      (createTransaction as any).mockResolvedValue({ id: 'new-1', ...newTransaction });
+      (createTransaction as unknown as Mock).mockResolvedValue({ id: 'new-1', ...newTransaction });
 
       const { result } = renderHook(() => useCreateTransaction(), { wrapper });
 
-      await result.current.mutateAsync(newTransaction as any);
+      await result.current.mutateAsync(newTransaction as any); // Type assertion needed for partial mock
 
       expect(createTransaction).toHaveBeenCalledWith(expect.objectContaining({
           ...newTransaction,
@@ -105,7 +103,7 @@ describe('useTransactions Hooks', () => {
   describe('useUpdateTransaction', () => {
     it('should update a transaction successfully', async () => {
       const updateData = { description: 'Updated' };
-      (updateTransaction as any).mockResolvedValue({ id: '1', ...updateData });
+      (updateTransaction as unknown as Mock).mockResolvedValue({ id: '1', ...updateData });
 
       const { result } = renderHook(() => useUpdateTransaction(), { wrapper });
 
@@ -117,7 +115,7 @@ describe('useTransactions Hooks', () => {
 
   describe('useDeleteTransaction', () => {
     it('should delete a transaction successfully', async () => {
-      (deleteTransaction as any).mockResolvedValue(true);
+      (deleteTransaction as unknown as Mock).mockResolvedValue(true);
 
       const { result } = renderHook(() => useDeleteTransaction(), { wrapper });
 
