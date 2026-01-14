@@ -2,7 +2,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 import { useAppStore } from '@/stores';
 
 // Mock mocks
@@ -49,19 +49,19 @@ describe('useAuth Hook', () => {
         return null;
     });
 
-    (supabase.auth.getSession as any).mockResolvedValue({
+    (supabase.auth.getSession as unknown as Mock).mockResolvedValue({
       data: { session: null },
       error: null,
     });
 
-    (supabase.auth.onAuthStateChange as any).mockReturnValue({
+    (supabase.auth.onAuthStateChange as unknown as Mock).mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
     });
   });
 
   it('should initialize with loading state', async () => {
     // Delay resolution of getSession to verify loading state
-    (supabase.auth.getSession as any).mockImplementation(() => new Promise(() => {}));
+    (supabase.auth.getSession as unknown as Mock).mockImplementation(() => new Promise(() => {}));
 
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 
@@ -73,7 +73,7 @@ describe('useAuth Hook', () => {
     const mockUser = { id: 'user-123', email: 'test@example.com' };
     const mockSession = { user: mockUser };
 
-    (supabase.auth.getSession as any).mockResolvedValue({
+    (supabase.auth.getSession as unknown as Mock).mockResolvedValue({
       data: { session: mockSession },
       error: null,
     });
@@ -91,7 +91,7 @@ describe('useAuth Hook', () => {
 
   it('should return error when login fails', async () => {
     const error = new Error('Invalid credentials');
-    (supabase.auth.signInWithPassword as any).mockResolvedValue({ error });
+    (supabase.auth.signInWithPassword as unknown as Mock).mockResolvedValue({ error });
 
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 
@@ -102,7 +102,7 @@ describe('useAuth Hook', () => {
   });
 
   it('should handle signOut successfully', async () => {
-    (supabase.auth.signOut as any).mockResolvedValue({ error: null });
+    (supabase.auth.signOut as unknown as Mock).mockResolvedValue({ error: null });
 
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -115,7 +115,7 @@ describe('useAuth Hook', () => {
   });
   
   it('should handle session restoration failure safely', async () => {
-    (supabase.auth.getSession as any).mockRejectedValue(new Error('Network Error'));
+    (supabase.auth.getSession as unknown as Mock).mockRejectedValue(new Error('Network Error'));
 
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 

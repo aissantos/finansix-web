@@ -14,6 +14,7 @@ import {
   Check,
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
+import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -264,7 +265,7 @@ function CategoryItem({
         className="h-10 w-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
         style={{ backgroundColor: category.color + '20' }}
       >
-        {category.icon || '📁'}
+        {category.icon ? <Icon name={category.icon} className="h-6 w-6" /> : '📁'}
       </div>
 
       {/* Name */}
@@ -411,7 +412,7 @@ function CategoryForm({
             className="h-12 w-12 rounded-xl flex items-center justify-center text-xl"
             style={{ backgroundColor: selectedColor + '30' }}
           >
-            {selectedIcon}
+            {selectedIcon ? <Icon name={selectedIcon} className="h-6 w-6" /> : null}
           </div>
           <div>
             <p className="font-bold text-slate-900 dark:text-white">
@@ -453,7 +454,7 @@ function CategoryForm({
                     : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200'
                 )}
               >
-                {icon}
+                <Icon name={icon} className="h-6 w-6 mx-auto" />
               </button>
             ))}
           </div>
