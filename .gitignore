@@ -39,3 +39,5 @@ pnpm-debug.log*
 supabase/.branches
 supabase/.temp
 node_modules
+
+coverage/
