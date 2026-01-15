@@ -510,7 +510,7 @@ export default function NewTransactionPage() {
         cardName={cards?.find(c => c.id === pendingSubmitData?.credit_card_id)?.name}
         startDate={pendingSubmitData?.transaction_date ? new Date(pendingSubmitData.transaction_date) : undefined}
         description={pendingSubmitData?.description ?? ''}
-        isLoading={isPending}
+        isLoading={isTransactionPending}
       />
 
       {/* NEW v2.0: Custom Numeric Keypad Modal */}

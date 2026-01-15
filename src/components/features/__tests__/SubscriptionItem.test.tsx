@@ -83,9 +83,11 @@ describe('SubscriptionItem', () => {
     const { container } = render(<SubscriptionItem subscription={mockSubscription} {...mockHandlers} />);
     
     // Should show billing day info (either "Dia 15" or "Em X dias" depending on current date)
+    // Should show billing day info (either "Dia 15", "Em X dias" or "Cobra hoje!" depending on current date)
     const hasStaticDay = container.textContent?.includes('Dia 15');
     const hasUpcomingDay = container.textContent?.includes('Em') && container.textContent?.includes('dia');
-    expect(hasStaticDay || hasUpcomingDay).toBe(true);
+    const hasToday = container.textContent?.includes('Cobra hoje!');
+    expect(hasStaticDay || hasUpcomingDay || hasToday).toBe(true);
   });
 
   it('should open menu when menu button is clicked', async () => {
