@@ -28,7 +28,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { DeleteConfirmDialog } from '@/components/ui';
 import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
 import { SwipeableTransactionItem } from '@/components/features/SwipeableTransactionItem';
-import { useAllTransactions, useCategories, useDeleteTransaction } from '@/hooks';
+import { useAllTransactions, useCategories, useDeleteTransaction, useUpdateTransaction } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/useToast';
@@ -132,6 +132,7 @@ function CategoryDistributionChart({ transactions }: { transactions: Transaction
 export default function AllTransactionsPage() {
   const navigate = useNavigate();
   const deleteMutation = useDeleteTransaction();
+  const updateMutation = useUpdateTransaction();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
@@ -147,6 +148,27 @@ export default function AllTransactionsPage() {
 
   const { data: transactions, isLoading } = useAllTransactions();
   const { data: categories } = useCategories();
+
+  const handlePay = async (transaction: TransactionWithDetails) => {
+    try {
+      await updateMutation.mutateAsync({
+        id: transaction.id,
+        data: { status: 'completed' }
+      });
+      toast({
+        title: 'Conta Paga! 💸',
+        description: 'Transação marcada como concluída.',
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('Failed to pay transaction:', error);
+      toast({
+        title: 'Erro ao pagar',
+        description: 'Não foi possível atualizar a transação.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Filter transactions
   const filteredTransactions = useMemo(() => {
@@ -504,6 +526,7 @@ export default function AllTransactionsPage() {
                   onClick={() => setEditingTransaction(transaction)}
                   onEdit={() => setEditingTransaction(transaction)}
                   onDelete={() => setDeletingTransaction(transaction)}
+                  onPay={() => handlePay(transaction)}
                 />
               ))}
             </div>

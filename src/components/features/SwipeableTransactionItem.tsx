@@ -1,7 +1,7 @@
 import { memo, useState, useRef } from 'react';
 import { motion, useMotionValue, type PanInfo } from 'framer-motion';
 import * as Icons from 'lucide-react';
-import { Trash2, Edit3, Copy } from 'lucide-react';
+import { Trash2, Edit3, Copy, Check } from 'lucide-react';
 import { formatCurrency, formatDateRelative, cn } from '@/lib/utils';
 import type { TransactionWithDetails } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ interface SwipeableTransactionItemProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
+  onPay?: () => void;
 }
 
 const iconMap: Record<string, keyof typeof Icons> = {
@@ -43,6 +44,7 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
   onEdit,
   onDelete,
   onDuplicate,
+  onPay,
 }: SwipeableTransactionItemProps) {
   const [isRevealed, setIsRevealed] = useState<'left' | 'right' | null>(null);
   const x = useMotionValue(0);
@@ -64,26 +66,25 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
 
   const installmentNumber = currentInstallment?.installment_number || 1;
 
+  const isPendingStatus = transaction.status === 'pending';
+  const canPay = onPay && isPendingStatus;
+
   const handleDragEnd = (_event: unknown, info: PanInfo) => {
     const threshold = 100;
 
     if (info.offset.x < -threshold) {
       // Swipe left - Delete
       if (onDelete) {
-        // Haptic feedback if available
-        if (navigator.vibrate) {
-          navigator.vibrate(50);
-        }
-        // Just call the callback - parent will handle confirmation
+        if (navigator.vibrate) navigator.vibrate(50);
         onDelete();
       }
     } else if (info.offset.x > threshold) {
-      // Swipe right - Edit
-      if (onEdit) {
-        if (navigator.vibrate) {
-          navigator.vibrate(30);
-        }
-        // Just call the callback
+      // Swipe right - Pay or Edit
+      if (canPay) {
+        if (navigator.vibrate) navigator.vibrate([50, 50]); // Double vibration for success feel
+        onPay();
+      } else if (onEdit) {
+        if (navigator.vibrate) navigator.vibrate(30);
         onEdit();
       }
     }
@@ -103,11 +104,17 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
         </div>
       </div>
 
-      {/* Edit Action (Right) - Blue background - RIGHT HALF ONLY */}
-      <div className="absolute inset-y-0 left-1/2 right-0 flex items-center justify-end px-6 bg-blue-500 rounded-r-2xl">
+      {/* Action (Right) - RIGHT HALF ONLY */}
+      {/* If pending: Green/Pay. If completed: Blue/Edit (or potentially "Reopen") */}
+      <div 
+        className={cn(
+          "absolute inset-y-0 left-1/2 right-0 flex items-center justify-end px-6 rounded-r-2xl transaction-swipe-action",
+          isPendingStatus ? "bg-emerald-500" : "bg-blue-500"
+        )}
+      >
         <div className="flex items-center gap-2 text-white">
-          <span className="font-semibold">Editar</span>
-          <Edit3 className="h-5 w-5" />
+          <span className="font-semibold">{isPendingStatus ? 'Pagar' : 'Editar'}</span>
+          {isPendingStatus ? <Check className="h-5 w-5" /> : <Edit3 className="h-5 w-5" />}
         </div>
       </div>
 
