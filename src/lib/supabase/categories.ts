@@ -113,14 +113,34 @@ export const DEFAULT_CATEGORIES: Omit<InsertTables<'categories'>, 'household_id'
 ];
 
 export async function seedDefaultCategories(householdId: string): Promise<void> {
-  const categories = DEFAULT_CATEGORIES.map(cat => ({
+  // 1. Buscar categorias existentes
+  const { data: existingCategories, error: fetchError } = await supabase
+    .from('categories')
+    .select('name, type')
+    .or(`household_id.eq.${householdId},household_id.is.null`);
+
+  if (fetchError) {
+    handleSupabaseError(fetchError);
+    return;
+  }
+
+  // 2. Filtrar apenas as categorias padrão que NÃO existem ainda
+  const newCategories = DEFAULT_CATEGORIES.filter(defaultCat => 
+    !existingCategories?.some(existingCat => 
+      existingCat.name === defaultCat.name && 
+      existingCat.type === defaultCat.type
+    )
+  ).map(cat => ({
     ...cat,
     household_id: householdId,
   }));
 
-  const { error } = await supabase
-    .from('categories')
-    .insert(categories);
+  // 3. Inserir apenas as novas
+  if (newCategories.length > 0) {
+    const { error } = await supabase
+      .from('categories')
+      .insert(newCategories);
 
-  if (error) handleSupabaseError(error);
+    if (error) handleSupabaseError(error);
+  }
 }

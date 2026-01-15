@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { CustomNumericKeypad } from '@/components/ui/CustomNumericKeypad';
 import { InstallmentConfirmDialog } from '@/components/features/InstallmentConfirmDialog';
-import { useCreateTransaction, useCategories, useCreditCards, useAccounts, useSmartCategorySearch, useCreateSubscription } from '@/hooks';
+import { useCreateTransaction, useCategories, useCreditCards, useAccounts, useSmartCategorySearch } from '@/hooks';
 import { toast } from '@/hooks/useToast';
 import { formatCurrency, cn } from '@/lib/utils';
 import type { TransactionType } from '@/types';
@@ -44,7 +44,6 @@ export default function NewTransactionPage() {
   const [pendingSubmitData, setPendingSubmitData] = useState<TransactionForm | null>(null);
 
   const { mutate: createTransaction, isPending: isTransactionPending } = useCreateTransaction();
-  const { mutate: createSubscription, isPending: isSubscriptionPending } = useCreateSubscription();
   const { data: categories } = useCategories();
   const { data: cards } = useCreditCards();
   const { data: accounts } = useAccounts();
@@ -119,43 +118,13 @@ export default function NewTransactionPage() {
         reimbursement_source: data.is_reimbursable ? data.reimbursement_source : null,
     };
 
-    // CHECK: Is it a Subscription (Assinatura)?
-    if (data.category_id && payload.type === 'expense') {
-      const category = categories?.find(c => c.id === data.category_id);
-      if (category && (category.name.toLowerCase().includes('assinatura') || category.name.toLowerCase() === 'assinaturas')) {
-        // FORCE "Ad Eternum" behavior via long-term installments
-        // This triggers the 'explode_installments' DB function to create future records
-        payload.is_installment = true;
-        payload.total_installments = 120; // 10 years of projections
-      }
-    }
+
 
     createTransaction(
       payload,
       {
         onSuccess: () => {
-          // CHECK: Can we create a subscription automatically?
-          if (data.category_id && data.type === 'expense') {
-            const category = categories?.find(c => c.id === data.category_id);
-            // Check if category name implies subscription
-            if (category && (category.name.toLowerCase().includes('assinatura') || category.name.toLowerCase() === 'assinaturas')) {
-              createSubscription({
-                name: data.description,
-                amount: data.amount,
-                billing_day: parseInt(data.transaction_date.split('-')[2], 10),
-                billing_cycle: 'monthly',
-                category_id: data.category_id,
-                credit_card_id: data.credit_card_id || null, // handle undefined
-                account_id: data.account_id || null, // handle undefined
-                is_active: true,
-              }, {
-                 onSuccess: () => {
-                   toast({ title: 'Adicionado em Minhas Assinaturas', variant: 'default' });
-                 }
-              });
-            }
-          }
-
+          
           const installmentText = data.is_installment && data.total_installments > 1 
             ? ` em ${data.total_installments}x` 
             : '';
@@ -524,7 +493,7 @@ export default function NewTransactionPage() {
           type="submit"
           size="xl"
           className="w-full mt-6"
-          isLoading={isTransactionPending || isSubscriptionPending}
+          isLoading={isTransactionPending}
         >
           <Check className="h-5 w-5 mr-2" />
           Salvar Transação
