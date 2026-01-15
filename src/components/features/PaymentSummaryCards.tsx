@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, CheckCircle2, AlertTriangle, ArrowDownCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,6 +27,25 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
     );
   }
 
+  const navigate = useNavigate();
+
+  const handleNavigate = (label: string) => {
+    switch (label) {
+      case 'A Pagar':
+        navigate('/accounts-payable?filter=pending');
+        break;
+      case 'Vencido':
+        navigate('/accounts-payable?filter=overdue');
+        break;
+      case 'Pago':
+        navigate('/accounts-payable?filter=paid');
+        break;
+      default:
+        // No navigation for others yet
+        break;
+    }
+  };
+
   const items = [
     {
       label: 'A Pagar',
@@ -34,6 +54,7 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
       color: 'text-amber-600',
       bgColor: 'bg-amber-50 dark:bg-amber-900/20',
       borderColor: 'border-amber-200 dark:border-amber-800',
+      action: true
     },
     {
       label: 'Pago',
@@ -42,6 +63,7 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
       color: 'text-green-600',
       bgColor: 'bg-green-50 dark:bg-green-900/20',
       borderColor: 'border-green-200 dark:border-green-800',
+      action: true
     },
     {
       label: 'Vencido',
@@ -51,6 +73,7 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
       bgColor: 'bg-red-50 dark:bg-red-900/20',
       borderColor: 'border-red-200 dark:border-red-800',
       highlight: (summary?.overdue ?? 0) > 0,
+      action: true
     },
     {
       label: 'Saldo Parcial',
@@ -60,6 +83,7 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
       bgColor: 'bg-blue-50 dark:bg-blue-900/20',
       borderColor: 'border-blue-200 dark:border-blue-800',
       isNegative: true,
+      action: false
     },
   ];
 
@@ -73,11 +97,13 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
           return (
             <div
               key={item.label}
+              onClick={() => item.action && handleNavigate(item.label)}
               className={cn(
-                "rounded-xl p-2 text-center border",
+                "rounded-xl p-2 text-center border transition-transform active:scale-95",
                 item.bgColor,
                 item.borderColor,
-                item.highlight && "ring-2 ring-red-500 ring-offset-1"
+                item.highlight && "ring-2 ring-red-500 ring-offset-1",
+                item.action && "cursor-pointer hover:opacity-80"
               )}
             >
               <Icon className={cn("h-4 w-4 mx-auto mb-1", item.color)} />
@@ -100,11 +126,13 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
         return (
           <Card
             key={item.label}
+            onClick={() => item.action && handleNavigate(item.label)}
             className={cn(
-              "glass-card p-4 border",
+              "glass-card p-4 border transition-all active:scale-[0.98]",
               item.bgColor,
               item.borderColor,
-              item.highlight && "ring-2 ring-red-500 ring-offset-2"
+              item.highlight && "ring-2 ring-red-500 ring-offset-2",
+              item.action && "cursor-pointer hover:shadow-md"
             )}
           >
             <div className="flex items-start justify-between">

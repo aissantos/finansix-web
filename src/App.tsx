@@ -36,6 +36,7 @@ const SubscriptionsPage = lazy(() => import('@/pages/wallet/SubscriptionsPage'))
 // Transaction pages
 const EditTransactionPage = lazy(() => import('@/pages/EditTransactionPage'));
 const AllTransactionsPage = lazy(() => import('@/pages/AllTransactionsPage'));
+const AccountsPayablePage = lazy(() => import('@/pages/AccountsPayablePage'));
 
 // Settings pages
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
@@ -239,6 +240,14 @@ function AnimatedRoutes() {
               element={
                 <ProtectedRoute>
                   <SubscriptionsPage />
+                </ProtectedRoute>
+              }
+            />
+             <Route
+              path="/accounts-payable"
+              element={
+                <ProtectedRoute>
+                  <AccountsPayablePage />
                 </ProtectedRoute>
               }
             />

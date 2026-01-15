@@ -11,6 +11,7 @@ export {
   useUpdateTransaction,
   useDeleteTransaction,
 } from './useTransactions';
+export { useAccountsPayable } from './useAccountsPayable';
 export {
   useCreditCards,
   useCreditCard,
