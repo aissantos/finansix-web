@@ -277,7 +277,7 @@ function CategoryDistribution() {
     return null;
   }
 
-  const total = categories.reduce((sum, c) => sum + c.total, 0);
+  const total = categories.reduce((sum: number, c: { total: number }) => sum + c.total, 0);
 
   // Calculate pie chart segments
   let cumulativePercent = 0;
@@ -298,7 +298,7 @@ function CategoryDistribution() {
         {/* Pie Chart */}
         <div className="relative h-40 w-40 flex-shrink-0">
           <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-            {categories.slice(0, 5).map((cat, i) => {
+            {categories.slice(0, 5).map((cat: { total: number; color: string }, i: number) => {
               const percent = (cat.total / total) * 100;
               const strokeDasharray = `${percent} ${100 - percent}`;
               const strokeDashoffset = -cumulativePercent;
@@ -330,7 +330,7 @@ function CategoryDistribution() {
 
         {/* Legend */}
         <div className="flex-1 w-full space-y-3">
-          {categories.slice(0, 5).map((cat, i) => {
+          {categories.slice(0, 5).map((cat: { total: number; color: string; category_name: string }, i: number) => {
             const percent = ((cat.total / total) * 100).toFixed(0);
             return (
               <div key={i} className="flex items-center justify-between group cursor-default">

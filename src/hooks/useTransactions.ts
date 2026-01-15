@@ -6,6 +6,7 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  getTransactionsByCategory,
 } from '@/lib/supabase';
 
 import { queryKeys } from '@/lib/query-client';
