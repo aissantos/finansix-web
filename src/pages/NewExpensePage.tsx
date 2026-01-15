@@ -64,6 +64,7 @@ export default function NewExpensePage() {
   >("credit");
   const [showKeypad, setShowKeypad] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
+  const [isRecurringMode, setIsRecurringMode] = useState(false);
   const [showInstallmentConfirm, setShowInstallmentConfirm] = useState(false);
   const [pendingSubmitData, setPendingSubmitData] =
     useState<ExpenseForm | null>(null);
@@ -122,7 +123,10 @@ export default function NewExpensePage() {
     createTransaction(
       {
         type: "expense",
-        amount: data.amount,
+        // If it's a recurring credit card expense, we multiply the amount by 12
+        // because the backend divides it by 12 for credit card installments.
+        // For accounts, we don't multiply because backend repeats the value.
+        amount: isRecurringMode && paymentMethod === "credit" ? data.amount * 12 : data.amount,
         description: data.description,
         category_id: data.category_id || null,
         credit_card_id: paymentMethod === "credit" ? data.credit_card_id : null,
@@ -141,11 +145,13 @@ export default function NewExpensePage() {
             data.is_installment && data.total_installments > 1
               ? ` em ${data.total_installments}x`
               : "";
+          
+          // Toast should show the value the user entered (Monthly or Total)
+          const formattedAmount = formatCurrency(data.amount);
+
           toast({
             title: "Despesa criada!",
-            description: `Despesa de ${formatCurrency(
-              data.amount
-            )}${installmentText} registrada.`,
+            description: `Despesa de ${formattedAmount}${installmentText} registrada.`,
             variant: "success",
           });
           navigate("/");
@@ -202,7 +208,7 @@ export default function NewExpensePage() {
         {/* Amount Card */}
         <Card className="p-6 mb-4 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-expense/20">
           <p className="text-xs font-bold text-expense/70 uppercase tracking-wide mb-2">
-            Valor da Despesa
+            {isRecurringMode ? "Valor Mensal (Mensalidade)" : "Valor da Despesa"}
           </p>
           <button
             type="button"
@@ -370,8 +376,8 @@ export default function NewExpensePage() {
           ) : null}
         </Card>
 
-        {/* Installments - only for credit card */}
-        {paymentMethod === "credit" && (
+        {/* Installments - only for credit card (hidden if in Recurring Mode) */}
+        {paymentMethod === "credit" && !isRecurringMode && (
           <Card className="p-4 mb-4">
             <label className="flex items-center justify-between mb-4">
               <div>
@@ -429,8 +435,8 @@ export default function NewExpensePage() {
           </Card>
         )}
 
-        {/* Recurring Expense Checkbox (12x) - Only for Accounts (not Credit Cards) */}
-        {paymentMethod !== "credit" && (
+        {/* Recurring Expense Checkbox (12x) */}
+        {(!isInstallment || isRecurringMode) && (
           <Card className="p-4 mb-6">
             <label className="flex items-center justify-between cursor-pointer">
               <div>
@@ -438,17 +444,20 @@ export default function NewExpensePage() {
                   Despesa Recorrente (12 meses)
                 </p>
                 <p className="text-xs text-slate-500">
-                  Criar automaticamente 12 parcelas fixas
+                  {paymentMethod === "credit" 
+                    ? "Cobrança mensal no cartão (12x)" 
+                    : "Criar automaticamente 12 parcelas fixas"}
                 </p>
               </div>
               <input
                 type="checkbox"
                 onChange={(e) => {
                   const checked = e.target.checked;
+                  setIsRecurringMode(checked);
                   setValue("is_installment", checked);
                   setValue("total_installments", checked ? 12 : 1);
                 }}
-                checked={isInstallment && totalInstallments === 12}
+                checked={isRecurringMode}
                 className="rounded border-slate-300 text-primary focus:ring-primary h-5 w-5"
               />
             </label>
