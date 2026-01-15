@@ -16,6 +16,7 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
   className,
 }: PaymentSummaryCardsProps) {
   const { data: summary, isLoading } = usePaymentSummary();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -26,8 +27,6 @@ export const PaymentSummaryCards = memo(function PaymentSummaryCards({
       </div>
     );
   }
-
-  const navigate = useNavigate();
 
   const handleNavigate = (label: string) => {
     switch (label) {

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Plus, TrendingDown, TrendingUp, ArrowRightLeft, X } from 'lucide-react';
+import { Plus, TrendingDown, TrendingUp, ArrowRightLeft, X, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface QuickAction {
@@ -18,21 +18,28 @@ const quickActions: QuickAction[] = [
     label: 'Despesa',
     color: 'bg-red-500',
     route: '/new-transaction?type=expense',
-    angle: -60,
+    angle: -75,
   },
   {
     icon: TrendingUp,
     label: 'Receita',
     color: 'bg-green-500',
     route: '/new-transaction?type=income',
-    angle: 0,
+    angle: -25,
   },
   {
     icon: ArrowRightLeft,
     label: 'Transferência',
     color: 'bg-blue-500',
     route: '/transfer',
-    angle: 60,
+    angle: 25,
+  },
+  {
+    icon: Receipt,
+    label: 'Contas',
+    color: 'bg-amber-500',
+    route: '/accounts-payable',
+    angle: 75,
   },
 ];
 
