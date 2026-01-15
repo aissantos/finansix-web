@@ -149,7 +149,7 @@ export default function AccountsPayablePage() {
                                     id: account.id,
                                     description: account.description,
                                     amount: account.amount,
-                                    date: account.date, // SwipeableTransactionItem uses 'date' or 'transaction_date'? It uses processed props usually.
+                                    transaction_date: account.date, // SwipeableTransactionItem uses 'date' or 'transaction_date'? It uses processed props usually.
                                     // We need to adapt data structure or create a compatible object
                                     category: { name: account.type === 'invoice' ? 'Fatura Cartão' : account.category || 'Conta', icon: account.type === 'invoice' ? 'credit-card' : 'file-text' },
                                     status: account.status === 'partial' ? 'pending' : account.status,

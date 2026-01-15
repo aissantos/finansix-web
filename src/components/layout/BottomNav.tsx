@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BarChart3, Wallet, User, Plus, TrendingDown, TrendingUp, ArrowRightLeft } from 'lucide-react';
+import { Home, BarChart3, Wallet, User, Plus, TrendingDown, TrendingUp, ArrowRightLeft, Receipt } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useScrollDirection } from '@/hooks';
@@ -34,6 +34,13 @@ const quickActions = [
     color: 'bg-primary',
     shadowColor: 'shadow-blue-500/30',
     route: '/transfer/new',
+  },
+  {
+    icon: Receipt,
+    label: 'Contas',
+    color: 'bg-amber-500',
+    shadowColor: 'shadow-amber-500/30',
+    route: '/accounts-payable',
   },
 ];
 
