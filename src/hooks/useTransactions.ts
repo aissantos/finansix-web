@@ -6,10 +6,8 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
-  getRecentTransactions,
-  getTransactionsByCategory,
 } from '@/lib/supabase';
-import { supabase } from '@/lib/supabase/client';
+
 import { queryKeys } from '@/lib/query-client';
 import { useHouseholdId, useSelectedMonth } from '@/stores';
 import type { InsertTables, UpdateTables, TransactionWithDetails } from '@/types';
