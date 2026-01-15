@@ -52,7 +52,7 @@ export async function getCreditCard(id: string): Promise<CreditCardWithLimits> {
     .from('credit_card_limits')
     .select('*')
     .eq('id', id)
-    .single();
+    .maybeSingle();
 
   const limitData = limit as { available_limit: number; used_limit: number } | null;
 

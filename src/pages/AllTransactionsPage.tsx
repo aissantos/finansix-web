@@ -284,7 +284,7 @@ export default function AllTransactionsPage() {
 
   return (
     <>
-      <Header title="Todas Transações" showBack onBack={() => navigate(-1)} />
+      <Header title="Todas Transações" showBack onBack={() => navigate(-1)} showMonthSelector />
       <PageContainer className="space-y-4 pt-6 pb-24">
         {/* Search Bar */}
         <div className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 pb-4">

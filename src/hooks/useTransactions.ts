@@ -46,10 +46,15 @@ export function useTransaction(id: string) {
 
 export function useRecentTransactions(limit = 10) {
   const householdId = useHouseholdId();
+  const selectedMonth = useSelectedMonth();
+  const monthKey = format(selectedMonth, 'yyyy-MM');
 
   return useQuery({
-    queryKey: [...queryKeys.transactions.all, 'recent', householdId, limit],
-    queryFn: () => getRecentTransactions(householdId!, limit),
+    queryKey: [...queryKeys.transactions.all, 'recent', householdId, limit, monthKey],
+    queryFn: () => getTransactions(householdId!, { 
+      limit,
+      month: selectedMonth 
+    }),
     enabled: !!householdId,
   });
 }
@@ -159,26 +164,17 @@ export function useDeleteTransaction() {
  */
 export function useAllTransactions() {
   const householdId = useHouseholdId();
+  const selectedMonth = useSelectedMonth();
+  const monthKey = format(selectedMonth, 'yyyy-MM');
 
+  // Used for the "Transactions Page" (Statement View)
+  // Filters by selected month AND includes installments for that month
   return useQuery({
-    queryKey: [...queryKeys.transactions.all, 'complete', householdId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select(`
-          *,
-          category:categories(id, name, icon, color, type),
-          credit_card:credit_cards(id, name, last_four_digits, brand, credit_limit),
-          account:accounts(id, name, type, current_balance),
-          installments:installments(*)
-        `)
-        .eq('household_id', householdId!)
-        .is('deleted_at', null)
-        .order('transaction_date', { ascending: false });
-
-      if (error) throw error;
-      return (data ?? []) as unknown as TransactionWithDetails[];
-    },
+    queryKey: [...queryKeys.transactions.all, 'statement', householdId, monthKey],
+    queryFn: () => getTransactions(householdId!, {
+      month: selectedMonth,
+      includeInstallments: true
+    }),
     enabled: !!householdId,
   });
 }

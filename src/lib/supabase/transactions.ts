@@ -16,7 +16,8 @@ export async function getTransactions(
     offset?: number;
     type?: 'income' | 'expense' | 'transfer';
     status?: 'pending' | 'completed' | 'cancelled';
-    beforeDate?: string; // New option
+    beforeDate?: string;
+    includeInstallments?: boolean; // If true, includes installments billed in the selected month
   }
 ): Promise<TransactionWithDetails[]> {
   let query = supabase
@@ -65,9 +66,10 @@ export async function getTransactions(
   
   let transactions = (data ?? []) as unknown as TransactionWithDetails[];
 
-  // For month filtering, we need to filter installment transactions by billing_month
-  // instead of transaction_date to show only installments that bill in the selected month
-  if (options?.month) {
+
+  // For month filtering, optionally verify installments billing month
+  // This allows "Statement View" (Transactions Page) to show installments in their respective months
+  if (options?.month && options?.includeInstallments) {
     const selectedMonthStr = format(startOfMonth(options.month), 'yyyy-MM-01');
     
     transactions = transactions.filter(tx => {
@@ -77,9 +79,18 @@ export async function getTransactions(
       }
       
       // Installment transactions: check if any installment bills in the selected month
-      return tx.installments.some(inst => 
+      const matchingInstallment = tx.installments.find(inst => 
         inst.billing_month === selectedMonthStr
       );
+
+      if (matchingInstallment) {
+        // Clone transaction and keep ONLY the matching installment
+        // This ensures the UI (which picks installments[0]) uses the correct one for this month
+        tx.installments = [matchingInstallment];
+        return true;
+      }
+      
+      return false;
     });
   }
 
