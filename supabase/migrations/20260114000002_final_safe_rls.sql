@@ -1,6 +1,23 @@
 -- SAFE RLS RECONSTRUCTION FOR HOUSEHOLD_MEMBERS
 -- This script fixes the infinite recursion error (500) caused by policies querying the table itself.
 
+-- 0. PRE-CLEANUP: Drop ALL existing policies (Legacy + New) to allow function updates
+DROP POLICY IF EXISTS "Users can view members of their households" ON household_members;
+DROP POLICY IF EXISTS "Users can see their own membership" ON household_members;
+DROP POLICY IF EXISTS "Users can view household members" ON household_members;
+DROP POLICY IF EXISTS "Member view policy" ON household_members;
+DROP POLICY IF EXISTS "Owners can manage members" ON household_members;
+DROP POLICY IF EXISTS "Users can insert themselves" ON household_members;
+DROP POLICY IF EXISTS "Admins can update members" ON household_members;
+DROP POLICY IF EXISTS "Admins can delete members" ON household_members;
+
+-- Also drop possibly manually created "Safe" policies that depend on the functions
+DROP POLICY IF EXISTS "Safe View Members" ON household_members;
+DROP POLICY IF EXISTS "Safe Insert Members" ON household_members;
+DROP POLICY IF EXISTS "Safe Update Members" ON household_members;
+DROP POLICY IF EXISTS "Safe Delete Members" ON household_members;
+DROP POLICY IF EXISTS "Safe Manage Members" ON household_members;
+
 -- 1. Helper Function: Get user's household ID safely (Bypasses RLS)
 CREATE OR REPLACE FUNCTION get_user_household_id()
 RETURNS UUID AS $$
@@ -11,6 +28,7 @@ RETURNS UUID AS $$
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- 2. Helper Function: Check if user is owner/admin safely (Bypasses RLS)
+DROP FUNCTION IF EXISTS is_household_admin(uuid);
 CREATE OR REPLACE FUNCTION is_household_admin(household_id uuid)
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
@@ -24,16 +42,6 @@ $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 GRANT EXECUTE ON FUNCTION get_user_household_id() TO authenticated;
 GRANT EXECUTE ON FUNCTION is_household_admin(uuid) TO authenticated;
-
--- 3. Reset RLS: Drop ALL existing policies to ensure no bad ones remain
-DROP POLICY IF EXISTS "Users can view members of their households" ON household_members;
-DROP POLICY IF EXISTS "Users can see their own membership" ON household_members;
-DROP POLICY IF EXISTS "Users can view household members" ON household_members;
-DROP POLICY IF EXISTS "Member view policy" ON household_members;
-DROP POLICY IF EXISTS "Owners can manage members" ON household_members;
-DROP POLICY IF EXISTS "Users can insert themselves" ON household_members;
-DROP POLICY IF EXISTS "Admins can update members" ON household_members;
-DROP POLICY IF EXISTS "Admins can delete members" ON household_members;
 
 -- 4. Re-enable RLS (Safe to do now that we cleaned up)
 ALTER TABLE household_members ENABLE ROW LEVEL SECURITY;

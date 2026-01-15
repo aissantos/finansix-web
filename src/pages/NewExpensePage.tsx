@@ -41,12 +41,13 @@ const expenseSchema = z
     reimbursement_source: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    // Se for parcelado, exige cartão de crédito
-    if (data.is_installment && !data.credit_card_id) {
+    // Garantir que existe um meio de pagamento selecionado (seja cartão ou conta)
+    // Se for parcelado, pode ser via cartão OU via conta ("Despesa Recorrente 12x")
+    if (!data.credit_card_id && !data.account_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Selecione um cartão de crédito para parcelamento",
-        path: ["credit_card_id"],
+        message: "Selecione uma forma de pagamento (Cartão ou Conta)",
+        path: ["credit_card_id"], // Aponta para cartão por padrão, mas poderia ser genérico
       });
     }
   });
@@ -427,6 +428,30 @@ export default function NewExpensePage() {
             )}
           </Card>
         )}
+
+        {/* Recurring Expense Checkbox (12x) */}
+        <Card className="p-4 mb-6">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                Despesa Recorrente (12 meses)
+              </p>
+              <p className="text-xs text-slate-500">
+                Criar automaticamente 12 parcelas fixas
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setValue("is_installment", checked);
+                setValue("total_installments", checked ? 12 : 1);
+              }}
+              checked={isInstallment && totalInstallments === 12}
+              className="rounded border-slate-300 text-primary focus:ring-primary h-5 w-5"
+            />
+          </label>
+        </Card>
 
         {/* Reimbursable */}
         <Card className="p-4 mb-6">

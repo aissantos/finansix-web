@@ -16,6 +16,7 @@ export async function getTransactions(
     offset?: number;
     type?: 'income' | 'expense' | 'transfer';
     status?: 'pending' | 'completed' | 'cancelled';
+    beforeDate?: string; // New option
   }
 ): Promise<TransactionWithDetails[]> {
   let query = supabase
@@ -35,6 +36,11 @@ export async function getTransactions(
     const start = format(startOfMonth(options.month), 'yyyy-MM-dd');
     const end = format(endOfMonth(options.month), 'yyyy-MM-dd');
     query = query.gte('transaction_date', start).lte('transaction_date', end);
+  }
+
+  // Filter by max date (e.g. for Recent Feed)
+  if (options?.beforeDate) {
+    query = query.lte('transaction_date', options.beforeDate);
   }
 
   if (options?.type) {
@@ -187,7 +193,12 @@ export async function getRecentTransactions(
   householdId: string,
   limit = 10
 ): Promise<TransactionWithDetails[]> {
-  return getTransactions(householdId, { limit });
+  const today = new Date().toISOString().split('T')[0]; // yyyy-MM-dd
+  // Filter out future transactions by setting beforeDate to Today
+  return getTransactions(householdId, { 
+    limit,
+    beforeDate: today
+  });
 }
 
 export async function getTransactionsByCategory(
