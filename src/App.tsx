@@ -276,7 +276,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <QueryErrorBoundary>
           <AuthProvider>
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
                 <AnimatedRoutes />
                 <PWAInstallBanner />
