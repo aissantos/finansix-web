@@ -6,9 +6,10 @@ import type { Subscription } from '@/hooks/useSubscriptions';
 interface SubscriptionItemProps {
   subscription: Subscription;
   card?: { name: string; last_four_digits: string | null };
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   onToggleActive?: () => void;
+  onClick?: () => void;
 }
 
 export function SubscriptionItem({ 
@@ -16,7 +17,8 @@ export function SubscriptionItem({
   card, 
   onEdit, 
   onDelete,
-  onToggleActive 
+  onToggleActive,
+  onClick
 }: SubscriptionItemProps) {
   const [showActions, setShowActions] = useState(false);
   
@@ -28,14 +30,18 @@ export function SubscriptionItem({
   const isUpcoming = daysUntilBilling <= 3 && subscription.is_active;
   const isToday = daysUntilBilling === 0;
 
+  const hasActions = Boolean(onEdit || onDelete || onToggleActive);
+
   return (
     <div
+      onClick={onClick}
       className={cn(
         'bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border transition-all',
         subscription.is_active
           ? 'border-slate-100 dark:border-slate-700'
           : 'border-slate-200 dark:border-slate-600 opacity-60',
-        isUpcoming && 'ring-2 ring-amber-500/20'
+        isUpcoming && 'ring-2 ring-amber-500/20',
+        onClick && 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 active:scale-[0.99]'
       )}
     >
       <div className="p-4">
@@ -105,59 +111,67 @@ export function SubscriptionItem({
               </div>
               
               {/* Actions */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowActions(!showActions)}
-                  className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-400 transition-colors"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </button>
-                
-                {/* Dropdown */}
-                {showActions && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setShowActions(false)} 
-                    />
-                    <div className="absolute right-0 bottom-full mb-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 min-w-[140px]">
-                      <button
-                        onClick={() => { onEdit(); setShowActions(false); }}
-                        className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                      >
-                        <Edit3 className="h-4 w-4 text-slate-400" />
-                        Editar
-                      </button>
-                      {onToggleActive && (
-                        <button
-                          onClick={() => { onToggleActive(); setShowActions(false); }}
-                          className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                        >
-                          {subscription.is_active ? (
-                            <>
-                              <Pause className="h-4 w-4 text-slate-400" />
-                              Pausar
-                            </>
-                          ) : (
-                            <>
-                              <Play className="h-4 w-4 text-slate-400" />
-                              Reativar
-                            </>
-                          )}
-                        </button>
-                      )}
-                      <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
-                      <button
-                        onClick={() => { onDelete(); setShowActions(false); }}
-                        className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Excluir
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
+              {hasActions && (
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => setShowActions(!showActions)}
+                    className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-400 transition-colors"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                  
+                  {/* Dropdown */}
+                  {showActions && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setShowActions(false)} 
+                      />
+                      <div className="absolute right-0 bottom-full mb-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 min-w-[140px]">
+                        {onEdit && (
+                          <button
+                            onClick={() => { onEdit(); setShowActions(false); }}
+                            className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                          >
+                            <Edit3 className="h-4 w-4 text-slate-400" />
+                            Editar
+                          </button>
+                        )}
+                        {onToggleActive && (
+                          <button
+                            onClick={() => { onToggleActive(); setShowActions(false); }}
+                            className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                          >
+                            {subscription.is_active ? (
+                              <>
+                                <Pause className="h-4 w-4 text-slate-400" />
+                                Pausar
+                              </>
+                            ) : (
+                              <>
+                                <Play className="h-4 w-4 text-slate-400" />
+                                Reativar
+                              </>
+                            )}
+                          </button>
+                        )}
+                        {onDelete && (
+                          <>
+                            <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
+                            <button
+                              onClick={() => { onDelete(); setShowActions(false); }}
+                              className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Excluir
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
