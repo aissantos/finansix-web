@@ -5,14 +5,11 @@ import { ptBR } from 'date-fns/locale';
 import { 
     ChevronLeft, 
     ChevronRight, 
-    Wallet, 
-    CalendarClock, 
-    CheckCircle2, 
     Receipt
 } from 'lucide-react';
-import { useAccountsPayable, PayableAccount } from '@/hooks/useAccountsPayable';
+import { useAccountsPayable } from '@/hooks/useAccountsPayable';
+import type { PayableAccount } from '@/hooks/useAccountsPayable';
 import { cn, formatCurrency } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Header, PageContainer } from '@/components/layout';
 import { SwipeableTransactionItem } from '@/components/features/SwipeableTransactionItem';
 import { InvoicePaymentModal } from '@/components/modals/InvoicePaymentModal';
@@ -172,12 +169,13 @@ export default function AccountsPayablePage() {
                                     category: { name: account.type === 'invoice' ? 'Fatura Cartão' : account.category || 'Conta', icon: account.type === 'invoice' ? 'credit-card' : 'file-text' },
                                     status: account.status === 'partial' ? 'pending' : account.status,
                                     type: 'expense'
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 } as any} // Forced cast for MVP compatibility
                                 onPay={() => handlePayBill(account)}
                                 // Disable other swipes for now or keep standard Edit behavior?
                                 // Standard Edit might break for Invoices (virtual entities). We should disable edit for Invoices.
                                 onEdit={(tx) => { if(account.type !== 'invoice') navigate(`/transactions/${tx.id}/edit`); }}
-                                onDelete={(tx) => { if(account.type !== 'invoice') console.log('Delete feature unused here'); }}
+                                onDelete={() => { if(account.type !== 'invoice') {/* Delete feature unused here */} }}
                             />
                         ))
                     )}

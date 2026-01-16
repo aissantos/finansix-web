@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { isSameMonth, parseISO, isAfter, isBefore, startOfDay } from 'date-fns';
+import { parseISO, isBefore, startOfDay } from 'date-fns';
 import { useTransactions } from './useTransactions';
 import { useCreditCards } from './useCreditCards';
-import { Transaction } from '@/types';
+import type { Transaction } from '@/types';
 
 export type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'partial';
 
@@ -30,7 +30,7 @@ export interface PayableAccount {
 }
 
 export function useAccountsPayable(selectedMonth: Date) {
-  const { data: transactions, isLoading: txLoading } = useTransactions(selectedMonth);
+  const { data: transactions, isLoading: txLoading } = useTransactions({ month: selectedMonth });
   const { data: cards, isLoading: cardsLoading } = useCreditCards();
 
   const data = useMemo(() => {
@@ -49,7 +49,7 @@ export function useAccountsPayable(selectedMonth: Date) {
         invoicesMap.set(card.id, {
             cardId: card.id,
             cardName: card.name,
-            cardColor: card.color,
+            cardColor: card.color ?? undefined,
             totalAmount: 0,
             paidAmount: 0,
             dueDate: dueDate.toISOString(),

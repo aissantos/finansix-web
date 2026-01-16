@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from '@/lib/utils';
-import { CardInvoice } from '@/hooks/useAccountsPayable';
+import type { CardInvoice } from '@/hooks/useAccountsPayable';
 import { useCreateTransaction, useUpdateTransaction } from '@/hooks';
 import { toast } from '@/hooks/useToast';
 import { format, addMonths } from 'date-fns';
@@ -37,7 +37,7 @@ export function InvoicePaymentModal({ isOpen, onClose, invoice }: InvoicePayment
             // For client-side simulation:
             const promises = invoice.transactions
                 .filter(t => t.status === 'pending')
-                .map(t => updateTransaction.mutateAsync({ id: t.id, status: 'completed' }));
+                .map(t => updateTransaction.mutateAsync({ id: t.id, data: { status: 'completed' } }));
 
             await Promise.all(promises);
 
@@ -61,7 +61,7 @@ export function InvoicePaymentModal({ isOpen, onClose, invoice }: InvoicePayment
                 toast({
                     title: 'Pagamento Parcial Registrado',
                     description: `R$ ${formatCurrency(remainder)} transferido para o próximo mês.`,
-                    variant: 'warning'
+                    variant: 'default'
                 });
             } else {
                 toast({
@@ -72,7 +72,7 @@ export function InvoicePaymentModal({ isOpen, onClose, invoice }: InvoicePayment
             }
 
             onClose();
-        } catch (error) {
+        } catch {
             toast({
                 title: 'Erro ao pagar',
                 description: 'Tente novamente.',
@@ -90,7 +90,7 @@ export function InvoicePaymentModal({ isOpen, onClose, invoice }: InvoicePayment
 
                 <div className="py-4">
                     <Tabs defaultValue="full" onValueChange={(v) => {
-                        setMode(v as any);
+                        setMode(v as 'full' | 'partial');
                         if (v === 'full') setAmount(invoice.totalAmount.toString());
                     }}>
                         <TabsList className="grid w-full grid-cols-2">
