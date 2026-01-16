@@ -1,6 +1,7 @@
+```javascript
 import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { format, isSameMonth, subMonths, addMonths } from 'date-fns';
+import { format, subMonths, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
     ChevronLeft, 
@@ -13,10 +14,9 @@ import {
 import { useAccountsPayable, PayableAccount } from '@/hooks/useAccountsPayable';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Header, PageContainer } from '@/components/layout';
 import { SwipeableTransactionItem } from '@/components/features/SwipeableTransactionItem';
-import { InvoicePaymentModal } from '@/components/modals/InvoicePaymentModal'; // To be created
+import { InvoicePaymentModal } from '@/components/modals/InvoicePaymentModal';
 import { useUpdateTransaction } from '@/hooks';
 import { toast } from '@/hooks/useToast';
 
@@ -72,70 +72,89 @@ export default function AccountsPayablePage() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-20">
-            {/* Header with Month Selector */}
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
-                <div className="px-4 h-16 flex items-center justify-between">
-                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-                        <ChevronLeft className="h-6 w-6 text-slate-600" />
-                    </Button>
-                    
-                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
+            <Header 
+                title="Central de Contas" 
+                right={
+                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">
                         <button onClick={() => handleMonthChange('prev')} className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-colors">
-                            <ChevronLeft className="h-4 w-4 text-slate-500" />
+                            <ChevronLeft className="h-3 w-3 text-slate-500" />
                         </button>
-                        <span className="text-sm font-semibold capitalize min-w-[100px] text-center">
-                            {format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}
+                        <span className="text-xs font-semibold capitalize min-w-[70px] text-center">
+                            {format(selectedMonth, 'MMM yyyy', { locale: ptBR })}
                         </span>
                         <button onClick={() => handleMonthChange('next')} className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-colors">
-                            <ChevronRight className="h-4 w-4 text-slate-500" />
+                            <ChevronRight className="h-3 w-3 text-slate-500" />
                         </button>
                     </div>
+                }
+            />
 
-                    <div className="w-10"></div> {/* Spacer for alignment */}
-                </div>
-            </header>
-
-            <PageContainer className="pt-4 space-y-6">
+            <PageContainer className="pt-6 space-y-6">
                 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-3 gap-2">
-                    <SummaryCard 
-                        title="A Pagar" 
-                        value={summary.pending + summary.overdue} 
-                        icon={Wallet} 
-                        color="text-slate-600"
-                        active={activeFilter === 'pending' || activeFilter === 'overdue'}
-                        onClick={() => handleFilterChange('pending')}
-                    />
-                     <SummaryCard 
-                        title="Vencidas" 
-                        value={summary.overdue} 
-                        icon={CalendarClock} 
-                        color="text-red-500"
-                        active={activeFilter === 'overdue'}
-                        onClick={() => handleFilterChange('overdue')}
-                    />
-                    <SummaryCard 
-                        title="Pagas" 
-                        value={summary.paid} 
-                        icon={CheckCircle2} 
-                        color="text-emerald-500"
-                        active={activeFilter === 'paid'}
-                        onClick={() => handleFilterChange('paid')}
-                    />
+                {/* Hero Summary Card */}
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 p-6 shadow-2xl shadow-orange-500/20">
+                    <div className="absolute top-0 right-0 opacity-10 pointer-events-none translate-x-1/4 -translate-y-1/4">
+                        <Receipt className="w-40 h-40" />
+                    </div>
+                    
+                    <div className="relative z-10 flex flex-col gap-4">
+                        <div>
+                            <p className="text-white/80 text-xs font-semibold uppercase tracking-wider">
+                                Total a Pagar
+                            </p>
+                            <h3 className="text-white text-3xl font-extrabold mt-1">
+                                {formatCurrency(summary.pending + summary.overdue)}
+                            </h3>
+                        </div>
+                        
+                        <div className="flex gap-3">
+                            <div className="flex-1 bg-white/20 backdrop-blur-md rounded-2xl p-3">
+                                <p className="text-white/70 text-[10px] font-bold uppercase">Vencidas</p>
+                                <p className="text-white text-lg font-bold">{formatCurrency(summary.overdue)}</p>
+                            </div>
+                            <div className="flex-1 bg-white/20 backdrop-blur-md rounded-2xl p-3">
+                                <p className="text-white/70 text-[10px] font-bold uppercase">Pagas</p>
+                                <p className="text-white text-lg font-bold">{formatCurrency(summary.paid)}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Filter Tabs (Visual) */}
-                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                    <FilterTab label="A Pagar" isActive={activeFilter === 'pending'} onClick={() => handleFilterChange('pending')} />
-                    <FilterTab label="Vencidas" isActive={activeFilter === 'overdue'} onClick={() => handleFilterChange('overdue')} />
-                    <FilterTab label="Pagas" isActive={activeFilter === 'paid'} onClick={() => handleFilterChange('paid')} />
+                {/* Filter Tabs */}
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
+                    {(['pending', 'overdue', 'paid'] as FilterType[]).map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => handleFilterChange(tab)}
+                            className={cn(
+                                'flex-1 py-2 text-center text-sm font-bold rounded-xl transition-all',
+                                activeFilter === tab
+                                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                                    : 'text-slate-500'
+                            )}
+                        >
+                            {tab === 'pending' ? 'A Pagar' : tab === 'overdue' ? 'Vencidas' : 'Pagas'}
+                        </button>
+                    ))}
                 </div>
 
                 {/* List */}
                 <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                        <h2 className="text-slate-900 dark:text-white text-lg font-bold">
+                            {activeFilter === 'pending' ? 'Contas Pendentes' : activeFilter === 'overdue' ? 'Contas Vencidas' : 'Histórico de Pagamentos'}
+                        </h2>
+                        <span className="text-xs font-bold text-slate-400">
+                            {filteredAccounts.length} itens
+                        </span>
+                    </div>
+
                     {isLoading ? (
-                        <p className="text-center text-slate-500 py-10">Calculando contas...</p>
+                        <div className="space-y-3">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-[72px] w-full bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
+                            ))}
+                        </div>
                     ) : filteredAccounts.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-10 text-slate-400">
                             <Receipt className="h-12 w-12 mb-3 opacity-20" />
@@ -178,41 +197,4 @@ export default function AccountsPayablePage() {
         </div>
     );
 }
-
-function SummaryCard({ title, value, icon: Icon, color, active, onClick }: any) {
-    return (
-        <button 
-            onClick={onClick}
-            className={cn(
-                "p-3 rounded-2xl flex flex-col items-start justify-between min-h-[90px] transition-all border",
-                active 
-                    ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm ring-1 ring-primary/20" 
-                    : "bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/50"
-            )}
-        >
-            <div className={cn("p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700", color.replace('text-', 'bg-').replace('500', '100'))}>
-                <Icon className={cn("h-4 w-4", color)} />
-            </div>
-            <div>
-                <p className="text-[10px] uppercase font-bold text-slate-400">{title}</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(value)}</p>
-            </div>
-        </button>
-    )
-}
-
-function FilterTab({ label, isActive, onClick }: any) {
-    return (
-        <button 
-            onClick={onClick}
-            className={cn(
-                "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
-                isActive 
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" 
-                    : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            )}
-        >
-            {label}
-        </button>
-    )
-}
+```

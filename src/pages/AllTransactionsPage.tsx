@@ -16,7 +16,8 @@ import {
   X,
   Plus,
   PieChart,
-  Repeat
+  Repeat,
+  Wallet
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -435,13 +436,13 @@ export default function AllTransactionsPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 text-sm">
               {hasActiveFilters && (
                 <Button
                   onClick={clearFilters}
                   variant="outline"
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 rounded-xl"
                 >
                   <X className="h-4 w-4 mr-2" />
                   Limpar
@@ -451,7 +452,7 @@ export default function AllTransactionsPage() {
                 onClick={() => exportTransactions(filteredTransactions)}
                 variant="outline"
                 size="sm"
-                className="flex-1"
+                className="flex-1 rounded-xl"
                 disabled={filteredTransactions.length === 0}
               >
                 📥 Exportar CSV
@@ -462,40 +463,51 @@ export default function AllTransactionsPage() {
 
         {/* Totals Summary */}
         {filteredTransactions.length > 0 && (
-          <>
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="p-3">
-                <p className="text-[10px] font-semibold text-income uppercase tracking-wider mb-1">
-                  Receitas
-                </p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">
-                  {formatCurrency(totals.income)}
-                </p>
-              </Card>
-              <Card className="p-3">
-                <p className="text-[10px] font-semibold text-expense uppercase tracking-wider mb-1">
-                  Despesas
-                </p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">
-                  {formatCurrency(totals.expense)}
-                </p>
-              </Card>
-              <Card className="p-3">
-                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                  Saldo
-                </p>
-                <p className={cn(
-                  'text-sm font-bold',
-                  totals.net >= 0 ? 'text-income' : 'text-expense'
-                )}>
-                  {formatCurrency(totals.net)}
-                </p>
-              </Card>
-            </div>
+            <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Receitas</p>
+                    </div>
+                    <p className="text-sm font-black text-slate-900 dark:text-white">
+                        {formatCurrency(totals.income)}
+                    </p>
+                </div>
 
-            {/* Category Distribution Chart */}
-            <CategoryDistributionChart transactions={filteredTransactions} />
-          </>
+                <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                     <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                            <ArrowUpRight className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Despesas</p>
+                    </div>
+                    <p className="text-sm font-black text-slate-900 dark:text-white">
+                        {formatCurrency(totals.expense)}
+                    </p>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
+                            <Wallet className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Saldo</p>
+                    </div>
+                    <p className={cn(
+                        'text-sm font-black',
+                        totals.net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                    )}>
+                        {formatCurrency(totals.net)}
+                    </p>
+                </div>
+            </div>
+        )}
+
+        {/* Category Distribution Chart */}
+        {filteredTransactions.length > 0 && (
+             <CategoryDistributionChart transactions={filteredTransactions} />
         )}
 
         {/* Transactions List */}
@@ -514,10 +526,16 @@ export default function AllTransactionsPage() {
             }}
           />
         ) : (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1">
-              {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transação' : 'transações'}
-            </p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Histórico
+                </p>
+                <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-500">
+                    {filteredTransactions.length} itens
+                </span>
+            </div>
+           
             <div className="flex flex-col gap-3">
               {filteredTransactions.map((transaction) => (
                 <SwipeableTransactionItem
@@ -532,14 +550,6 @@ export default function AllTransactionsPage() {
             </div>
           </div>
         )}
-
-        {/* FAB - Add Transaction */}
-        <button
-          onClick={() => navigate('/transactions/new')}
-          className="fixed right-6 bottom-20 h-14 w-14 rounded-full bg-primary text-white shadow-xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-20"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
       </PageContainer>
 
       {/* Modals */}
