@@ -26,7 +26,7 @@ export default function AccountsPayablePage() {
     // Get filter from URL or default to 'pending'
     const activeFilter = (searchParams.get('filter') as FilterType) || 'pending';
     
-    const { allAccounts, summary, isLoading } = useAccountsPayable(selectedMonth);
+    const { allAccounts = [], summary, isLoading } = useAccountsPayable(selectedMonth);
     const updateTransaction = useUpdateTransaction();
 
     const [selectedInvoice, setSelectedInvoice] = useState<PayableAccount | null>(null);
@@ -43,7 +43,7 @@ export default function AccountsPayablePage() {
         if (activeFilter === 'overdue') return acc.status === 'overdue';
         if (activeFilter === 'paid') return acc.status === 'paid';
         // pending includes partial invoices essentially
-        return acc.status === 'pending' || (acc.type === 'invoice' && acc.status === 'partial');
+        return acc.status === 'pending';
     });
 
     const handlePayBill = (account: PayableAccount) => {
@@ -53,7 +53,7 @@ export default function AccountsPayablePage() {
             // Direct Bill Payment
             updateTransaction.mutate({
                 id: account.id,
-                status: 'completed'
+                data: { status: 'completed' }
             }, {
                 onSuccess: () => {
                     toast({
@@ -167,14 +167,14 @@ export default function AccountsPayablePage() {
                                     transaction_date: account.date, // SwipeableTransactionItem uses 'date' or 'transaction_date'? It uses processed props usually.
                                     // We need to adapt data structure or create a compatible object
                                     category: { name: account.type === 'invoice' ? 'Fatura Cartão' : account.category || 'Conta', icon: account.type === 'invoice' ? 'credit-card' : 'file-text' },
-                                    status: account.status === 'partial' ? 'pending' : account.status,
+                                    status: account.status === 'paid' ? 'completed' : 'pending',
                                     type: 'expense'
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 } as any} // Forced cast for MVP compatibility
                                 onPay={() => handlePayBill(account)}
                                 // Disable other swipes for now or keep standard Edit behavior?
                                 // Standard Edit might break for Invoices (virtual entities). We should disable edit for Invoices.
-                                onEdit={(tx) => { if(account.type !== 'invoice') navigate(`/transactions/${tx.id}/edit`); }}
+                                onEdit={() => { if(account.type !== 'invoice') navigate(`/transactions/${account.id}/edit`); }}
                                 onDelete={() => { if(account.type !== 'invoice') {/* Delete feature unused here */} }}
                             />
                         ))

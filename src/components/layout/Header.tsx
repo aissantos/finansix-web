@@ -12,9 +12,10 @@ interface HeaderProps {
   showBack?: boolean;
   onBack?: () => void;
   showLogo?: boolean;
+  right?: React.ReactNode;
 }
 
-export function Header({ title, showMonthSelector = false, showBack, onBack, showLogo = true }: HeaderProps) {
+export function Header({ title, showMonthSelector = false, showBack, onBack, showLogo = true, right }: HeaderProps) {
   const selectedMonth = useSelectedMonth();
   const { goToPreviousMonth, goToNextMonth, goToCurrentMonth } = useAppStore();
   const isOnline = useOnlineStatus();
@@ -110,6 +111,7 @@ export function Header({ title, showMonthSelector = false, showBack, onBack, sho
 
         {/* Right */}
         <div className="flex items-center gap-2">
+          {right}
           {!isOnline && (
             <div className="flex items-center gap-1 text-amber-500 text-xs font-medium px-2 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-full">
               <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
