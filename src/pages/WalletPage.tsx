@@ -8,6 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useCreditCards, useCreditUsage, useAccounts, useSubscriptions } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
+// ... (keep existing lines until SubscriptionsTab)
+
 
 type TabType = 'cards' | 'accounts' | 'subscriptions';
 
@@ -341,15 +343,6 @@ function SubscriptionsTab() {
                 </div>
               ))}
             </div>
-            
-            <Button 
-              onClick={() => navigate('/subscriptions')}
-              size="sm" 
-              className="bg-white text-violet-600 hover:bg-white/90 font-bold shadow-md rounded-full"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Nova
-            </Button>
           </div>
         </div>
       </div>
@@ -359,12 +352,6 @@ function SubscriptionsTab() {
         <h2 className="text-slate-900 dark:text-white text-lg font-bold">
           Minhas Assinaturas
         </h2>
-        <button
-          onClick={() => navigate('/subscriptions')}
-          className="text-primary text-xs font-bold flex items-center gap-0.5 hover:underline"
-        >
-          VER TODAS <ArrowLeftRight className="w-3 h-3" />
-        </button>
       </div>
 
       {activeSubscriptions.length === 0 ? (
@@ -373,14 +360,10 @@ function SubscriptionsTab() {
             <Repeat className="h-7 w-7 text-slate-400" />
           </div>
           <p className="text-slate-500 text-sm mb-3">Nenhuma assinatura cadastrada</p>
-          <Button onClick={() => navigate('/subscriptions')} size="sm">
-            <Plus className="h-4 w-4 mr-1" />
-            Adicionar primeira
-          </Button>
         </Card>
       ) : (
         <div className="grid gap-3">
-          {activeSubscriptions.slice(0, 5).map((sub) => {
+          {activeSubscriptions.map((sub) => {
             const card = cards?.find(c => c.id === sub.credit_card_id);
 
             return (
@@ -388,20 +371,10 @@ function SubscriptionsTab() {
                 key={sub.id}
                 subscription={sub}
                 card={card}
-                onEdit={() => navigate(`/subscriptions/${sub.id}/edit`)}
-                onDelete={() => navigate(`/subscriptions/${sub.id}/edit`)}
+                onClick={() => navigate('/accounts-payable')}
               />
             );
           })}
-          
-          {activeSubscriptions.length > 5 && (
-            <button
-              onClick={() => navigate('/subscriptions')}
-              className="text-center text-xs font-bold text-primary py-2 hover:underline"
-            >
-              Ver todas as {activeSubscriptions.length} assinaturas →
-            </button>
-          )}
         </div>
       )}
     </section>

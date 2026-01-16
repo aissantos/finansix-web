@@ -31,7 +31,6 @@ const CardDetailPage = lazy(() => import('@/pages/wallet/CardDetailPage'));
 const NewAccountPage = lazy(() => import('@/pages/wallet/NewAccountPage'));
 const EditAccountPage = lazy(() => import('@/pages/wallet/EditAccountPage'));
 const AccountDetailPage = lazy(() => import('@/pages/wallet/AccountDetailPage'));
-const SubscriptionsPage = lazy(() => import('@/pages/wallet/SubscriptionsPage'));
 
 // Transaction pages
 const EditTransactionPage = lazy(() => import('@/pages/EditTransactionPage'));
@@ -126,17 +125,15 @@ function AnimatedRoutes() {
               <Route path="wallet" element={<WalletPage />} />
               <Route path="analysis" element={<AnalysisPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              
+              {/* Feature Pages in Layout */}
+              <Route path="transactions" element={<AllTransactionsPage />} />
+              <Route path="accounts-payable" element={<AccountsPayablePage />} />
+              <Route path="categories" element={<CategoriesPage />} />
+              <Route path="household" element={<HouseholdPage />} />
             </Route>
 
             {/* Full-screen protected routes (no bottom nav) */}
-            <Route
-              path="/transactions"
-              element={
-                <ProtectedRoute>
-                  <AllTransactionsPage />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/transactions/new"
               element={
@@ -235,40 +232,7 @@ function AnimatedRoutes() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/subscriptions"
-              element={
-                <ProtectedRoute>
-                  <SubscriptionsPage />
-                </ProtectedRoute>
-              }
-            />
-             <Route
-              path="/accounts-payable"
-              element={
-                <ProtectedRoute>
-                  <AccountsPayablePage />
-                </ProtectedRoute>
-              }
-            />
 
-            {/* Settings routes */}
-            <Route
-              path="/categories"
-              element={
-                <ProtectedRoute>
-                  <CategoriesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/household"
-              element={
-                <ProtectedRoute>
-                  <HouseholdPage />
-                </ProtectedRoute>
-              }
-            />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

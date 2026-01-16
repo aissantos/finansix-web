@@ -48,6 +48,7 @@ export {
   useUpdateSubscription,
   useDeleteSubscription,
   useSubscriptionTotal,
+  useUpsertSubscription,
 } from './useSubscriptions';
 export { useMonthlyComparison, useMonthlyTrend } from './useMonthlyComparison';
 export {

@@ -23,6 +23,7 @@ import {
   useCreditCards,
   useAccounts,
   useSmartCategorySearch,
+  useUpsertSubscription,
 } from "@/hooks";
 import { toast } from "@/hooks/useToast";
 import { formatCurrency, cn } from "@/lib/utils";
@@ -69,7 +70,10 @@ export default function NewExpensePage() {
   const [pendingSubmitData, setPendingSubmitData] =
     useState<ExpenseForm | null>(null);
 
-  const { mutate: createTransaction, isPending } = useCreateTransaction();
+  const { mutate: createTransaction, isPending: isCreating } = useCreateTransaction();
+  const { mutate: upsertSubscription, isPending: isUpserting } = useUpsertSubscription();
+  const isPending = isCreating || isUpserting;
+  
   const { data: categories } = useCategories();
   const { data: cards } = useCreditCards();
   const { data: accounts } = useAccounts();
@@ -96,11 +100,25 @@ export default function NewExpensePage() {
   const isInstallment = watch("is_installment");
   const totalInstallments = watch("total_installments");
   const amount = watch("amount");
+  const selectedCategoryId = watch("category_id");
 
   const smartCategories = useSmartCategorySearch(categorySearch, amount);
+  // Filter out children from main list to keep it clean, unless searching? 
+  // For now, simple filter by type
   const displayCategories = categorySearch
     ? smartCategories.filter((c) => !c.type || c.type === "expense")
-    : categories?.filter((c) => !c.type || c.type === "expense") ?? [];
+    : categories?.filter((c) => (!c.type || c.type === "expense") && !c.parent_id) ?? [];
+
+  // Subscription Logic
+  const selectedCategory = categories?.find(c => c.id === selectedCategoryId);
+  const assinaturasCat = categories?.find(c => c.name === 'Assinaturas');
+  
+  // Check if we are in subscription flow (either Assinaturas selected, or one of its children)
+  const isSubscriptionFlow = 
+    (selectedCategory?.id === assinaturasCat?.id) || 
+    (selectedCategory?.parent_id === assinaturasCat?.id);
+
+  const subscriptionSubcategories = categories?.filter(c => c.parent_id === assinaturasCat?.id) ?? [];
 
   const handleAmountChange = (value: number) => {
     setValue("amount", value, { shouldDirty: true });
@@ -123,9 +141,6 @@ export default function NewExpensePage() {
     createTransaction(
       {
         type: "expense",
-        // If it's a recurring credit card expense, we multiply the amount by 12
-        // because the backend divides it by 12 for credit card installments.
-        // For accounts, we don't multiply because backend repeats the value.
         amount: isRecurringMode && paymentMethod === "credit" ? data.amount * 12 : data.amount,
         description: data.description,
         category_id: data.category_id || null,
@@ -141,12 +156,25 @@ export default function NewExpensePage() {
       },
       {
         onSuccess: () => {
+          // If subscription flow, upsert to subscriptions table
+          const category = categories?.find(c => c.id === data.category_id);
+          const isSubscription = category?.name === 'Assinaturas' || 
+            (category?.parent_id && categories?.find(p => p.id === category.parent_id)?.name === 'Assinaturas');
+
+          if (isSubscription && assinaturasCat) {
+             upsertSubscription({
+               name: data.description,
+               amount: data.amount,
+               category_id: data.category_id,
+               billing_day: new Date(data.transaction_date).getDate(),
+             });
+          }
+
           const installmentText =
             data.is_installment && data.total_installments > 1
               ? ` em ${data.total_installments}x`
               : "";
           
-          // Toast should show the value the user entered (Monthly or Total)
           const formattedAmount = formatCurrency(data.amount);
 
           toast({
@@ -272,9 +300,12 @@ export default function NewExpensePage() {
               className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border-none text-sm focus:ring-2 focus:ring-primary"
             />
           </div>
-          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+          
+          {/* Main Categories */}
+          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto mb-2">
             {displayCategories.map((cat) => {
               const isSelected = watch("category_id") === cat.id;
+              // If we are in subscription flow, we might want to highlight Assinaturas specialy?
               return (
                 <button
                   key={cat.id}
@@ -292,6 +323,35 @@ export default function NewExpensePage() {
               );
             })}
           </div>
+
+          {/* Subcategories (Only visible if Assinaturas is involved) */}
+          {isSubscriptionFlow && (
+            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-2">
+               <label className="block text-[10px] font-bold text-primary uppercase tracking-wide mb-3">
+                Tipo de Assinatura
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {subscriptionSubcategories.map(sub => {
+                   const isSelected = watch("category_id") === sub.id;
+                   return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setValue("category_id", sub.id)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                         isSelected
+                          ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
+                          : "bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-300 border border-cyan-100 dark:border-cyan-900"
+                      )}
+                    >
+                      <Icon name={sub.icon} className="h-3 w-3 mr-1.5" /> {sub.name}
+                    </button>
+                   );
+                })}
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* Payment Method */}

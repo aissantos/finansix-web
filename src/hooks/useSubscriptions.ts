@@ -111,3 +111,59 @@ export function useSubscriptionTotal() {
   
   return { total, count };
 }
+
+// Upsert subscription (create or update by name)
+export function useUpsertSubscription() {
+  const queryClient = useQueryClient();
+  const householdId = useAppStore((s) => s.householdId);
+
+  return useMutation({
+    mutationFn: async (subscription: {
+      name: string;
+      amount: number;
+      category_id?: string;
+      billing_day: number;
+    }) => {
+      if (!householdId) throw new Error('No household selected');
+
+      // 1. Check if exists
+      const { data: existing } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('household_id', householdId)
+        .ilike('name', subscription.name) // Case insensitive match
+        .single();
+
+      if (existing) {
+        // Update
+        const { error } = await supabase
+          .from('subscriptions')
+          .update({
+            amount: subscription.amount,
+            category_id: subscription.category_id,
+            billing_day: subscription.billing_day,
+            is_active: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing.id);
+        
+        if (error) handleSupabaseError(error);
+      } else {
+        // Insert
+        const { error } = await supabase
+          .from('subscriptions')
+          .insert({
+            ...subscription,
+            household_id: householdId,
+            billing_cycle: 'monthly',
+            is_active: true,
+          });
+
+        if (error) handleSupabaseError(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+    },
+  });
+}

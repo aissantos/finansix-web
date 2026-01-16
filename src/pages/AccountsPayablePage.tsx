@@ -1,4 +1,3 @@
-```javascript
 import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
@@ -197,4 +196,3 @@ export default function AccountsPayablePage() {
         </div>
     );
 }
-```

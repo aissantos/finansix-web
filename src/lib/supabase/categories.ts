@@ -112,11 +112,18 @@ export const DEFAULT_CATEGORIES: Omit<InsertTables<'categories'>, 'household_id'
   { name: 'Reembolso', type: 'income', icon: 'rotate-ccw', color: '#34d399', is_favorite: true, sort_order: 4 },
 ];
 
+export const DEFAULT_SUBCATEGORIES = [
+  { parent: 'Assinaturas', name: 'Streaming', icon: 'tv', color: '#06b6d4' },
+  { parent: 'Assinaturas', name: 'Software e IAs', icon: 'cpu', color: '#0ea5e9' },
+  { parent: 'Assinaturas', name: 'Educação', icon: 'book-open', color: '#2dd4bf' },
+  { parent: 'Assinaturas', name: 'Serviços', icon: 'wifi', color: '#64748b' },
+];
+
 export async function seedDefaultCategories(householdId: string): Promise<void> {
   // 1. Buscar categorias existentes
   const { data: existingCategories, error: fetchError } = await supabase
     .from('categories')
-    .select('name, type')
+    .select('id, name, type, parent_id')
     .or(`household_id.eq.${householdId},household_id.is.null`);
 
   if (fetchError) {
@@ -124,23 +131,64 @@ export async function seedDefaultCategories(householdId: string): Promise<void> 
     return;
   }
 
-  // 2. Filtrar apenas as categorias padrão que NÃO existem ainda
-  const newCategories = DEFAULT_CATEGORIES.filter(defaultCat => 
+  // 2. Filtrar e inserir PAIS que não existem
+  const newRefCategories = DEFAULT_CATEGORIES.filter(defaultCat => 
     !existingCategories?.some(existingCat => 
       existingCat.name === defaultCat.name && 
-      existingCat.type === defaultCat.type
+      existingCat.type === defaultCat.type &&
+      !existingCat.parent_id
     )
   ).map(cat => ({
     ...cat,
     household_id: householdId,
   }));
 
-  // 3. Inserir apenas as novas
-  if (newCategories.length > 0) {
+  if (newRefCategories.length > 0) {
     const { error } = await supabase
       .from('categories')
-      .insert(newCategories);
+      .insert(newRefCategories);
 
     if (error) handleSupabaseError(error);
   }
+
+  // 3. Inserir SUBCATEGORIAS
+  // Recarrega categorias para ter os IDs das recém criadas
+  const { data: allCategories } = await supabase
+    .from('categories')
+    .select('id, name')
+    .or(`household_id.eq.${householdId},household_id.is.null`);
+
+  if (!allCategories) return;
+
+  const newSubCategories = DEFAULT_SUBCATEGORIES.map(sub => {
+    const parent = allCategories.find(c => c.name === sub.parent);
+    if (!parent) return null;
+
+    // Check if subcategory already exists
+    const exists = existingCategories?.some(existing => 
+      existing.name === sub.name && 
+      existing.parent_id === parent.id
+    );
+    if (exists) return null;
+
+    return {
+      name: sub.name,
+      icon: sub.icon,
+      color: sub.color,
+      type: 'expense' as const, // Assinaturas são expense
+      parent_id: parent.id,
+      household_id: householdId,
+      is_favorite: false,
+      sort_order: 99,
+    };
+  }).filter((c): c is NonNullable<typeof c> => c !== null);
+
+  if (newSubCategories.length > 0) {
+    const { error } = await supabase
+      .from('categories')
+      .insert(newSubCategories);
+    
+    if (error) handleSupabaseError(error);
+  }
 }
+
