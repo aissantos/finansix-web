@@ -75,16 +75,16 @@ export function initSentry() {
 }
 
 // Helper to set user context (chamado após login)
+// Helper to set user context (chamado após login)
 export function setSentryUser(userId: string, householdId?: string) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (import.meta.env.PROD && (window as any).Sentry) {
-    Sentry.setUser({
+  if (import.meta.env.PROD && window.Sentry) {
+    window.Sentry.setUser({
       id: userId,
       // Não incluir email ou nome (PII)
     });
     
     if (householdId) {
-      Sentry.setContext('household', {
+      window.Sentry.setContext('household', {
         id: householdId,
       });
     }
@@ -93,9 +93,8 @@ export function setSentryUser(userId: string, householdId?: string) {
 
 // Helper to clear user context (chamado no logout)
 export function clearSentryUser() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (import.meta.env.PROD && (window as any).Sentry) {
-    Sentry.setUser(null);
+  if (import.meta.env.PROD && window.Sentry) {
+    window.Sentry.setUser(null);
   }
 }
 

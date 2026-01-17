@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Transaction Flow', () => {
     // Authenticate before each test (Mock or UI login?)
@@ -7,18 +7,9 @@ test.describe('Transaction Flow', () => {
     // we will write it as a template that the user needs to adapt/run against a local server.
 
     test('should allow creating a new transaction', async ({ page }) => {
-        // 1. Visit page (Login required usually)
+        // 1. Visit page (Authenticated via setup)
         await page.goto('/');
         
-        // Mock Auth or waiting for user to be logged in?
-        // Ideally we use a reusable auth state.
-        // For this task, we assume the user is logged in or we mock the auth cookie.
-
-        // Placeholder for login flow
-        // await page.getByPlaceholder('Email').fill('user@example.com');
-        // await page.getByPlaceholder('Password').fill('password');
-        // await page.getByRole('button', { name: 'Entrar' }).click();
-
         // 2. Open New Transaction Modal
         await page.getByRole('button', { name: 'Nova Transação' }).click();
 

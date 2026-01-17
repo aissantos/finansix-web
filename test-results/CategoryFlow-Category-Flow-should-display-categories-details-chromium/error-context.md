@@ -1,0 +1,59 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - banner [ref=e6]:
+        - generic [ref=e7]:
+          - button "Voltar" [ref=e9] [cursor=pointer]:
+            - img [ref=e10]
+          - heading "Categorias" [level=1] [ref=e13]
+          - button "Notificações" [ref=e15] [cursor=pointer]:
+            - img [ref=e16]
+      - main [ref=e19]:
+        - generic [ref=e20]:
+          - button "Despesas" [ref=e21] [cursor=pointer]:
+            - img [ref=e22]
+            - text: Despesas
+          - button "Receitas" [ref=e25] [cursor=pointer]:
+            - img [ref=e26]
+            - text: Receitas
+        - generic [ref=e29]:
+          - img [ref=e30]
+          - textbox "Buscar categoria..." [ref=e33]
+        - button "Nova Categoria" [ref=e34] [cursor=pointer]:
+          - img [ref=e35]
+          - text: Nova Categoria
+      - generic [ref=e37]:
+        - button "Abrir menu de ações rápidas" [ref=e38] [cursor=pointer]:
+          - img [ref=e39]
+        - generic [ref=e41]: Segure para ações rápidas
+      - navigation "Navegação principal" [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e46]:
+            - link "Navegar para Home" [ref=e47] [cursor=pointer]:
+              - /url: /
+              - img [ref=e48]
+              - generic [ref=e51]: Home
+            - link "Navegar para Análise" [ref=e52] [cursor=pointer]:
+              - /url: /analysis
+              - img [ref=e53]
+              - generic [ref=e55]: Análise
+            - link "Navegar para Carteira" [ref=e56] [cursor=pointer]:
+              - /url: /wallet
+              - img [ref=e57]
+              - generic [ref=e60]: Carteira
+            - link "Navegar para Perfil" [ref=e61] [cursor=pointer]:
+              - /url: /profile
+              - img [ref=e62]
+              - generic [ref=e65]: Perfil
+          - button "Abrir menu de ações" [ref=e67] [cursor=pointer]:
+            - img [ref=e68]
+    - region "Notifications (F8)":
+      - list
+  - generic [ref=e69]:
+    - img [ref=e71]
+    - button "Open Tanstack query devtools" [ref=e119] [cursor=pointer]:
+      - img [ref=e120]
+```

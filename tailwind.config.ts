@@ -39,8 +39,8 @@ const config: Config = {
           light: '#ffffff',
           dark: '#1e293b',
         },
-        expense: '#ef4444',
-        income: '#22c55e',
+        expense: '#dc2626', // Red 600 (WCAG AA with white)
+        income: '#16a34a', // Green 600 (WCAG AA with white)
         card: {
           nubank: '#820AD1',
           inter: '#FF7A00',
@@ -86,9 +86,7 @@ const config: Config = {
           '0%': { transform: 'translateY(-10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
-        shimmer: {
-          '100%': { transform: 'translateX(100%)' },
-        },
+
         // NEW v2.0: Additional animations
         ...theme.animations,
       },
