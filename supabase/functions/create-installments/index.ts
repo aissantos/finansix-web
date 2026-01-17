@@ -32,6 +32,37 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // 1. Verify User (Authentication & identification for rate limiting)
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid User Token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    // 2. Rate Limiting Check
+    const rateKey = `create-installments:${user.id}`
+    const { data: isAllowed, error: rateError } = await supabase.rpc('check_rate_limit', {
+      rate_key: rateKey,
+      max_requests: 100, // 100 requests per minute
+      window_seconds: 60
+    })
+
+    if (rateError) {
+       console.error('Rate limit RPC error:', rateError)
+       // Fail safe: Allow if RPC fails? Or Deny? Deny is safer for stability.
+       return new Response(JSON.stringify({ error: 'Rate limit system error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    if (!isAllowed) {
+       return new Response(JSON.stringify({ error: 'Rate limit exceeded (100 req/min). Please try again later.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     const payload: TransactionPayload = await req.json()
     const { id, household_id, credit_card_id, amount, transaction_date, is_installment, total_installments } = payload
 
