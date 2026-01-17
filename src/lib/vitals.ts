@@ -1,14 +1,17 @@
 import { onCLS, onINP, onLCP, onFCP, onTTFB } from 'web-vitals';
+import type { Metric } from 'web-vitals';
 
 const vitalsUrl = 'https://vitals.vercel-analytics.com/v1/vitals';
 
 function getConnectionSpeed() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (navigator as any).connection && (navigator as any).connection.effectiveType
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ? (navigator as any).connection.effectiveType
     : '';
 }
 
-export function reportWebVitals(onPerfEntry?: (metric: any) => void) {
+export function reportWebVitals(onPerfEntry?: (metric: Metric) => void) {
   if (onPerfEntry && onPerfEntry instanceof Function) {
     onCLS(onPerfEntry);
     onINP(onPerfEntry);
@@ -18,7 +21,7 @@ export function reportWebVitals(onPerfEntry?: (metric: any) => void) {
   }
 }
 
-export function sendToAnalytics(metric: any) {
+export function sendToAnalytics(metric: Metric) {
   const body = JSON.stringify({
     dsn: import.meta.env.VITE_ANALYTICS_ID || 'test-analytics-id',
     id: metric.id,
@@ -44,6 +47,7 @@ export function sendToAnalytics(metric: any) {
   
   // Also log to console in development
   if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
       console.log('[Web Vitals]', metric);
   }
 }

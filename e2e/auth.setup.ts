@@ -5,10 +5,10 @@ const authFile = 'playwright/.auth/user.json';
 setup('authenticate', async ({ page }) => {
   // Capture browser errors to debug White Screen of Death
   page.on('console', msg => {
-    if (msg.type() === 'error') console.log(`BROWSER ERROR: "${msg.text()}"`);
+    if (msg.type() === 'error') console.error(`BROWSER ERROR: "${msg.text()}"`);
   });
   page.on('pageerror', err => {
-    console.log(`BROWSER UNCAUGHT EXCEPTION: "${err.message}"`);
+    console.error(`BROWSER UNCAUGHT EXCEPTION: "${err.message}"`);
   });
 
   // Mock Supabase Auth
