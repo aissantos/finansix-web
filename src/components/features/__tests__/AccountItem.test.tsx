@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountItem } from '../AccountItem';
 import { render } from '@/test/test-utils';
@@ -143,7 +143,9 @@ describe('AccountItem', () => {
     const menuButton = screen.getByLabelText('Opções da conta');
     await user.click(menuButton);
     
-    expect(screen.getByText('Editar')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Editar')).toBeInTheDocument();
+    });
   });
 
   it('should call onEdit when edit button is clicked', async () => {

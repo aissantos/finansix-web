@@ -107,6 +107,7 @@ export function QuickActionFAB() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
             onClick={() => setIsOpen(false)}
+            aria-hidden="true"
           />
         )}
       </AnimatePresence>
@@ -144,13 +145,19 @@ export function QuickActionFAB() {
                 )}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label={action.label}
               >
-                <action.icon className="h-5 w-5 mb-0.5" />
+                <action.icon className="h-5 w-5 mb-0.5" aria-hidden="true" />
                 <span className="text-[9px] font-bold">{action.label}</span>
               </motion.button>
             );
           })}
         </AnimatePresence>
+
+        {/* Quick Actions Menu Container - Logic Grouping */}
+        <div id="quick-actions-menu" role="menu" aria-orientation="vertical" aria-hidden={!isOpen}>
+             {/* Note: The buttons are absolutely positioned above, but logically they belong here or should be linked via aria-controls */}
+        </div>
 
         {/* Main FAB */}
         <motion.button
@@ -172,6 +179,10 @@ export function QuickActionFAB() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           animate={{ rotate: isOpen ? 45 : 0 }}
+          aria-label={isOpen ? "Fechar menu de ações rápidas" : "Abrir menu de ações rápidas"}
+          aria-expanded={isOpen}
+          aria-haspopup="menu"
+          aria-controls="quick-actions-menu"
         >
           {isOpen ? (
             <X className="h-6 w-6" />

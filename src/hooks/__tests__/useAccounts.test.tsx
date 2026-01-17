@@ -19,6 +19,12 @@ vi.mock('@/lib/supabase', () => ({
   getTotalBalance: vi.fn(),
 }));
 
+vi.mock('@/lib/sentry', () => ({
+  captureError: vi.fn(),
+  setSentryUser: vi.fn(),
+  clearSentryUser: vi.fn(),
+}));
+
 vi.mock('@/stores', () => ({
   useHouseholdId: vi.fn(),
 }));
@@ -76,7 +82,7 @@ describe('useAccounts', () => {
             })
         );
       
-        expect(result.current.isSuccess).toBe(true);
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
     });
   });
 });

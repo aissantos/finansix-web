@@ -4,6 +4,7 @@ import type { User, Session } from '@supabase/supabase-js';
 import { supabase, getOrCreateHousehold } from '@/lib/supabase';
 import { useAppStore } from '@/stores';
 import { seedDefaultCategories } from '@/lib/supabase/categories';
+import { setSentryUser, clearSentryUser, captureError } from '@/lib/sentry';
 
 interface AuthState {
   user: User | null;
@@ -37,6 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const name = email?.split('@')[0];
       const householdId = await getOrCreateHousehold(userId, name);
       setHouseholdId(householdId);
+      
+      // Set Sentry User Context with Household
+      setSentryUser(userId, householdId);
 
       const { data: categories } = await supabase
         .from('categories')
@@ -49,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('[Auth] Failed to initialize user data:', error);
+      captureError(error, { context: 'initializeUserData' });
     }
   };
 
@@ -79,10 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (session?.user) {
             initializeUserData(session.user.id, session.user.email);
+          } else {
+            clearSentryUser();
           }
         }
       } catch (error) {
         console.error('[Auth] Error checking session:', error);
+        captureError(error, { context: 'initSession' });
         // Mesmo com erro, liberamos a tela para o usuário tentar login novamente
         if (mounted) {
           setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
@@ -107,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initializeUserData(session.user.id, session.user.email);
       } else if (event === 'SIGNED_OUT') {
         setHouseholdId(null);
+        clearSentryUser();
       }
     });
 
@@ -119,7 +128,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+       captureError(error, { context: 'signIn', email });
+       throw error;
+    }
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
@@ -128,19 +140,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: { data: { display_name: name } },
     });
-    if (error) throw error;
+    if (error) {
+        captureError(error, { context: 'signUp', email });
+        throw error;
+    }
   };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (error) {
+        captureError(error, { context: 'signOut' });
+        throw error;
+    }
   };
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
-    if (error) throw error;
+    if (error) {
+        captureError(error, { context: 'resetPassword', email });
+        throw error;
+    }
   };
 
   return (

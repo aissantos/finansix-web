@@ -56,6 +56,8 @@ export function useBestCard(minimumLimit = 0) {
   });
 }
 
+import { captureError } from '@/lib/sentry';
+
 export function useCreateCreditCard() {
   const queryClient = useQueryClient();
   const householdId = useHouseholdId();
@@ -90,13 +92,14 @@ export function useCreateCreditCard() {
       return { previous };
     },
 
-    onError: (_err, _newCard, context) => {
+    onError: (err, _newCard, context) => {
       if (context?.previous) {
         queryClient.setQueryData(
           queryKeys.cards.list(householdId!),
           context.previous
         );
       }
+      captureError(err, { context: 'useCreateCreditCard', data: _newCard });
     },
 
     onSettled: () => {
@@ -112,6 +115,10 @@ export function useUpdateCreditCard() {
     mutationFn: ({ id, data }: { id: string; data: UpdateTables<'credit_cards'> }) =>
       updateCreditCard(id, data),
 
+    onError: (err, variables) => {
+      captureError(err, { context: 'useUpdateCreditCard', id: variables.id });
+    },
+
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.all });
     },
@@ -123,6 +130,10 @@ export function useDeleteCreditCard() {
 
   return useMutation({
     mutationFn: (id: string) => deleteCreditCard(id),
+
+    onError: (err, id) => {
+      captureError(err, { context: 'useDeleteCreditCard', id });
+    },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.all });

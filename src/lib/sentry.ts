@@ -101,13 +101,23 @@ export function clearSentryUser() {
 
 // Helper to add breadcrumb
 export function addBreadcrumb(message: string, category: string, data?: Record<string, unknown>) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((window as any).Sentry) {
+  if (import.meta.env.PROD) {
     Sentry.addBreadcrumb({
       message,
       category,
       level: 'info',
       data,
     });
+  }
+}
+
+// Helper to capture exception
+export function captureError(error: unknown, context?: Record<string, unknown>) {
+  if (import.meta.env.PROD) {
+     Sentry.captureException(error, {
+        extra: context
+     });
+  } else {
+    console.error('[Sentry Dev]', error, context);
   }
 }

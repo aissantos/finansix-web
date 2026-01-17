@@ -70,6 +70,8 @@ export function useTransactionsByCategory() {
   });
 }
 
+import { captureError } from '@/lib/sentry';
+
 export function useCreateTransaction() {
   const queryClient = useQueryClient();
   const householdId = useHouseholdId();
@@ -107,7 +109,7 @@ export function useCreateTransaction() {
       return { previousTransactions };
     },
 
-    onError: (_err, _newTransaction, context) => {
+    onError: (err, _newTransaction, context) => {
       // Rollback on error
       if (context?.previousTransactions) {
         queryClient.setQueryData(
@@ -115,6 +117,7 @@ export function useCreateTransaction() {
           context.previousTransactions
         );
       }
+      captureError(err, { context: 'useCreateTransaction', data: _newTransaction });
     },
 
     onSettled: () => {
@@ -133,6 +136,10 @@ export function useUpdateTransaction() {
     mutationFn: ({ id, data }: { id: string; data: UpdateTables<'transactions'> }) =>
       updateTransaction(id, data),
 
+    onError: (err, variables) => {
+      captureError(err, { context: 'useUpdateTransaction', id: variables.id });
+    },
+
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
       queryClient.invalidateQueries({ queryKey: ['freeBalance'] });
@@ -147,6 +154,10 @@ export function useDeleteTransaction() {
 
   return useMutation({
     mutationFn: (id: string) => deleteTransaction(id),
+
+    onError: (err, id) => {
+      captureError(err, { context: 'useDeleteTransaction', id });
+    },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });

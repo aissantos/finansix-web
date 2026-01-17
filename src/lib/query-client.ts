@@ -2,6 +2,8 @@ import { QueryClient } from '@tanstack/react-query';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
+import { captureError } from '@/lib/sentry';
+
 // Custom error handler for global query errors
 const handleQueryError = (error: unknown) => {
   // Log to console in development
@@ -9,16 +11,8 @@ const handleQueryError = (error: unknown) => {
     console.error('[Query Error]', error);
   }
   
-  // Send to Sentry in production
-  if (import.meta.env.PROD && typeof window !== 'undefined') {
-    const Sentry = (window as unknown as { Sentry?: { captureException: (error: unknown, options?: Record<string, unknown>) => void } }).Sentry;
-    if (Sentry) {
-      Sentry.captureException(error, {
-        tags: { type: 'query-error' },
-        level: 'error',
-      });
-    }
-  }
+  // Send to Sentry in production using standardized helper
+  captureError(error, { tags: { type: 'query-error' } });
 };
 
 export const queryClient = new QueryClient({
@@ -83,6 +77,10 @@ if (typeof window !== 'undefined' && 'localStorage' in window) {
           ];
           const queryKey = query.queryKey[0];
           return typeof queryKey === 'string' && persistableKeys.includes(queryKey);
+        },
+        // Persist paused mutations (e.g. offline) so they resume on reload
+        shouldDehydrateMutation: (mutation) => {
+          return mutation.state.isPaused;
         },
       },
     });

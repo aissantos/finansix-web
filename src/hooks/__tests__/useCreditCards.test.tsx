@@ -20,6 +20,12 @@ vi.mock('@/lib/supabase', () => ({
   getTotalCreditUsage: vi.fn(),
 }));
 
+vi.mock('@/lib/sentry', () => ({
+  captureError: vi.fn(),
+  setSentryUser: vi.fn(),
+  clearSentryUser: vi.fn(),
+}));
+
 vi.mock('@/lib/utils/calculations', () => ({
     getBestCard: (...args: unknown[]) => mockGetBestCard(...args),
 }));
@@ -102,7 +108,7 @@ describe('useCreditCards', () => {
             })
         );
       
-        expect(result.current.isSuccess).toBe(true);
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
     });
   });
 });

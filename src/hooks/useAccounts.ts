@@ -39,6 +39,8 @@ export function useTotalBalance() {
   });
 }
 
+import { captureError } from '@/lib/sentry';
+
 export function useCreateAccount() {
   const queryClient = useQueryClient();
   const householdId = useHouseholdId();
@@ -72,13 +74,14 @@ export function useCreateAccount() {
       return { previous };
     },
 
-    onError: (_err, _newAccount, context) => {
+    onError: (err, _newAccount, context) => {
       if (context?.previous) {
         queryClient.setQueryData(
           queryKeys.accounts.list(householdId!),
           context.previous
         );
       }
+      captureError(err, { context: 'useCreateAccount', data: _newAccount });
     },
 
     onSettled: () => {
@@ -95,6 +98,10 @@ export function useUpdateAccount() {
     mutationFn: ({ id, data }: { id: string; data: UpdateTables<'accounts'> }) =>
       updateAccount(id, data),
 
+    onError: (err, variables) => {
+      captureError(err, { context: 'useUpdateAccount', id: variables.id });
+    },
+
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
       queryClient.invalidateQueries({ queryKey: ['freeBalance'] });
@@ -107,6 +114,10 @@ export function useDeleteAccount() {
 
   return useMutation({
     mutationFn: (id: string) => deleteAccount(id),
+
+    onError: (err, id) => {
+      captureError(err, { context: 'useDeleteAccount', id });
+    },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
