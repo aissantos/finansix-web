@@ -1,6 +1,6 @@
 
 import { assertEquals } from "https://deno.land/std@0.208.0/assert/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Mock Supabase client for Deno tests? 
 // Deno tests usually run against a real local Supabase or need complex mocking.
@@ -12,9 +12,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // For this file, we will write a test that *would* work if we export `calculateBillingDates`.
 // Or we can integration test the endpoint.
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "http://localhost:54321";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "anon-key";
 
 Deno.test("create-installments - Rate Limit Check", async () => {
     // This is an integration test requiring running Supabase.

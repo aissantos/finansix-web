@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { useInstallments } from '../useInstallments';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
@@ -8,7 +8,7 @@ import React from 'react';
 const mockGetInstallments = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
-  getInstallments: (...args: any[]) => mockGetInstallments(...args),
+  getInstallments: (...args: unknown[]) => mockGetInstallments(...args),
   getInstallmentProjection: vi.fn(),
 }));
 
@@ -32,8 +32,8 @@ import { useHouseholdId, useSelectedMonth } from '@/stores';
 describe('useInstallments', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useHouseholdId as any).mockReturnValue('household-123');
-    (useSelectedMonth as any).mockReturnValue(new Date('2026-02-01'));
+    (useHouseholdId as unknown as Mock).mockReturnValue('household-123');
+    (useSelectedMonth as unknown as Mock).mockReturnValue(new Date('2026-02-01'));
   });
 
   it('should fetch installments with default options', async () => {
@@ -84,7 +84,7 @@ describe('useInstallments', () => {
   });
 
   it('should not run if householdId is missing', async () => {
-    (useHouseholdId as any).mockReturnValue(null);
+    (useHouseholdId as unknown as Mock).mockReturnValue(null);
     
     const { result } = renderHook(() => useInstallments(), { wrapper: createWrapper() });
 

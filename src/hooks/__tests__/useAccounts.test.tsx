@@ -1,17 +1,18 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { useAccounts, useCreateAccount } from '../useAccounts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
+import type { InsertTables } from '@/types';
 
 // Mocks
 const mockGetAccounts = vi.fn();
 const mockCreateAccount = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
-  getAccounts: (...args: any[]) => mockGetAccounts(...args),
-  createAccount: (...args: any[]) => mockCreateAccount(...args),
+  getAccounts: (...args: unknown[]) => mockGetAccounts(...args),
+  createAccount: (...args: unknown[]) => mockCreateAccount(...args),
   getAccount: vi.fn(),
   updateAccount: vi.fn(),
   deleteAccount: vi.fn(),
@@ -37,7 +38,7 @@ import { useHouseholdId } from '@/stores';
 describe('useAccounts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useHouseholdId as any).mockReturnValue('household-123');
+    (useHouseholdId as unknown as Mock).mockReturnValue('household-123');
   });
 
   describe('useAccounts (List)', () => {
@@ -65,7 +66,7 @@ describe('useAccounts', () => {
                 initial_balance: 1000,
                 color: '#000000',
                 icon: 'bank',
-            } as any);
+            } as unknown as Omit<InsertTables<'accounts'>, 'household_id'>);
         });
       
         expect(mockCreateAccount).toHaveBeenCalledWith(

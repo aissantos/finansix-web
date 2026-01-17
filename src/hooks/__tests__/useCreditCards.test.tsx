@@ -1,9 +1,10 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { useCreditCards, useCreateCreditCard, useBestCard } from '../useCreditCards';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
+import type { InsertTables } from '@/types';
 
 // Mocks
 const mockGetCreditCards = vi.fn();
@@ -11,8 +12,8 @@ const mockCreateCreditCard = vi.fn();
 const mockGetBestCard = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
-  getCreditCards: (...args: any[]) => mockGetCreditCards(...args),
-  createCreditCard: (...args: any[]) => mockCreateCreditCard(...args),
+  getCreditCards: (...args: unknown[]) => mockGetCreditCards(...args),
+  createCreditCard: (...args: unknown[]) => mockCreateCreditCard(...args),
   getCreditCard: vi.fn(),
   updateCreditCard: vi.fn(),
   deleteCreditCard: vi.fn(),
@@ -20,7 +21,7 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 vi.mock('@/lib/utils/calculations', () => ({
-    getBestCard: (...args: any[]) => mockGetBestCard(...args),
+    getBestCard: (...args: unknown[]) => mockGetBestCard(...args),
 }));
 
 vi.mock('@/stores', () => ({
@@ -43,8 +44,8 @@ import { useHouseholdId, useSelectedMonth } from '@/stores';
 describe('useCreditCards', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useHouseholdId as any).mockReturnValue('household-123');
-    (useSelectedMonth as any).mockReturnValue(new Date('2026-02-01'));
+    (useHouseholdId as unknown as Mock).mockReturnValue('household-123');
+    (useSelectedMonth as unknown as Mock).mockReturnValue(new Date('2026-02-01'));
   });
 
   describe('useCreditCards (List)', () => {
@@ -91,7 +92,7 @@ describe('useCreditCards', () => {
                 due_day: 15,
                 color: '#000',
                 icon: 'credit-card',
-            } as any);
+            } as unknown as Omit<InsertTables<'credit_cards'>, 'household_id'>);
         });
       
         expect(mockCreateCreditCard).toHaveBeenCalledWith(
