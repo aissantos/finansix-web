@@ -53,7 +53,7 @@ export function AuditLogsPage() {
   const handleExportCSV = async () => {
     setIsExporting(true);
     try {
-        let query = supabaseAdmin.from('audit_logs').select('*').csv();
+        let query = supabaseAdmin.from('audit_logs').select('*');
 
         // Apply filters (replicating hook logic roughly)
         if (hookFilters.action) query = query.eq('action', hookFilters.action);
@@ -61,7 +61,7 @@ export function AuditLogsPage() {
         if (hookFilters.startDate) query = query.gte('timestamp', hookFilters.startDate.toISOString());
         if (hookFilters.endDate) query = query.lte('timestamp', hookFilters.endDate.toISOString());
 
-        const { data, error } = await query;
+        const { data, error } = await query.csv();
         
         if (error) throw error;
         if (!data) throw new Error('No data');

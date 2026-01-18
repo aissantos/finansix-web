@@ -86,7 +86,7 @@ export function SettingsPage() {
                       <div className="flex items-center gap-2 w-full max-w-sm">
                         <Input
                           type={setting.type === 'number' ? 'number' : 'text'}
-                          value={currentValue ?? ''}
+                          value={(currentValue as string | number) ?? ''}
                           onChange={(e) => {
                             const val = setting.type === 'number' ? Number(e.target.value) : e.target.value;
                             handleValueChange(setting.key, val);

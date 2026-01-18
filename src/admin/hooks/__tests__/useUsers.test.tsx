@@ -67,12 +67,12 @@ describe('useUsers', () => {
     const error = { message: 'Failed to fetch' };
     const queryBuilder = createMockQueryBuilder([], error);
     // Force the promise to reject for the error case in useUsers
-    queryBuilder.then = ((resolve: any, reject: any) => reject(error)) as any;
+    queryBuilder.then = ((_: any, reject: any) => reject(error)) as any;
     
     // Alternative approach: mock the query execution to throw
     const throwingBuilder = {
       ...queryBuilder,
-      then: (resolve: any, reject: any) => reject(error)
+      then: (_: any, reject: any) => reject(error)
     };
     
     vi.mocked(supabaseAdmin.from).mockReturnValue(throwingBuilder as any);
