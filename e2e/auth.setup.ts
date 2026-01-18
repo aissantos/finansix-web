@@ -14,7 +14,7 @@ setup('authenticate', async ({ page }) => {
   // Mock Supabase Auth
   await page.route('**/auth/v1/token?grant_type=password', async route => {
     const json = {
-      access_token: 'fake-access-token',
+      access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
       token_type: 'bearer',
       expires_in: 3600,
       refresh_token: 'fake-refresh-token',

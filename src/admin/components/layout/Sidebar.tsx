@@ -38,6 +38,13 @@ export function AdminSidebar() {
       permission: 'VIEW_DASHBOARD' as const,
     },
     {
+      name: 'Transações',
+      href: '/admin/transactions',
+      icon: FileText, // Reusing FileText or using another icon
+      current: location.pathname.startsWith('/admin/transactions'),
+      permission: 'VIEW_DASHBOARD' as const, 
+    },
+    {
       name: 'Auditoria',
       href: '/admin/audit',
       icon: ShieldAlert,
@@ -45,18 +52,18 @@ export function AdminSidebar() {
       permission: 'VIEW_AUDIT_LOG' as const,
     },
     {
-      name: 'Sistema',
-      href: '/admin/system',
+      name: 'System Health',
+      href: '/admin/system-health',
       icon: Activity,
-      current: location.pathname.startsWith('/admin/system'),
+      current: location.pathname.startsWith('/admin/system-health'),
       permission: 'VIEW_SYSTEM_HEALTH' as const,
     },
     {
-        name: 'Relatórios',
-        href: '/admin/reports',
-        icon: FileText,
-        current: location.pathname.startsWith('/admin/reports'),
-        permission: 'VIEW_DASHBOARD' as const, // Placeholder permission
+      name: 'Feature Flags',
+      href: '/admin/feature-flags',
+      icon: Activity, // Or another icon like Flag or ToggleLeft
+      current: location.pathname.startsWith('/admin/feature-flags'),
+      permission: 'MANAGE_FEATURE_FLAGS' as const,
     },
     {
       name: 'Configurações',

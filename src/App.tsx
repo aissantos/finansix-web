@@ -11,6 +11,7 @@ import { QueryErrorBoundary } from '@/components/QueryErrorBoundary';
 import { PWAInstallBanner } from '@/components/features';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { SystemConfigProvider } from '@/contexts/SystemConfigContext';
 
 // Lazy load pages for better initial bundle size
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -48,6 +49,11 @@ const AdminUserDetailPage = lazy(() => import('@/admin/pages/UserDetail'));
 const AdminAnalyticsPage = lazy(() => import('@/admin/pages/Analytics'));
 const AdminAuthLayout = lazy(() => import('@/admin/layouts/AuthLayout'));
 const AdminLayout = lazy(() => import('@/admin/layouts/AdminLayout'));
+const AdminSettingsPage = lazy(() => import('@/admin/pages/Settings').then(module => ({ default: module.SettingsPage })));
+const AdminAuditPage = lazy(() => import('@/admin/pages/AuditLogs').then(module => ({ default: module.AuditLogsPage })));
+const AdminTransactionsPage = lazy(() => import('@/admin/pages/Transactions/List').then(module => ({ default: module.TransactionsListPage })));
+const AdminSystemHealthPage = lazy(() => import('@/admin/pages/SystemHealth/SystemHealth').then(module => ({ default: module.SystemHealthPage })));
+const AdminFeatureFlagsPage = lazy(() => import('@/admin/pages/FeatureFlags/List').then(module => ({ default: module.FeatureFlagsListPage })));
 const AdminLoginPage = lazy(() => import('@/admin/pages/auth/Login'));
 const AdminSetup2FA = lazy(() => import('@/admin/pages/auth/Setup2FA'));
 const AdminVerify2FA = lazy(() => import('@/admin/pages/auth/Verify2FA'));
@@ -261,6 +267,11 @@ function AnimatedRoutes() {
                         <Route path="users" element={<AdminUsersPage />} />
                         <Route path="users/:userId" element={<AdminUserDetailPage />} />
                         <Route path="analytics" element={<AdminAnalyticsPage />} />
+                        <Route path="settings" element={<AdminSettingsPage />} />
+                        <Route path="audit" element={<AdminAuditPage />} />
+                        <Route path="transactions" element={<AdminTransactionsPage />} />
+                        <Route path="system-health" element={<AdminSystemHealthPage />} />
+                        <Route path="feature-flags" element={<AdminFeatureFlagsPage />} />
                     </Route>
                 </Route>
             </Route>
@@ -280,8 +291,9 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <QueryErrorBoundary>
-          <AuthProvider>
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <SystemConfigProvider>
+            <AuthProvider>
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
                 <AnimatedRoutes />
                 <PWAInstallBanner />
@@ -289,6 +301,7 @@ export default function App() {
               </div>
             </BrowserRouter>
           </AuthProvider>
+          </SystemConfigProvider>
         </QueryErrorBoundary>
         
         {import.meta.env.DEV && (

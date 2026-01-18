@@ -765,6 +765,37 @@ export interface Database {
           }
         ]
       }
+      system_settings: {
+        Row: {
+          key: string
+          value: Json
+          type: 'boolean' | 'string' | 'number' | 'json'
+          description: string | null
+          group: string
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: Json
+          type: 'boolean' | 'string' | 'number' | 'json'
+          description?: string | null
+          group?: string
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          value?: Json
+          type?: 'boolean' | 'string' | 'number' | 'json'
+          description?: string | null
+          group?: string
+          is_public?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       free_balance_view: {
@@ -798,6 +829,38 @@ export interface Database {
           mau: number
           total_events: number
         }
+      }
+      get_database_metrics: {
+        Args: Record<string, never>
+        Returns: {
+          cpu: number
+          connections: number
+          memory_usage: number
+          timestamp: string
+        }
+      }
+      get_aggregate_stats: {
+        Args: {
+          start_date?: string
+          end_date?: string
+        }
+        Returns: {
+          total_income: number
+          total_expenses: number
+          net_balance: number
+          total_transactions: number
+        }
+      }
+      get_system_settings: {
+        Args: Record<string, never>
+        Returns: Database['public']['Tables']['system_settings']['Row'][]
+      }
+      update_system_setting: {
+        Args: {
+          p_key: string
+          p_value: Json
+        }
+        Returns: Database['public']['Tables']['system_settings']['Row']
       }
       get_transaction_analytics: {
         Args: { 
