@@ -3,7 +3,6 @@ import { supabaseAdmin } from '@/admin/lib/supabase-admin';
 import { useToast } from '@/hooks/useToast';
 import type { Database } from '@/types/database';
 
-type HouseholdMember = Database['public']['Tables']['household_members']['Row'];
 type HouseholdMemberInsert = Database['public']['Tables']['household_members']['Insert'];
 type HouseholdMemberUpdate = Database['public']['Tables']['household_members']['Update'];
 
@@ -74,7 +73,7 @@ export function useUserMutations() {
 
   // Delete user mutation (soft delete)
   const deleteUser = useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async (_userId: string) => {
       // Note: We don't actually delete from household_members
       // Instead, we could deactivate or remove from household
       // For now, this is a placeholder
@@ -98,7 +97,7 @@ export function useUserMutations() {
 
   // Bulk activate/deactivate users
   const bulkUpdateStatus = useMutation({
-    mutationFn: async ({ userIds, status }: { userIds: string[]; status: 'active' | 'inactive' }) => {
+    mutationFn: async ({ userIds: _userIds, status: _status }: { userIds: string[]; status: 'active' | 'inactive' }) => {
       // Note: household_members doesn't have a status field
       // This would need to be implemented based on your schema
       // Placeholder for now

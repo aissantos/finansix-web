@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Home, Users, Shield } from 'lucide-react';
+import { Home, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { UserDetail } from '@/admin/hooks/useUserDetail';
