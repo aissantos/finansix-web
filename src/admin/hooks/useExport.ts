@@ -14,7 +14,7 @@ export function useExport() {
   /**
    * Export data to CSV format
    */
-  const exportToCSV = useCallback((data: any[], options: ExportOptions = {}) => {
+  const exportToCSV = useCallback((data: Record<string, unknown>[], options: ExportOptions = {}) => {
     if (!data || data.length === 0) {
       throw new Error('No data to export');
     }
@@ -57,7 +57,7 @@ export function useExport() {
   /**
    * Export data to JSON format
    */
-  const exportToJSON = useCallback((data: any[], options: ExportOptions = {}) => {
+  const exportToJSON = useCallback((data: Record<string, unknown>[], options: ExportOptions = {}) => {
     if (!data || data.length === 0) {
       throw new Error('No data to export');
     }
@@ -82,7 +82,7 @@ export function useExport() {
    * Export data to Excel format (requires xlsx library)
    * Note: Install with: pnpm add xlsx
    */
-  const exportToExcel = useCallback(async (data: any[], options: ExportOptions = {}) => {
+  const exportToExcel = useCallback(async (data: Record<string, unknown>[], options: ExportOptions = {}) => {
     if (!data || data.length === 0) {
       throw new Error('No data to export');
     }
@@ -111,7 +111,7 @@ export function useExport() {
   /**
    * Copy data to clipboard as JSON
    */
-  const copyToClipboard = useCallback(async (data: any[]) => {
+  const copyToClipboard = useCallback(async (data: Record<string, unknown>[]) => {
     if (!data || data.length === 0) {
       throw new Error('No data to copy');
     }

@@ -43,14 +43,14 @@ export default function AdminLoginPage() {
       if (!authData.user) throw new Error('Falha na autenticação');
 
       // 2. Check if user exists in admin_users table (RBAC)
-      console.log('🔍 Checking admin_users for user ID:', authData.user.id);
+      console.warn('🔍 Checking admin_users for user ID:', authData.user.id);
       const { data: adminUser, error: adminError } = await supabaseAdmin
         .from('admin_users')
         .select('id, role, name, is_active')
         .eq('id', authData.user.id) // Assuming admin_users ID matches auth.users ID
         .single();
     
-      console.log('📊 Admin user query result:', { adminUser, adminError });
+      console.warn('📊 Admin user query result:', { adminUser, adminError });
       
       // Note: If admins are manually added to admin_users but sign up via auth, 
       // we might need to match by email first if IDs don't match initially.
@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
       // If the query fails, we try by email as fallback verification.
       
       if (adminError || !adminUser) {
-        console.log('⚠️  First query failed, trying email fallback...');
+        console.warn('⚠️  First query failed, trying email fallback...');
         // Fallback: check by email if ID lookup failed (e.g. if manual entry didn't use same UUID)
         const { data: adminByEmail, error: emailError } = await supabaseAdmin
              .from('admin_users')
@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
              .eq('email', data.email)
              .single();
              
-        console.log('📧 Email fallback result:', { adminByEmail, emailError });
+        console.warn('📧 Email fallback result:', { adminByEmail, emailError });
              
         if (!adminByEmail) {
             await supabaseAdmin.auth.signOut();

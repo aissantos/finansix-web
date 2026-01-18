@@ -93,6 +93,7 @@ export function CategoryDistributionChart({ data, isLoading }: CategoryDistribut
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '6px',
               }}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: number, name: string, props: any) => {
                 if (name === 'value') {
                   return [
@@ -106,6 +107,7 @@ export function CategoryDistributionChart({ data, isLoading }: CategoryDistribut
             <Legend
               verticalAlign="bottom"
               height={36}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value, entry: any) => {
                 const item = chartData.find((d) => d.name === entry.payload.name);
                 return `${value} (${item?.value || 0})`;
