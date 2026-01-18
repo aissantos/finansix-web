@@ -41,14 +41,14 @@ export async function createAccount(account: InsertTables<'accounts'>): Promise<
     is_active: account.is_active ?? true,
   };
 
-  // Add bank details only if provided
-  if (account.bank_code !== undefined) validFields.bank_code = account.bank_code;
-  if (account.bank_name !== undefined) validFields.bank_name = account.bank_name;
-  if (account.branch_number !== undefined) validFields.branch_number = account.branch_number;
-  if (account.account_number !== undefined) validFields.account_number = account.account_number;
-  if (account.account_digit !== undefined) validFields.account_digit = account.account_digit;
-  if (account.pix_key !== undefined) validFields.pix_key = account.pix_key;
-  if (account.pix_key_type !== undefined) validFields.pix_key_type = account.pix_key_type;
+  // Add bank details only if provided and not empty
+  if (account.bank_code && account.bank_code.trim()) validFields.bank_code = account.bank_code;
+  if (account.bank_name && account.bank_name.trim()) validFields.bank_name = account.bank_name;
+  if (account.branch_number && account.branch_number.trim()) validFields.branch_number = account.branch_number;
+  if (account.account_number && account.account_number.trim()) validFields.account_number = account.account_number;
+  if (account.account_digit && account.account_digit.trim()) validFields.account_digit = account.account_digit;
+  if (account.pix_key && account.pix_key.trim()) validFields.pix_key = account.pix_key;
+  if (account.pix_key_type) validFields.pix_key_type = account.pix_key_type;
 
   // Add cents column if it exists (from P0 migration)
   if (account.current_balance_cents !== undefined) {
