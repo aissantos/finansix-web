@@ -4,4 +4,5 @@ export {
   useHouseholdId,
   useTheme,
   useIsOnline,
+  useShowFAB,
 } from './app-store';
