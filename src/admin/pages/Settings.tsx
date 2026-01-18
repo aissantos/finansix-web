@@ -14,7 +14,7 @@ export function SettingsPage() {
   const { toast } = useToast();
   
   // Local state for edits
-  const [editingValues, setEditingValues] = useState<Record<string, any>>({});
+  const [editingValues, setEditingValues] = useState<Record<string, string | number | boolean>>({});
 
   if (isLoading) {
     return (
@@ -24,21 +24,21 @@ export function SettingsPage() {
     );
   }
 
-  const handleUpdate = async (key: string, value: any) => {
+  const handleUpdate = async (key: string, value: string | number | boolean) => {
     try {
-      await updateSetting.mutateAsync({ key, value });
+      await updateSetting.mutateAsync({ key, value: String(value) }); // Ensure string for DB if needed, or handle type
       setEditingValues((prev) => {
         const next = { ...prev };
         delete next[key]; // Clear edit state
         return next;
       });
       toast({ title: 'Configuração atualizada com sucesso' });
-    } catch (error) {
+    } catch {
       toast({ variant: 'destructive', title: 'Erro ao atualizar configuração' });
     }
   };
 
-  const handleValueChange = (key: string, value: any) => {
+  const handleValueChange = (key: string, value: string | number | boolean) => {
     setEditingValues((prev) => ({ ...prev, [key]: value }));
   };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FeatureFlag } from '../../hooks/useFeatureFlags';
+import type { FeatureFlag } from '../../hooks/useFeatureFlags';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';

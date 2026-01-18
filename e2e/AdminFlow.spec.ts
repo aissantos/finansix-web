@@ -7,7 +7,7 @@ test.describe('Admin Dashboard', () => {
     // 1. Mock Auth Token (Simulate logged in user)
     await page.route('**/auth/v1/token*', async route => {
         // Log to see what's being called
-        console.log('Mocking Auth Token:', route.request().url());
+        console.warn('Mocking Auth Token:', route.request().url());
         
         await route.fulfill({
              status: 200,
@@ -107,7 +107,7 @@ test.describe('Admin Dashboard', () => {
     await page.route('**/rest/v1/**', async route => {
         // If it wasn't handled by previous routes, return empty array/object
         // This prevents "No suitable key" errors from real server
-        console.log('Mocking unhandled request:', route.request().url());
+        console.warn('Mocking unhandled request:', route.request().url());
         await route.fulfill({
             status: 200,
             json: []

@@ -1,4 +1,24 @@
-  // getStatusColor removed as it was unused
+import { useQuery } from '@tanstack/react-query';
+import { 
+    Activity, 
+    AlertTriangle, 
+    CheckCircle2, 
+    Server, 
+    Database, 
+    Zap, 
+    Cloud, 
+    RefreshCw, 
+    XCircle 
+} from 'lucide-react';
+import { format } from 'date-fns';
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useSystemHealth } from '@/admin/hooks/useSystemHealth';
+
+export function SystemHealthPage() {
+  const { data, isLoading, refetch, isRefetching } = useSystemHealth();
 
   const getStatusIcon = (status: string) => {
     switch (status) {

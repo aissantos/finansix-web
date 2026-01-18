@@ -42,12 +42,13 @@ async function checkDatabaseHealth(): Promise<ServiceHealth> {
       },
       lastChecked: new Date().toISOString()
     };
-  } catch (err: any) {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
     return {
       service: 'Database',
       status: 'error',
       metrics: {},
-      error: err.message,
+      error: message,
       lastChecked: new Date().toISOString()
     };
   }

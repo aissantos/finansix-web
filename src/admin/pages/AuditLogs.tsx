@@ -88,6 +88,10 @@ export function AuditLogsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Logs de Auditoria</h1>
+        <Button onClick={handleExportCSV} disabled={isExporting} variant="outline">
+            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            Exportar CSV
+        </Button>
       </div>
 
       <Card>
