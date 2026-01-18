@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { Bell, Lock, Palette, HelpCircle, MessageCircle, FileText, LogOut, ChevronRight, Users, Tag } from 'lucide-react';
+import { Bell, Lock, Palette, HelpCircle, MessageCircle, FileText, LogOut, ChevronRight, Users, Tag, Zap } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AvatarUploader } from '@/components/features';
 import { useAuth, useHouseholdMembers } from '@/hooks';
+import { useAppStore } from '@/stores';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -109,6 +110,7 @@ export default function ProfilePage() {
               label="Notificações"
               hasToggle
             />
+            <FABToggleItem />
             <SettingItem
               icon={<Lock className="h-5 w-5" />}
               iconBg="bg-green-100 text-green-600"
@@ -163,6 +165,31 @@ export default function ProfilePage() {
         </p>
       </PageContainer>
     </>
+  );
+}
+
+function FABToggleItem() {
+  const showFAB = useAppStore((state) => state.showFAB);
+  const setShowFAB = useAppStore((state) => state.setShowFAB);
+
+  return (
+    <button 
+      onClick={() => setShowFAB(!showFAB)}
+      className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-orange-100 text-orange-600">
+          <Zap className="h-5 w-5" />
+        </div>
+        <div className="flex flex-col items-start">
+          <span className="text-sm font-semibold text-slate-900 dark:text-white">Botão Flutuante</span>
+          <span className="text-[10px] font-medium text-slate-400">Ações rápidas</span>
+        </div>
+      </div>
+      <div className={`w-11 h-6 rounded-full relative flex items-center px-1 transition-colors ${showFAB ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}>
+        <div className={`h-4 w-4 bg-white rounded-full shadow-sm transition-transform ${showFAB ? 'ml-auto' : ''}`} />
+      </div>
+    </button>
   );
 }
 

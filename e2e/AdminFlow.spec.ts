@@ -103,7 +103,24 @@ test.describe('Admin Dashboard', () => {
         });
     });
 
-    // 6. Catch-all for other Supabase REST requests to prevent hitting real server with fake token
+    // 6. Mock MFA endpoints to prevent 2FA redirect
+    await page.route('**/auth/v1/factors*', async route => {
+        await route.fulfill({
+            json: { all: [], totp: [] }
+        });
+    });
+
+    await page.route('**/auth/v1/aal*', async route => {
+        await route.fulfill({
+            json: { 
+                currentLevel: 'aal2',
+                nextLevel: 'aal2',
+                currentAuthenticationMethods: []
+            }
+        });
+    });
+
+    // 7. Catch-all for other Supabase REST requests to prevent hitting real server with fake token
     await page.route('**/rest/v1/**', async route => {
         // If it wasn't handled by previous routes, return empty array/object
         // This prevents "No suitable key" errors from real server
@@ -115,9 +132,10 @@ test.describe('Admin Dashboard', () => {
     });
 
     // Navigate to dashboard directly (session is mocked)
-    await page.goto('/admin/dashboard');
-    // Wait for page to be ready
-    await page.waitForLoadState('networkidle');
+    // Use domcontentloaded instead of load to avoid waiting for all resources
+    await page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded', timeout: 10000 });
+    // Wait a bit for React to hydrate
+    await page.waitForTimeout(1000);
   });
 
   test('should navigate to System Health', async ({ page }) => {

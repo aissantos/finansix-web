@@ -18,6 +18,10 @@ interface AppState {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   
+  // FAB visibility
+  showFAB: boolean;
+  setShowFAB: (show: boolean) => void;
+  
   // Theme
   theme: 'light' | 'dark' | 'system';
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
@@ -53,6 +57,10 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: false,
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
 
+      // FAB
+      showFAB: false,
+      setShowFAB: (show) => set({ showFAB: show }),
+
       // Theme
       theme: 'system',
       setTheme: (theme) => set({ theme }),
@@ -66,6 +74,7 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         theme: state.theme,
         householdId: state.householdId,
+        showFAB: state.showFAB,
       }),
     }
   )
@@ -76,3 +85,4 @@ export const useSelectedMonth = () => useAppStore((state) => state.selectedMonth
 export const useHouseholdId = () => useAppStore((state) => state.householdId);
 export const useTheme = () => useAppStore((state) => state.theme);
 export const useIsOnline = () => useAppStore((state) => state.isOnline);
+export const useShowFAB = () => useAppStore((state) => state.showFAB);
