@@ -6,15 +6,15 @@ import { usePermissions } from '@/admin/hooks/usePermissions';
 
 export interface ImpersonationSession {
   id: string;
-  admin_id: string;
-  user_id: string;
+  admin_id: string | null;
+  user_id: string | null;
   started_at: string;
   ended_at: string | null;
   timeout_at: string;
   reason: string | null;
   ip_address: string | null;
   user_agent: string | null;
-  created_at: string;
+
 }
 
 /**

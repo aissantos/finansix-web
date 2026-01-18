@@ -1,7 +1,5 @@
 import { Eye } from 'lucide-react';
-import {
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { useImpersonation } from '@/admin/hooks/useImpersonation';
 import { useToast } from '@/hooks/useToast';
 
@@ -32,9 +30,14 @@ export function ImpersonateUserAction({ userId, userName }: ImpersonateUserActio
   };
 
   return (
-    <DropdownMenuItem onClick={handleImpersonate} disabled={startImpersonation.isPending}>
+    <Button 
+      variant="ghost" 
+      size="sm"
+      onClick={handleImpersonate} 
+      disabled={startImpersonation.isPending}
+    >
       <Eye className="h-4 w-4 mr-2" />
       {startImpersonation.isPending ? 'Iniciando...' : 'Impersonar'}
-    </DropdownMenuItem>
+    </Button>
   );
 }

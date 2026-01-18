@@ -61,7 +61,8 @@ export function useUsers(filters: UserFilters = {}, pagination: Pagination = { p
       }
 
       if (filters.role) {
-        query = query.eq('role', filters.role);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        query = query.eq('role', filters.role as any);
       }
 
       if (filters.created_after) {
@@ -102,7 +103,7 @@ export function useHouseholds() {
       const { data, error } = await supabaseAdmin
         .from('households')
         .select('id, name')
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('name');
 
       if (error) throw error;

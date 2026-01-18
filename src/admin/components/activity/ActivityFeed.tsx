@@ -63,11 +63,15 @@ export function ActivityFeed() {
                   locale: ptBR 
                 })}
               </p>
-              {activity.metadata?.description && (
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(activity.metadata as any)?.description && (
                 <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 truncate">
-                  {(typeof activity.metadata.description === 'string' 
-                    ? activity.metadata.description 
-                    : JSON.stringify(activity.metadata.description)) as string}
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {typeof (activity.metadata as any).description === 'string' 
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    ? (activity.metadata as any).description 
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    : JSON.stringify((activity.metadata as any).description)}
                 </p>
               )}
             </div>

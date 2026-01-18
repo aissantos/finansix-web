@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MoreVertical, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface DropdownMenuItem {
+export interface DropdownMenuItem {
   label: string;
   icon?: ReactNode;
   onClick: () => void;

@@ -60,7 +60,7 @@ export function UserActivityTimeline({ userId }: UserActivityTimelineProps) {
       <CardContent>
         <div className="space-y-4">
           {transactions.map((transaction) => {
-            const category = transaction.categories as { name: string; icon: string; color: string } | null;
+            const category = transaction.categories as unknown as { name: string; icon: string; color: string } | null;
             const isIncome = transaction.type === 'income';
 
             return (

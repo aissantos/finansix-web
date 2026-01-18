@@ -658,6 +658,9 @@ export interface Database {
           id: string
           admin_id: string | null
           user_id: string | null
+          ip_address: string | null
+          user_agent: string | null
+          timeout_at: string
           reason: string
           started_at: string
           ended_at: string | null
@@ -715,6 +718,7 @@ export interface Database {
             target_segment?: string | null
             updated_at?: string
         }
+
         Relationships: [
             {
                 foreignKeyName: "feature_flags_created_by_fkey"
@@ -722,6 +726,43 @@ export interface Database {
                 referencedRelation: "admin_users"
                 referencedColumns: ["id"]
             }
+        ]
+      }
+      saved_reports: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          config: Json
+          created_by: string
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          config: Json
+          created_by: string
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          name?: string
+          description?: string | null
+          config?: Json
+          is_public?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_reports_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          }
         ]
       }
     }
@@ -748,6 +789,65 @@ export interface Database {
       setup_user_household: {
         Args: { user_name: string | undefined }
         Returns: string
+      }
+      get_user_activity_metrics: {
+        Args: { p_date: string }
+        Returns: {
+          dau: number
+          wau: number
+          mau: number
+          total_events: number
+        }
+      }
+      get_transaction_analytics: {
+        Args: { 
+          p_start_date: string
+          p_end_date: string
+          p_household_id: string | null 
+        }
+        Returns: {
+          total_transactions: number
+          total_income: number
+          total_expense: number
+          net_balance: number
+          avg_transaction: number
+          by_category: Json
+          by_type: Json
+          daily_trend: Json
+        }
+      }
+      get_household_growth_metrics: {
+        Args: { 
+          p_start_date: string
+          p_end_date: string 
+        }
+        Returns: {
+            total_households: number
+            new_households: number
+            active_households: number
+            by_date: Json
+        }
+      }
+      get_category_distribution: {
+        Args: { 
+          p_start_date: string
+          p_end_date: string
+          p_type: string | null 
+        }
+        Returns: Json // Returns CategoryDistribution[]
+      }
+      get_user_statistics: {
+        Args: { user_id_param: string }
+        Returns: {
+          totalTransactions: number
+          totalExpenses: number
+          totalIncome: number
+          netBalance: number
+          categoriesUsed: number
+          lastTransactionDate: string | null
+          firstTransactionDate: string | null
+          averageTransactionAmount: number
+        }
       }
     }
     Enums: {

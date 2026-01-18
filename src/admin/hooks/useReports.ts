@@ -117,7 +117,7 @@ export function useReportMutations() {
 
   const deleteReport = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabaseAdmin.from('saved_reports').delete().eq('id', id);
+      const { error } = await supabaseAdmin.from('saved_reports').delete().eq('id', id).select().single();
 
       if (error) throw error;
     },

@@ -70,7 +70,7 @@ export function useUserActivityMetrics(date: Date = new Date()) {
       });
 
       if (error) throw error;
-      return data as UserActivityMetrics;
+      return data;
     },
     staleTime: 60000, // 1 minute
     refetchInterval: 300000, // Refetch every 5 minutes
@@ -91,7 +91,7 @@ export function useTransactionAnalytics(filters: AnalyticsFilters) {
       });
 
       if (error) throw error;
-      return data as TransactionAnalytics;
+      return data as unknown as TransactionAnalytics;
     },
     staleTime: 60000, // 1 minute
   });
@@ -104,13 +104,13 @@ export function useHouseholdGrowthMetrics(startDate: string, endDate: string) {
   return useQuery({
     queryKey: ['household-growth-metrics', startDate, endDate],
     queryFn: async (): Promise<HouseholdGrowthMetrics> => {
-      const { data, error } = await supabaseAdmin.rpc('get_household_growth_metrics', {
+      const { data, error} = await supabaseAdmin.rpc('get_household_growth_metrics', {
         p_start_date: startDate,
         p_end_date: endDate,
       });
 
       if (error) throw error;
-      return data as HouseholdGrowthMetrics;
+      return data as unknown as HouseholdGrowthMetrics;
     },
     staleTime: 60000, // 1 minute
   });
@@ -134,7 +134,7 @@ export function useCategoryDistribution(
       });
 
       if (error) throw error;
-      return (data as CategoryDistribution[]) || [];
+      return (data as unknown as CategoryDistribution[]) || [];
     },
     staleTime: 60000, // 1 minute
   });

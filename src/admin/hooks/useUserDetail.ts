@@ -46,7 +46,7 @@ export function useUserDetail(userId: string | undefined) {
       if (!user) throw new Error('User not found');
 
       // Fetch user statistics via RPC
-      // @ts-expect-error - RPC function not in generated types yet
+      // Fetch user statistics via RPC
       const { data: stats, error: statsError } = await supabaseAdmin
         .rpc('get_user_statistics', { user_id_param: userId });
 
@@ -55,8 +55,10 @@ export function useUserDetail(userId: string | undefined) {
       }
 
       return {
-        ...user,
-        statistics: stats || {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(user as any),
+
+        statistics: (stats as unknown as UserDetail['statistics']) || {
           totalTransactions: 0,
           totalExpenses: 0,
           totalIncome: 0,
@@ -86,7 +88,7 @@ export function useUserTransactions(userId: string | undefined, limit: number = 
         .from('transactions')
         .select('*, categories(name, icon, color)')
         .eq('created_by', userId)
-        .eq('deleted_at', null)
+        .is('deleted_at', null)
         .order('transaction_date', { ascending: false })
         .limit(limit);
 
