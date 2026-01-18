@@ -57,3 +57,19 @@ Object.defineProperty(window, 'scrollTo', {
   writable: true,
   value: vi.fn(),
 });
+// Mock supabase-admin
+vi.mock('@/admin/lib/supabase-admin', () => ({
+  supabaseAdmin: {
+    from: vi.fn(),
+    rpc: vi.fn(),
+    auth: {
+      admin: {
+        createUser: vi.fn(),
+        deleteUser: vi.fn(),
+        updateUserById: vi.fn(),
+        listUsers: vi.fn(),
+      },
+      getUser: vi.fn(),
+    },
+  },
+}));

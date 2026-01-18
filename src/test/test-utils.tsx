@@ -1,25 +1,37 @@
 import type { ReactElement } from 'react';
-import { render, type RenderOptions } from '@testing-library/react';
+import { render, renderHook, type RenderOptions, type RenderHookOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 
-/**
- * Custom render function that wraps components with necessary providers
- */
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      gcTime: Infinity,
+    },
+    mutations: {
+      retry: false,
+    },
+  },
+});
+
+export function createWrapper() {
+  const queryClient = createTestQueryClient();
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          {children}
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+  };
+}
+
 export function renderWithProviders(
   ui: ReactElement,
   {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false, // Don't retry in tests
-          gcTime: Infinity, // Don't garbage collect in tests
-        },
-        mutations: {
-          retry: false,
-        },
-      },
-    }),
+    queryClient = createTestQueryClient(),
     ...renderOptions
   }: RenderOptions & { queryClient?: QueryClient } = {}
 ) {
@@ -39,6 +51,23 @@ export function renderWithProviders(
   };
 }
 
-// Re-export everything from testing library
+export function customRenderHook<Result, Props>(
+  render: (initialProps: Props) => Result,
+  options?: RenderHookOptions<Props>
+) {
+  const queryClient = createTestQueryClient();
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        {children}
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+
+  return renderHook(render, { wrapper, ...options });
+}
+
+// Re-export everything
 export * from '@testing-library/react';
 export { renderWithProviders as render };
+export { customRenderHook as renderHook };
