@@ -23,6 +23,14 @@ export default defineConfig({
         storageState: 'playwright/.auth/user.json',
       },
       dependencies: ['setup'],
+      testIgnore: '**/AdminFlow.spec.ts',
+    },
+    {
+      name: 'admin',
+      testMatch: '**/AdminFlow.spec.ts',
+      use: { 
+        ...devices['Desktop Chrome'],
+      },
     },
   ],
   webServer: {

@@ -114,12 +114,10 @@ test.describe('Admin Dashboard', () => {
         });
     });
 
-    // Login logic
-    await page.goto('/admin/login');
-    await page.getByPlaceholder('seu@email.com').fill('admin@versix.com.br');
-    await page.getByPlaceholder('******').fill('password');
-    await page.getByRole('button', { name: 'Entrar' }).click();
-    await page.waitForURL('**/admin/dashboard');
+    // Navigate to dashboard directly (session is mocked)
+    await page.goto('/admin/dashboard');
+    // Wait for page to be ready
+    await page.waitForLoadState('networkidle');
   });
 
   test('should navigate to System Health', async ({ page }) => {
