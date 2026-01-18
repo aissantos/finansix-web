@@ -577,6 +577,153 @@ export interface Database {
         Update: never
         Relationships: []
       }
+      admin_users: {
+        Row: {
+          id: string
+          email: string
+          name: string
+          role: string // Enum not strictly enforced in types yet, or use 'super_admin' | 'admin' etc
+          totp_secret: string | null
+          is_active: boolean
+          last_login_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          name: string
+          role: string
+          totp_secret?: string | null
+          is_active?: boolean
+          last_login_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          email?: string
+          name?: string
+          role?: string
+          totp_secret?: string | null
+          is_active?: boolean
+          last_login_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          id: string
+          timestamp: string
+          admin_id: string | null
+          action: string
+          resource_type: string
+          resource_id: string | null
+          ip_address: string | null
+          user_agent: string | null
+          metadata: Json | null
+          result: string | null
+          error_message: string | null
+        }
+        Insert: {
+          id?: string
+          timestamp?: string
+          admin_id?: string | null
+          action: string
+          resource_type: string
+          resource_id?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          metadata?: Json | null
+          result?: string | null
+          error_message?: string | null
+        }
+        Update: {
+          // Generally audit logs shouldn't be updated, but for completeness
+          action?: string
+          resource_type?: string
+          result?: string | null
+        }
+        Relationships: [
+            {
+                foreignKeyName: "audit_logs_admin_id_fkey"
+                columns: ["admin_id"]
+                referencedRelation: "admin_users"
+                referencedColumns: ["id"]
+            }
+        ]
+      }
+      impersonation_sessions: {
+        Row: {
+          id: string
+          admin_id: string | null
+          user_id: string | null
+          reason: string
+          started_at: string
+          ended_at: string | null
+          is_active: boolean
+        }
+        Insert: {
+           id?: string
+           admin_id?: string | null
+           user_id?: string | null
+           reason: string
+           started_at?: string
+           ended_at?: string | null
+           is_active?: boolean
+        }
+        Update: {
+           ended_at?: string | null
+           is_active?: boolean
+        }
+        Relationships: [
+            {
+                foreignKeyName: "impersonation_sessions_admin_id_fkey"
+                columns: ["admin_id"]
+                referencedRelation: "admin_users"
+                referencedColumns: ["id"]
+            }
+        ]
+      }
+      feature_flags: {
+        Row: {
+            id: string
+            name: string
+            description: string | null
+            is_enabled: boolean
+            rollout_percentage: number | null
+            target_segment: string | null
+            created_by: string | null
+            created_at: string
+            updated_at: string
+        }
+        Insert: {
+            id?: string
+            name: string
+            description?: string | null
+            is_enabled?: boolean
+            rollout_percentage?: number | null
+            target_segment?: string | null
+            created_by?: string | null
+            created_at?: string
+            updated_at?: string
+        }
+        Update: {
+            description?: string | null
+            is_enabled?: boolean
+            rollout_percentage?: number | null
+            target_segment?: string | null
+            updated_at?: string
+        }
+        Relationships: [
+            {
+                foreignKeyName: "feature_flags_created_by_fkey"
+                columns: ["created_by"]
+                referencedRelation: "admin_users"
+                referencedColumns: ["id"]
+            }
+        ]
+      }
     }
     Views: {
       free_balance_view: {

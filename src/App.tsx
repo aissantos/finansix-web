@@ -41,6 +41,18 @@ const AccountsPayablePage = lazy(() => import('@/pages/AccountsPayablePage'));
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
 const HouseholdPage = lazy(() => import('@/pages/HouseholdPage'));
 
+// Admin pages
+const AdminDashboard = lazy(() => import('@/admin/pages/Dashboard'));
+const AdminUsersPage = lazy(() => import('@/admin/pages/Users'));
+const AdminUserDetailPage = lazy(() => import('@/admin/pages/UserDetail'));
+const AdminAnalyticsPage = lazy(() => import('@/admin/pages/Analytics'));
+const AdminAuthLayout = lazy(() => import('@/admin/layouts/AuthLayout'));
+const AdminLayout = lazy(() => import('@/admin/layouts/AdminLayout'));
+const AdminLoginPage = lazy(() => import('@/admin/pages/auth/Login'));
+const AdminSetup2FA = lazy(() => import('@/admin/pages/auth/Setup2FA'));
+const AdminVerify2FA = lazy(() => import('@/admin/pages/auth/Verify2FA'));
+const AdminProtectedRoute = lazy(() => import('@/admin/components/AdminProtectedRoute'));
+
 // Loading component for Suspense
 function PageLoader() {
   return (
@@ -232,6 +244,26 @@ function AnimatedRoutes() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Admin Routes */}
+            <Route path="/admin">
+                <Route element={<AdminAuthLayout />}>
+                    <Route path="auth/login" element={<AdminLoginPage />} />
+                    <Route path="auth/setup-2fa" element={<AdminSetup2FA />} />
+                    <Route path="auth/verify-2fa" element={<AdminVerify2FA />} />
+                    <Route path="login" element={<Navigate to="auth/login" replace />} />
+                </Route>
+                
+                <Route element={<AdminProtectedRoute />}>
+                    <Route element={<AdminLayout />}>
+                        <Route path="" element={<AdminDashboard />} /> 
+                        <Route path="dashboard" element={<Navigate to="/admin" replace />} />
+                        <Route path="users" element={<AdminUsersPage />} />
+                        <Route path="users/:userId" element={<AdminUserDetailPage />} />
+                        <Route path="analytics" element={<AdminAnalyticsPage />} />
+                    </Route>
+                </Route>
+            </Route>
 
 
             {/* Fallback */}
