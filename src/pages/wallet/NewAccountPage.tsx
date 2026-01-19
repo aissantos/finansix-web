@@ -35,14 +35,14 @@ const accountSchema = z.object({
   initial_balance: z.number(),
   color: z.string().optional(),
   icon: z.string().optional(),
-  // Campos bancários opcionais
-  bank_code: z.string().optional(),
-  bank_name: z.string().optional(),
-  branch_number: z.string().optional(),
-  account_number: z.string().optional(),
-  account_digit: z.string().optional(),
-  pix_key: z.string().optional(),
-  pix_key_type: z.enum(['cpf', 'cnpj', 'email', 'phone', 'random']).optional(),
+  // Campos bancários opcionais - transform empty strings to undefined
+  bank_code: z.string().optional().transform(val => val === '' ? undefined : val),
+  bank_name: z.string().optional().transform(val => val === '' ? undefined : val),
+  branch_number: z.string().optional().transform(val => val === '' ? undefined : val),
+  account_number: z.string().optional().transform(val => val === '' ? undefined : val),
+  account_digit: z.string().optional().transform(val => val === '' ? undefined : val),
+  pix_key: z.string().optional().transform(val => val === '' ? undefined : val),
+  pix_key_type: z.enum(['cpf', 'cnpj', 'email', 'phone', 'random']).optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
 });
 
 type AccountForm = z.infer<typeof accountSchema>;
