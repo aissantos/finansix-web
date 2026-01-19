@@ -147,9 +147,6 @@ export default function NewAccountPage() {
   };
 
   const onSubmit = (data: AccountForm) => {
-    console.log('Form submitted with data:', data);
-    console.log('Selected color:', selectedColor);
-    console.log('Form errors:', errors);
     
     createAccount(
       { ...data, color: selectedColor, is_active: true },
