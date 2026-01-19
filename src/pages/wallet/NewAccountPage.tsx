@@ -147,6 +147,10 @@ export default function NewAccountPage() {
   };
 
   const onSubmit = (data: AccountForm) => {
+    console.log('Form submitted with data:', data);
+    console.log('Selected color:', selectedColor);
+    console.log('Form errors:', errors);
+    
     createAccount(
       { ...data, color: selectedColor, is_active: true },
       {
@@ -154,7 +158,8 @@ export default function NewAccountPage() {
           toast({ title: 'Conta adicionada!', description: `${data.name} foi cadastrada com sucesso.`, variant: 'success' });
           navigate('/wallet');
         },
-        onError: () => {
+        onError: (error) => {
+          console.error('Error creating account:', error);
           toast({ title: 'Erro ao adicionar conta', description: 'Tente novamente.', variant: 'destructive' });
         },
       }
