@@ -41,6 +41,7 @@ export function DebugPanel() {
 
       // 2. Try to call the RPC
       try {
+        // @ts-expect-error - get_dashboard_metrics not in generated types yet
         const { error } = await supabase.rpc('get_dashboard_metrics');
         if (error) {
           setRpcError({
@@ -59,17 +60,19 @@ export function DebugPanel() {
       }
 
       // 3. Check if user is in admin_users
-      const { data: adminData, error: adminError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('id', session?.user?.id)
-        .single();
+      if (session?.user?.id) {
+        const { data: adminData, error: adminError } = await supabase
+          .from('admin_users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
 
-      setAdminCheck({
-        isInAdminTable: !!adminData,
-        adminData,
-        error: adminError?.message,
-      });
+        setAdminCheck({
+          isInAdminTable: !!adminData,
+          adminData,
+          error: adminError?.message,
+        });
+      }
     }
 
     checkAuth();
