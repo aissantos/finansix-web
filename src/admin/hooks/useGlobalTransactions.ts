@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
 export type TransactionWithDetails = Database['public']['Tables']['transactions']['Row'] & {
-  users: { name: string; email: string } | null;
+  users: { id: string; email: string; display_name: string } | null;
   categories: { name: string; icon: string | null } | null;
   households: { name: string } | null;
 };
@@ -34,7 +34,7 @@ export function useGlobalTransactions({
         .from('transactions')
         .select(`
           *,
-          users:created_by(name:raw_user_meta_data->>display_name, email),
+          users:user_profiles!created_by(id, email, display_name),
           categories(name, icon),
           households(name)
         `, { count: 'exact' });

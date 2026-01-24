@@ -202,7 +202,7 @@ export function TransactionsListPage() {
                     </td>
                     <td className="p-4 align-middle">
                       <div className="flex flex-col">
-                        <span className="font-medium">{tx.users?.name || 'Unknown'}</span>
+                        <span className="font-medium">{tx.users?.display_name || tx.users?.email || 'N/A'}</span>
                         <span className="text-xs text-muted-foreground">{tx.users?.email}</span>
                       </div>
                     </td>

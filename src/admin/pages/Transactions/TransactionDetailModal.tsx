@@ -65,7 +65,7 @@ export function TransactionDetailModal({
                 Usuário
               </h4>
               <div className="text-sm">
-                <p className="font-medium">{transaction.users?.name || 'N/A'}</p>
+                <p className="font-medium">{transaction.users?.display_name || transaction.users?.email || 'N/A'}</p>
                 <p className="text-muted-foreground text-xs">{transaction.users?.email}</p>
               </div>
             </div>
