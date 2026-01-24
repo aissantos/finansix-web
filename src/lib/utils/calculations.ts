@@ -187,20 +187,6 @@ export async function calculateFreeBalance(
     ...(accounts ?? []).map(a => toCents(a.current_balance ?? 0))
   );
 
-  // 2. Completed income transactions (NEW - FIX FOR INCOME BUG)
-  const { data: incomeTx } = await supabase
-    .from('transactions')
-    .select('amount')
-    .eq('household_id', householdId)
-    .eq('type', 'income')
-    .eq('status', 'completed')
-    .lte('transaction_date', targetDateStr)
-    .is('deleted_at', null);
-
-  const completedIncomeCents = addCents(
-    ...(incomeTx ?? []).map(t => toCents(t.amount ?? 0))
-  );
-
   // 3. Pending expenses (not on credit card)
   const { data: pendingTx } = await supabase
     .from('transactions')
@@ -273,7 +259,7 @@ export async function calculateFreeBalance(
   // FINAL FORMULA (ALL IN CENTS - NO FLOATING POINT!)
   const freeBalanceCents = addCents(
     currentBalanceCents,
-    completedIncomeCents,      // NEW: Add completed income
+    // Removed duplicate income addition
     -pendingExpensesCents,
     -creditCardDueCents,
     expectedIncomeCents,
@@ -284,7 +270,7 @@ export async function calculateFreeBalance(
   // Convert to reais for display
   const breakdown: BalanceBreakdownItem[] = [
     { label: 'Saldo em contas', value: toReais(currentBalanceCents), type: 'positive' },
-    { label: 'Receitas recebidas', value: toReais(completedIncomeCents), type: 'positive' }, // NEW
+    // Removed 'Receitas recebidas' as it is implicitly in current balance
     { label: 'Despesas pendentes', value: -toReais(pendingExpensesCents), type: 'negative' },
     { label: 'Faturas de cartão', value: -toReais(creditCardDueCents), type: 'negative' },
   ];
