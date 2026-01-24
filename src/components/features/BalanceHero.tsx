@@ -1,6 +1,6 @@
 import { Eye, EyeOff, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { useState } from 'react';
-import { useFreeBalance, useTotalBalance } from '@/hooks';
+import { useFreeBalance } from '@/hooks';
 import { formatCurrency, cn, getBalanceColor } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
@@ -9,13 +9,12 @@ export function BalanceHero() {
   const [isVisible, setIsVisible] = useState(false); // ← Inicia ocultado
   const [showBreakdown, setShowBreakdown] = useState(false);
   const { data, isLoading } = useFreeBalance();
-  const { data: accountBalance, isLoading: accountLoading } = useTotalBalance();
 
-  if (isLoading || accountLoading) {
+  if (isLoading) {
     return <BalanceHeroSkeleton />;
   }
 
-  const balance = accountBalance ?? 0; // ✅ Usar saldo em contas
+  const balance = data?.freeBalance ?? 0; // FIX: Use free balance calculation
   const isPositive = balance >= 0;
 
   return (
@@ -97,8 +96,8 @@ export function BalanceHero() {
                 <span className="text-sm font-bold text-slate-900 dark:text-white">
                   Saldo Livre
                 </span>
-                <span className={cn('text-sm font-black', getBalanceColor(balance))}>
-                  {formatCurrency(balance)}
+                <span className={cn('text-sm font-black', getBalanceColor(data.freeBalance))}>
+                  {formatCurrency(data.freeBalance)}
                 </span>
               </div>
             </div>

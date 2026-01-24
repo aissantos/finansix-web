@@ -2,6 +2,7 @@ import {
   differenceInDays, 
   getDaysInMonth, 
   startOfMonth,
+  endOfMonth,
   format 
 } from 'date-fns';
 import type { 
@@ -171,7 +172,8 @@ export async function calculateFreeBalance(
   includeProjections = true
 ): Promise<FreeBalanceResult> {
   const today = startOfMonth(new Date());
-  const targetDateStr = format(targetDate, 'yyyy-MM-dd');
+  const monthEnd = endOfMonth(targetDate);
+  const targetDateStr = format(monthEnd, 'yyyy-MM-dd');
 
   // 1. Current balance from all accounts
   const { data: accounts } = await supabase
@@ -185,7 +187,21 @@ export async function calculateFreeBalance(
     ...(accounts ?? []).map(a => toCents(a.current_balance ?? 0))
   );
 
-  // 2. Pending expenses (not on credit card)
+  // 2. Completed income transactions (NEW - FIX FOR INCOME BUG)
+  const { data: incomeTx } = await supabase
+    .from('transactions')
+    .select('amount')
+    .eq('household_id', householdId)
+    .eq('type', 'income')
+    .eq('status', 'completed')
+    .lte('transaction_date', targetDateStr)
+    .is('deleted_at', null);
+
+  const completedIncomeCents = addCents(
+    ...(incomeTx ?? []).map(t => toCents(t.amount ?? 0))
+  );
+
+  // 3. Pending expenses (not on credit card)
   const { data: pendingTx } = await supabase
     .from('transactions')
     .select('amount')
@@ -200,7 +216,7 @@ export async function calculateFreeBalance(
     ...(pendingTx ?? []).map(t => toCents(t.amount ?? 0))
   );
 
-  // 3. Credit card due (pending installments until target date)
+  // 4. Credit card due (pending installments until target date)
   const { data: installments } = await supabase
     .from('installments')
     .select('amount')
@@ -257,6 +273,7 @@ export async function calculateFreeBalance(
   // FINAL FORMULA (ALL IN CENTS - NO FLOATING POINT!)
   const freeBalanceCents = addCents(
     currentBalanceCents,
+    completedIncomeCents,      // NEW: Add completed income
     -pendingExpensesCents,
     -creditCardDueCents,
     expectedIncomeCents,
@@ -267,6 +284,7 @@ export async function calculateFreeBalance(
   // Convert to reais for display
   const breakdown: BalanceBreakdownItem[] = [
     { label: 'Saldo em contas', value: toReais(currentBalanceCents), type: 'positive' },
+    { label: 'Receitas recebidas', value: toReais(completedIncomeCents), type: 'positive' }, // NEW
     { label: 'Despesas pendentes', value: -toReais(pendingExpensesCents), type: 'negative' },
     { label: 'Faturas de cartão', value: -toReais(creditCardDueCents), type: 'negative' },
   ];
