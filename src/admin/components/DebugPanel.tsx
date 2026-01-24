@@ -4,10 +4,30 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
+interface AuthState {
+  userId?: string;
+  email?: string;
+  hasSession: boolean;
+}
+
+interface RpcError {
+  message?: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+  stack?: string;
+}
+
+interface AdminCheck {
+  isInAdminTable: boolean;
+  adminData: unknown;
+  error?: string;
+}
+
 export function DebugPanel() {
-  const [authState, setAuthState] = useState<any>(null);
-  const [rpcError, setRpcError] = useState<any>(null);
-  const [adminCheck, setAdminCheck] = useState<any>(null);
+  const [authState, setAuthState] = useState<AuthState | null>(null);
+  const [rpcError, setRpcError] = useState<RpcError | null>(null);
+  const [adminCheck, setAdminCheck] = useState<AdminCheck | null>(null);
 
   useEffect(() => {
     async function checkAuth() {
@@ -21,7 +41,7 @@ export function DebugPanel() {
 
       // 2. Try to call the RPC
       try {
-        const { data, error } = await supabase.rpc('get_dashboard_metrics');
+        const { error } = await supabase.rpc('get_dashboard_metrics');
         if (error) {
           setRpcError({
             message: error.message,
@@ -30,10 +50,11 @@ export function DebugPanel() {
             code: error.code,
           });
         }
-      } catch (err: any) {
+      } catch (err) {
+        const error = err as Error;
         setRpcError({
-          message: err.message,
-          stack: err.stack,
+          message: error.message,
+          stack: error.stack,
         });
       }
 
