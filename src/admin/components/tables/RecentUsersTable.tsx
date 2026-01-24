@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import { Badge } from '@/components/ui/badge';
 import { UserRowActions } from './UserRowActions';
 import type { Database } from '@/types/database';
@@ -17,7 +17,7 @@ export function RecentUsersTable() {
   const { data, isLoading } = useQuery({
     queryKey: ['recent-household-members'],
     queryFn: async () => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('household_members')
         .select('*')
         .order('created_at', { ascending: false })

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
 type HouseholdMember = Database['public']['Tables']['household_members']['Row'];
@@ -36,7 +36,7 @@ export function useUserDetail(userId: string | undefined) {
       if (!userId) throw new Error('User ID is required');
 
       // Fetch user basic info with household
-      const { data: user, error: userError } = await supabaseAdmin
+      const { data: user, error: userError } = await supabase
         .from('household_members')
         .select('*, households(name, created_at)')
         .eq('user_id', userId)
@@ -47,7 +47,7 @@ export function useUserDetail(userId: string | undefined) {
 
       // Fetch user statistics via RPC
       // Fetch user statistics via RPC
-      const { data: stats, error: statsError } = await supabaseAdmin
+      const { data: stats, error: statsError } = await supabase
         .rpc('get_user_statistics', { user_id_param: userId });
 
       if (statsError) {
@@ -84,7 +84,7 @@ export function useUserTransactions(userId: string | undefined, limit: number = 
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('transactions')
         .select('*, categories(name, icon, color)')
         .eq('created_by', userId)
@@ -109,7 +109,7 @@ export function useUserAuditLog(userId: string | undefined, limit: number = 20) 
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
         .eq('resource_id', userId)

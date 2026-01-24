@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/useToast';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 
 const verifySchema = z.object({
   code: z.string().length(6, 'O código deve ter 6 dígitos').regex(/^\d+$/, 'Apenas números'),
@@ -35,21 +35,21 @@ export default function AdminSetup2FA() {
   useEffect(() => {
     const enroll = async () => {
       try {
-        const { data: { user } } = await supabaseAdmin.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
             navigate('/admin/auth/login');
             return;
         }
 
         // Check if already enrolled
-        const { data: factors } = await supabaseAdmin.auth.mfa.listFactors();
+        const { data: factors } = await supabase.auth.mfa.listFactors();
         const existing = factors?.all?.find(f => f.factor_type === 'totp' && f.status === 'verified');
         if (existing) {
             navigate('/admin');
             return;
         }
 
-        const { data, error } = await supabaseAdmin.auth.mfa.enroll({
+        const { data, error } = await supabase.auth.mfa.enroll({
           factorType: 'totp',
           issuer: 'Finansix Admin', // Nice label in Auth app
           friendlyName: user.email || 'Admin',
@@ -84,13 +84,13 @@ export default function AdminSetup2FA() {
     setIsVerifying(true);
 
     try {
-      const { data: challenge, error: challengeError } = await supabaseAdmin.auth.mfa.challenge({
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
          factorId
       });
 
       if (challengeError) throw challengeError;
 
-      const { error: verifyError } = await supabaseAdmin.auth.mfa.verify({
+      const { error: verifyError } = await supabase.auth.mfa.verify({
         factorId,
         challengeId: challenge.id,
         code: data.code,

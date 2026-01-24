@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/useToast';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 
 // Validation Schema
 const loginSchema = z.object({
@@ -33,7 +33,7 @@ export default function AdminLoginPage() {
     setIsLoading(true);
     try {
       // 1. Authenticate with Supabase
-      const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
@@ -44,10 +44,10 @@ export default function AdminLoginPage() {
 
       // 2. Check if user exists in admin_users table (RBAC)
       console.warn('🔍 Checking admin_users for user ID:', authData.user.id);
-      const { data: adminUser, error: adminError } = await supabaseAdmin
+      const { data: adminUser, error: adminError } = await supabase
         .from('admin_users')
         .select('id, role, name, is_active')
-        .eq('id', authData.user.id) // Assuming admin_users ID matches auth.users ID
+        .eq('id', authData.user.id)
         .single();
     
       console.warn('📊 Admin user query result:', { adminUser, adminError });
@@ -59,8 +59,8 @@ export default function AdminLoginPage() {
       
       if (adminError || !adminUser) {
         console.warn('⚠️  First query failed, trying email fallback...');
-        // Fallback: check by email if ID lookup failed (e.g. if manual entry didn't use same UUID)
-        const { data: adminByEmail, error: emailError } = await supabaseAdmin
+        // Fallback: check by email if ID lookup failed
+        const { data: adminByEmail, error: emailError } = await supabase
              .from('admin_users')
              .select('id, role, is_active')
              .eq('email', data.email)
@@ -69,26 +69,26 @@ export default function AdminLoginPage() {
         console.warn('📧 Email fallback result:', { adminByEmail, emailError });
              
         if (!adminByEmail) {
-            await supabaseAdmin.auth.signOut();
+            await supabase.auth.signOut();
             throw new Error('Acesso não autorizado. Este usuário não é um administrador.');
         }
         
         if (!adminByEmail.is_active) {
-            await supabaseAdmin.auth.signOut();
+            await supabase.auth.signOut();
             throw new Error('Conta de administrador desativada.');
         }
       } else if (!adminUser.is_active) {
-         await supabaseAdmin.auth.signOut();
+         await supabase.auth.signOut();
          throw new Error('Conta de administrador desativada.');
       }
 
       // 3. Check MFA Requirements
-      const { data: mfaFactors } = await supabaseAdmin.auth.mfa.listFactors();
+      const { data: mfaFactors } = await supabase.auth.mfa.listFactors();
       const hasVerifiedTOTP = mfaFactors?.all?.some(f => f.factor_type === 'totp' && f.status === 'verified');
 
       if (hasVerifiedTOTP) {
           // If setup, must verify
-          const { data: aal } = await supabaseAdmin.auth.mfa.getAuthenticatorAssuranceLevel();
+          const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
           if (aal && aal.currentLevel !== 'aal2') {
                navigate('/admin/auth/verify-2fa');
                return;

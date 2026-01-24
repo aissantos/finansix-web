@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { Loader2, FilterX, Download } from 'lucide-react';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 // import { DatePicker } from '@/components/ui/date-picker'; // Fallback to native for now
 
 export function AuditLogsPage() {
@@ -53,7 +53,7 @@ export function AuditLogsPage() {
   const handleExportCSV = async () => {
     setIsExporting(true);
     try {
-        let query = supabaseAdmin.from('audit_logs').select('*');
+        let query = supabase.from('audit_logs').select('*');
 
         // Apply filters (replicating hook logic roughly)
         if (hookFilters.action) query = query.eq('action', hookFilters.action);

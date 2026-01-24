@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { supabaseAdmin } from '../lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
 export type AuditLog = Database['public']['Tables']['audit_logs']['Row'] & {
@@ -26,7 +26,7 @@ export function useAuditLogs({
   return useQuery({
     queryKey: ['audit-logs', page, pageSize, filters],
     queryFn: async () => {
-      let query = supabaseAdmin
+      let query = supabase
         .from('audit_logs')
         .select(`
           *,

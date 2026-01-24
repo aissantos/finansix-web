@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabaseAdmin } from '../lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 
 export interface ServiceHealth {
   service: string;
@@ -20,7 +20,7 @@ export interface SystemHealthData {
 async function checkDatabaseHealth(): Promise<ServiceHealth> {
   const start = performance.now();
   try {
-    const { data: metrics, error } = await supabaseAdmin.rpc('get_database_metrics');
+    const { data: metrics, error } = await supabase.rpc('get_database_metrics');
     
     if (error) throw error;
     

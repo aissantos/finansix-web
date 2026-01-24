@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@/test/test-utils';
 import { useImpersonation } from '@/admin/hooks/useImpersonation';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import { createMockQueryBuilder } from '@/test/mocks/supabase-admin';
 import { usePermissions } from '@/admin/hooks/usePermissions';
 
@@ -46,7 +46,7 @@ describe('useImpersonation', () => {
 
   it('deve carregar sessão ativa', async () => {
     const queryBuilder = createMockQueryBuilder(mockSession);
-    vi.mocked(supabaseAdmin.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
 
     const { result } = renderHook(() => useImpersonation());
 
@@ -56,7 +56,7 @@ describe('useImpersonation', () => {
 
   it('deve iniciar impersonation com sucesso', async () => {
     // Mock RPC call
-    vi.mocked(supabaseAdmin.rpc).mockResolvedValue({ 
+    vi.mocked(supabase.rpc).mockResolvedValue({ 
       data: mockSession, 
       error: null 
     } as any);
@@ -70,7 +70,7 @@ describe('useImpersonation', () => {
       });
     });
 
-    expect(supabaseAdmin.rpc).toHaveBeenCalledWith('start_impersonation', expect.objectContaining({
+    expect(supabase.rpc).toHaveBeenCalledWith('start_impersonation', expect.objectContaining({
       target_user_id: 'user-1',
       impersonation_reason: 'Test reason'
     }));
@@ -79,10 +79,10 @@ describe('useImpersonation', () => {
   it('deve parar impersonation com sucesso', async () => {
     // Setup active session
     const queryBuilder = createMockQueryBuilder(mockSession);
-    vi.mocked(supabaseAdmin.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
     
     // Mock RPC for stop
-    vi.mocked(supabaseAdmin.rpc).mockResolvedValue({ 
+    vi.mocked(supabase.rpc).mockResolvedValue({ 
       data: { success: true }, 
       error: null 
     } as any);
@@ -95,7 +95,7 @@ describe('useImpersonation', () => {
       await result.current.stopImpersonation.mutateAsync();
     });
 
-    expect(supabaseAdmin.rpc).toHaveBeenCalledWith('stop_impersonation', {
+    expect(supabase.rpc).toHaveBeenCalledWith('stop_impersonation', {
       session_id_param: 'session-1'
     });
   });

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/useToast';
 import type { Database } from '@/types/database';
 
@@ -14,7 +14,7 @@ export function useReports() {
   return useQuery({
     queryKey: ['saved-reports'],
     queryFn: async (): Promise<SavedReport[]> => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('saved_reports')
         .select('*')
         .order('created_at', { ascending: false });
@@ -33,7 +33,7 @@ export function useReport(reportId: string) {
   return useQuery({
     queryKey: ['saved-report', reportId],
     queryFn: async (): Promise<SavedReport | null> => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('saved_reports')
         .select('*')
         .eq('id', reportId)
@@ -55,7 +55,7 @@ export function useReportMutations() {
 
   const createReport = useMutation({
     mutationFn: async (report: Omit<SavedReportInsert, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('saved_reports')
         .insert(report)
         .select()
@@ -88,7 +88,7 @@ export function useReportMutations() {
       id: string;
       updates: SavedReportUpdate;
     }) => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('saved_reports')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
@@ -117,7 +117,7 @@ export function useReportMutations() {
 
   const deleteReport = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabaseAdmin.from('saved_reports').delete().eq('id', id).select().single();
+      const { error } = await supabase.from('saved_reports').delete().eq('id', id).select().single();
 
       if (error) throw error;
     },

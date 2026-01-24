@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
 // Types
@@ -45,7 +45,7 @@ export function useUsers(filters: UserFilters = {}, pagination: Pagination = { p
       const to = from + pageSize - 1;
 
       // Build query
-      let query = supabaseAdmin
+      let query = supabase
         .from('household_members')
         .select('*, households(name)', { count: 'exact' });
 
@@ -100,7 +100,7 @@ export function useHouseholds() {
   return useQuery({
     queryKey: ['households'],
     queryFn: async () => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('households')
         .select('id, name')
         .is('deleted_at', null)

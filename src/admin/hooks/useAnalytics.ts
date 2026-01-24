@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 
 export interface AnalyticsFilters {
   startDate: string;
@@ -65,7 +65,7 @@ export function useUserActivityMetrics(date: Date = new Date()) {
   return useQuery({
     queryKey: ['user-activity-metrics', date.toISOString()],
     queryFn: async (): Promise<UserActivityMetrics> => {
-      const { data, error } = await supabaseAdmin.rpc('get_user_activity_metrics', {
+      const { data, error } = await supabase.rpc('get_user_activity_metrics', {
         p_date: date.toISOString(),
       });
 
@@ -84,7 +84,7 @@ export function useTransactionAnalytics(filters: AnalyticsFilters) {
   return useQuery({
     queryKey: ['transaction-analytics', filters],
     queryFn: async (): Promise<TransactionAnalytics> => {
-      const { data, error } = await supabaseAdmin.rpc('get_transaction_analytics', {
+      const { data, error } = await supabase.rpc('get_transaction_analytics', {
         p_start_date: filters.startDate,
         p_end_date: filters.endDate,
         p_household_id: filters.householdId || null,
@@ -104,7 +104,7 @@ export function useHouseholdGrowthMetrics(startDate: string, endDate: string) {
   return useQuery({
     queryKey: ['household-growth-metrics', startDate, endDate],
     queryFn: async (): Promise<HouseholdGrowthMetrics> => {
-      const { data, error} = await supabaseAdmin.rpc('get_household_growth_metrics', {
+      const { data, error} = await supabase.rpc('get_household_growth_metrics', {
         p_start_date: startDate,
         p_end_date: endDate,
       });
@@ -127,7 +127,7 @@ export function useCategoryDistribution(
   return useQuery({
     queryKey: ['category-distribution', startDate, endDate, type],
     queryFn: async (): Promise<CategoryDistribution[]> => {
-      const { data, error } = await supabaseAdmin.rpc('get_category_distribution', {
+      const { data, error } = await supabase.rpc('get_category_distribution', {
         p_start_date: startDate,
         p_end_date: endDate,
         p_type: type || null,

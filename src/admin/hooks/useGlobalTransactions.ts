@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { supabaseAdmin } from '../lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
 export type TransactionWithDetails = Database['public']['Tables']['transactions']['Row'] & {
@@ -30,7 +30,7 @@ export function useGlobalTransactions({
   return useQuery({
     queryKey: ['global-transactions', page, pageSize, filters],
     queryFn: async () => {
-      let query = supabaseAdmin
+      let query = supabase
         .from('transactions')
         .select(`
           *,
@@ -96,7 +96,7 @@ export function useAggregateStats(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: ['aggregate-stats', startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .rpc('get_aggregate_stats', {
           start_date: startDate?.toISOString().split('T')[0],
           end_date: endDate?.toISOString().split('T')[0],

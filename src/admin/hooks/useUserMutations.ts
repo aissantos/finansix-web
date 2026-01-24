@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/useToast';
 import type { Database } from '@/types/database';
 
@@ -16,7 +16,7 @@ export function useUserMutations() {
   // Create user mutation
   const createUser = useMutation({
     mutationFn: async (data: HouseholdMemberInsert) => {
-      const { data: newUser, error } = await supabaseAdmin
+      const { data: newUser, error } = await supabase
         .from('household_members')
         .insert(data)
         .select()
@@ -44,7 +44,7 @@ export function useUserMutations() {
   // Update user mutation
   const updateUser = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: HouseholdMemberUpdate }) => {
-      const { data: updatedUser, error } = await supabaseAdmin
+      const { data: updatedUser, error } = await supabase
         .from('household_members')
         .update(data)
         .eq('id', id)

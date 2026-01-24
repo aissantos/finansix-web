@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@/test/test-utils';
 import { useUsers } from '@/admin/hooks/useUsers';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import { createMockQueryBuilder } from '@/test/mocks/supabase-admin';
 
 describe('useUsers', () => {
@@ -18,7 +18,7 @@ describe('useUsers', () => {
   it('deve buscar usuários com sucesso', async () => {
     // Setup mock query builder
     const queryBuilder = createMockQueryBuilder(mockUsers, null, 2);
-    vi.mocked(supabaseAdmin.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
 
     const { result } = renderHook(() => useUsers());
 
@@ -26,12 +26,12 @@ describe('useUsers', () => {
 
     expect(result.current.data?.users).toHaveLength(2);
     expect(result.current.data?.total).toBe(2);
-    expect(supabaseAdmin.from).toHaveBeenCalledWith('household_members');
+    expect(supabase.from).toHaveBeenCalledWith('household_members');
   });
 
   it('deve aplicar filtro de busca por texto', async () => {
     const queryBuilder = createMockQueryBuilder(mockUsers, null, 2);
-    vi.mocked(supabaseAdmin.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
 
     const { result } = renderHook(() => useUsers({ search: 'John' }));
 
@@ -42,7 +42,7 @@ describe('useUsers', () => {
 
   it('deve aplicar filtro de role', async () => {
     const queryBuilder = createMockQueryBuilder(mockUsers, null, 2);
-    vi.mocked(supabaseAdmin.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
 
     const { result } = renderHook(() => useUsers({ role: 'admin' }));
 
@@ -53,7 +53,7 @@ describe('useUsers', () => {
 
   it('deve aplicar paginação', async () => {
     const queryBuilder = createMockQueryBuilder(mockUsers, null, 20);
-    vi.mocked(supabaseAdmin.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
 
     const { result } = renderHook(() => useUsers({}, { page: 2, pageSize: 10 }));
 
@@ -75,7 +75,7 @@ describe('useUsers', () => {
       then: (_: any, reject: any) => reject(error)
     };
     
-    vi.mocked(supabaseAdmin.from).mockReturnValue(throwingBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(throwingBuilder as any);
 
     const { result } = renderHook(() => useUsers());
 

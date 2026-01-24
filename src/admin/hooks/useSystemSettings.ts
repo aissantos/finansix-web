@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabaseAdmin } from '../lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
 export type SystemSetting = Database['public']['Tables']['system_settings']['Row'];
@@ -9,7 +9,7 @@ export function useSystemSettings() {
   return useQuery({
     queryKey: ['system-settings'],
     queryFn: async () => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('system_settings')
         .select('*')
         .order('group', { ascending: true })
@@ -26,7 +26,7 @@ export function useUpdateSystemSetting() {
 
   return useMutation({
     mutationFn: async ({ key, value }: { key: string; value: Database['public']['Tables']['system_settings']['Row']['value'] }) => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('system_settings')
         .update({ value })
         .eq('key', key)

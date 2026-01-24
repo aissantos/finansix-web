@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabaseAdmin } from '../lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
 export type FeatureFlag = Database['public']['Tables']['feature_flags']['Row'];
@@ -16,7 +16,7 @@ export function useFeatureFlags() {
     const { data: flags, isLoading, error } = useQuery({
         queryKey: ['feature-flags'],
         queryFn: async () => {
-            const { data, error } = await supabaseAdmin
+            const { data, error } = await supabase
                 .from('feature_flags')
                 .select('*')
                 .order('name');
@@ -34,7 +34,7 @@ export function useFeatureFlags() {
             if (rolloutPercentage !== undefined) updates.rollout_percentage = rolloutPercentage;
             if (targetSegment !== undefined) updates.target_segment = targetSegment;
 
-            const { error } = await supabaseAdmin
+            const { error } = await supabase
                 .from('feature_flags')
                 .update(updates)
                 .eq('id', id);

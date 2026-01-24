@@ -1,6 +1,6 @@
 import { LogOut, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import { usePermissions } from '@/admin/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
@@ -12,7 +12,7 @@ export function AdminHeader() {
   const { user } = usePermissions();
 
   const handleSignOut = async () => {
-    await supabaseAdmin.auth.signOut();
+    await supabase.auth.signOut();
     navigate('/admin/auth/login');
   };
 

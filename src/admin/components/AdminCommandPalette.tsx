@@ -8,7 +8,7 @@ import {
   LogOut
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { supabaseAdmin } from "@/admin/lib/supabase-admin"
+import { supabase } from "@/lib/supabase"
 
 import {
   CommandDialog,
@@ -98,7 +98,7 @@ export function AdminCommandPalette() {
           <CommandGroup heading="Conta">
             <CommandItem 
                 onSelect={() => runCommand(async () => {
-                    await supabaseAdmin.auth.signOut();
+                    await supabase.auth.signOut();
                     navigate("/admin/auth/login");
                 })}
                 className="text-red-600 dark:text-red-400"

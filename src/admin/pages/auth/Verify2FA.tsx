@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/useToast';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 
 const verifySchema = z.object({
   code: z.string().length(6, 'O código deve ter 6 dígitos').regex(/^\d+$/, 'Apenas números'),
@@ -29,7 +29,7 @@ export default function AdminVerify2FA() {
 
   // Check valid session on mount
   useEffect(() => {
-    supabaseAdmin.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
         if (!data.session) {
             navigate('/admin/auth/login');
         }
@@ -41,7 +41,7 @@ export default function AdminVerify2FA() {
 
     try {
         // Get the challenge factors
-        const { data: factors, error: factorsError } = await supabaseAdmin.auth.mfa.listFactors();
+        const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
         if (factorsError) throw factorsError;
         
         const totpFactor = factors.all.find(f => f.factor_type === 'totp' && f.status === 'verified');
@@ -49,12 +49,12 @@ export default function AdminVerify2FA() {
              throw new Error("Nenhum fator 2FA encontrado.");
         }
 
-        const { data: challenge, error: challengeError } = await supabaseAdmin.auth.mfa.challenge({
+        const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
             factorId: totpFactor.id
         });
         if (challengeError) throw challengeError;
 
-        const { error: verifyError } = await supabaseAdmin.auth.mfa.verify({
+        const { error: verifyError } = await supabase.auth.mfa.verify({
             factorId: totpFactor.id,
             challengeId: challenge.id,
             code: data.code,
@@ -78,7 +78,7 @@ export default function AdminVerify2FA() {
   };
 
   const handleSignOut = async () => {
-      await supabaseAdmin.auth.signOut();
+      await supabase.auth.signOut();
       navigate('/admin/auth/login');
   }
 

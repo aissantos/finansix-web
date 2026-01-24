@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 
 export interface DashboardMetrics {
   activeUsers: {
@@ -25,7 +25,7 @@ export function useDashboardMetrics() {
     queryKey: ['dashboard-metrics'],
     queryFn: async () => {
       // @ts-expect-error - get_dashboard_metrics not yet in generated types
-      const { data, error } = await supabaseAdmin.rpc('get_dashboard_metrics');
+      const { data, error } = await supabase.rpc('get_dashboard_metrics');
       
       if (error) throw error;
       return data as unknown as DashboardMetrics;

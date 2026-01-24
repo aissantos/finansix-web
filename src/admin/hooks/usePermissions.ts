@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 
 export type AdminRole = 'super_admin' | 'admin' | 'support' | 'analyst';
 
@@ -41,7 +41,7 @@ export function usePermissions() {
 
         async function fetchAdminUser() {
             try {
-                const { data: { user: authUser } } = await supabaseAdmin.auth.getUser();
+                const { data: { user: authUser } } = await supabase.auth.getUser();
                 
                 if (!authUser) {
                     if (mounted) {
@@ -51,7 +51,7 @@ export function usePermissions() {
                     return;
                 }
 
-                const { data, error } = await supabaseAdmin
+                const { data, error } = await supabase
                     .from('admin_users')
                     .select('*')
                     .eq('id', authUser.id)
@@ -59,7 +59,7 @@ export function usePermissions() {
 
                 if (error || !data) {
                     // Fallback to email lookup just in case (as in Login)
-                    const { data: dataByEmail } = await supabaseAdmin
+                    const { data: dataByEmail } = await supabase
                         .from('admin_users')
                         .select('*')
                         .eq('email', authUser.email || '')
@@ -68,7 +68,7 @@ export function usePermissions() {
                      if (mounted && dataByEmail) {
                         setUser({
                             ...dataByEmail,
-                            role: dataByEmail.role as AdminRole // Cast string to AdminRole
+                            role: dataByEmail.role as AdminRole
                         });
                      } else if (mounted) {
                         setUser(null);
@@ -77,7 +77,7 @@ export function usePermissions() {
                      if (mounted && data) {
                         setUser({
                             ...data,
-                            role: data.role as AdminRole // Cast string to AdminRole
+                            role: data.role as AdminRole
                         });
                      }
                 }
@@ -91,7 +91,7 @@ export function usePermissions() {
 
         fetchAdminUser();
 
-        const { data: { subscription } } = supabaseAdmin.auth.onAuthStateChange(async (event) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
              if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
                  fetchAdminUser();
              }

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import { subDays, format } from 'date-fns';
 
 export interface TransactionTrend {
@@ -13,7 +13,7 @@ export function useTransactionTrends() {
     queryFn: async () => {
       const sevenDaysAgo = subDays(new Date(), 7);
       
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('transactions')
         .select('created_at')
         .gte('created_at', sevenDaysAgo.toISOString());

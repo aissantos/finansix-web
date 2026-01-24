@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabaseAdmin } from '@/admin/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/useToast';
 import { usePermissions } from '@/admin/hooks/usePermissions';
 
@@ -45,7 +45,7 @@ export function useImpersonation() {
   const { data: currentSession } = useQuery({
     queryKey: ['impersonation-session'],
     queryFn: async (): Promise<ImpersonationSession | null> => {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('impersonation_sessions')
         .select('*')
         .is('ended_at', null)
@@ -73,7 +73,7 @@ export function useImpersonation() {
       }
 
       // @ts-expect-error - RPC function not in generated types yet
-      const { data, error } = await supabaseAdmin.rpc('start_impersonation', {
+      const { data, error } = await supabase.rpc('start_impersonation', {
         target_user_id: userId,
         impersonation_reason: reason || null,
         client_ip: null,
@@ -108,7 +108,7 @@ export function useImpersonation() {
       }
 
       // @ts-expect-error - RPC function not in generated types yet
-      const { data, error } = await supabaseAdmin.rpc('stop_impersonation', {
+      const { data, error } = await supabase.rpc('stop_impersonation', {
         session_id_param: currentSession.id,
       });
 
