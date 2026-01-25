@@ -75,7 +75,7 @@ export interface CreditCardWithLimits extends CreditCard {
 
 // Form types
 export interface TransactionFormData {
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
   amount: number;
   description: string;
   category_id?: string;

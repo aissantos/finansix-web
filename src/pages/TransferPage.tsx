@@ -80,20 +80,22 @@ export default function TransferPage() {
     const transferDescription = description.trim() || `Transferência: ${fromAccount?.name} → ${toAccount?.name}`;
 
     try {
-      // 1. Criar despesa na conta de origem
+      // 1. Criar saída na conta de origem (Transferência Enviada)
+      // Usamos type='transfer' e valor negativo
       await createTransaction({
         account_id: fromAccountId,
-        type: 'expense',
-        amount: amount,
+        type: 'transfer',
+        amount: -amount, // Negativo para saída
         description: transferDescription,
         transaction_date: new Date().toISOString().split('T')[0],
       });
 
-      // 2. Criar receita na conta de destino
+      // 2. Criar entrada na conta de destino (Transferência Recebida)
+      // Usamos type='transfer' e valor positivo
       await createTransaction({
         account_id: toAccountId,
-        type: 'income',
-        amount: amount,
+        type: 'transfer',
+        amount: amount, // Positivo para entrada
         description: transferDescription,
         transaction_date: new Date().toISOString().split('T')[0],
       });

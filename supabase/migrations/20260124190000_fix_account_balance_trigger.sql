@@ -15,6 +15,7 @@ DECLARE
   v_initial_balance_cents BIGINT;
   v_total_income_cents BIGINT;
   v_total_expense_cents BIGINT;
+  v_total_transfer_cents BIGINT;
   v_new_balance_cents BIGINT;
 BEGIN
   -- Get initial balance
@@ -43,8 +44,17 @@ BEGIN
     AND status = 'completed'
     AND deleted_at IS NULL;
 
+  -- Calculate total transfers (in cents) - ALREADY SIGNED (negative=outgoing, positive=incoming)
+  SELECT COALESCE(SUM(amount_cents), 0)
+  INTO v_total_transfer_cents
+  FROM transactions
+  WHERE account_id = p_account_id
+    AND type = 'transfer'
+    AND status = 'completed'
+    AND deleted_at IS NULL;
+
   -- Calculate new balance
-  v_new_balance_cents := v_initial_balance_cents + v_total_income_cents - v_total_expense_cents;
+  v_new_balance_cents := v_initial_balance_cents + v_total_income_cents - v_total_expense_cents + v_total_transfer_cents;
 
   -- Update account
   UPDATE accounts

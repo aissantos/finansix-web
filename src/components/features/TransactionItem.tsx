@@ -46,8 +46,11 @@ export const TransactionItem = memo(function TransactionItem({
   
   const Icon = getIcon(transaction.category?.icon || 'default');
   const isIncome = transaction.type === 'income';
+  const isTransfer = transaction.type === 'transfer';
   const hasInstallments = transaction.is_installment && (transaction.total_installments ?? 0) > 1;
-  const categoryColor = transaction.category?.color || (isIncome ? '#22c55e' : '#ef4444');
+  
+  // Color: Blue for transfer, Green for income, Red for expense
+  const categoryColor = transaction.category?.color || (isTransfer ? '#3b82f6' : (isIncome ? '#22c55e' : '#ef4444'));
 
   // Get current month's installment (if installment transaction)
   const currentInstallment = hasInstallments && transaction.installments?.length
@@ -105,7 +108,7 @@ export const TransactionItem = memo(function TransactionItem({
             )}
           </div>
           <span className="card-subtitle truncate">
-            {transaction.category?.name || 'Sem categoria'}
+            {transaction.category?.name || (isTransfer ? 'Transferência' : 'Sem categoria')}
           </span>
         </div>
       </div>
@@ -116,10 +119,20 @@ export const TransactionItem = memo(function TransactionItem({
           <span
             className={cn(
               'value-display-sm',
-              isIncome ? 'text-income' : 'text-expense'
+              isTransfer ? 'text-blue-500' : (isIncome ? 'text-income' : 'text-expense')
             )}
           >
-            {isIncome ? '+' : '-'} {formatCurrency(displayAmount)}
+            {isTransfer ? (
+              // For transfer, allow formatCurrency to handle negative, manually add + for positive
+              <>
+                {displayAmount > 0 ? '+' : ''} {formatCurrency(displayAmount)}
+              </>
+            ) : (
+              // For income/expense, assume absolute amount in DB and force sign
+              <>
+                {isIncome ? '+' : '-'} {formatCurrency(Math.abs(displayAmount))}
+              </>
+            )}
           </span>
           <span className="label-overline">
             {formatDateRelative(transaction.transaction_date)}

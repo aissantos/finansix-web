@@ -256,6 +256,20 @@ export async function calculateFreeBalance(
     })
   );
 
+  // 7. Pending transfers (signed amounts)
+  const { data: pendingTransfers } = await supabase
+    .from('transactions')
+    .select('amount')
+    .eq('household_id', householdId)
+    .eq('type', 'transfer')
+    .eq('status', 'pending')
+    .lte('transaction_date', targetDateStr)
+    .is('deleted_at', null);
+
+  const pendingTransfersCents = addCents(
+    ...(pendingTransfers ?? []).map(t => toCents(t.amount ?? 0))
+  );
+
   // FINAL FORMULA (ALL IN CENTS - NO FLOATING POINT!)
   const freeBalanceCents = addCents(
     currentBalanceCents,
@@ -264,7 +278,8 @@ export async function calculateFreeBalance(
     -creditCardDueCents,
     expectedIncomeCents,
     -expectedExpensesCents,
-    pendingReimbursementsCents
+    pendingReimbursementsCents,
+    pendingTransfersCents
   );
 
   // Convert to reais for display
@@ -287,6 +302,14 @@ export async function calculateFreeBalance(
     value: toReais(pendingReimbursementsCents),
     type: 'positive',
   });
+
+  if (pendingTransfersCents !== 0) {
+    breakdown.push({
+      label: 'Transferências programadas',
+      value: toReais(pendingTransfersCents),
+      type: pendingTransfersCents >= 0 ? 'positive' : 'negative',
+    });
+  }
 
   return {
     currentBalance: toReais(currentBalanceCents),
