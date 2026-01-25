@@ -1,16 +1,17 @@
 -- ============================================================================
 -- Migration: Absolute Final Transfer Fix (Enum -> Text Check)
 -- Date: 2026-01-25
--- Purpose: 1. DROP Dependent Views (`monthly_summary`, `household_free_balance`).
+-- Purpose: 1. DROP Dependent Views & Functions (CASCADE).
 --          2. Convert `type` column to TEXT in all tables.
 --          3. DROP Enum `transaction_type`.
 --          4. Add Check Constraints.
---          5. Restore Views.
+--          5. Restore Views & Functions.
 -- ============================================================================
 
--- 1. DROP DEPENDENT VIEWS
+-- 1. DROP DEPENDENT VIEWS (CASCADE will handle dependent functions like get_monthly_transactions)
 DROP VIEW IF EXISTS monthly_summary CASCADE;
 DROP VIEW IF EXISTS household_free_balance CASCADE;
+DROP VIEW IF EXISTS transactions_with_installments_expanded CASCADE;
 
 -- 2. ALTER COLUMNS TO TEXT (Break Enum Dependency)
 ALTER TABLE transactions ALTER COLUMN type TYPE text;
@@ -37,7 +38,7 @@ ALTER TABLE transactions DROP CONSTRAINT IF EXISTS amount_positive;
 ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_amount_check;
 ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_amount_cents_check;
 
--- 6. RESTORE VIEWS
+-- 6. RESTORE VIEWS & FUNCTIONS
 
 -- 6a. Restore household_free_balance
 CREATE OR REPLACE VIEW household_free_balance AS
@@ -128,6 +129,119 @@ SELECT
 FROM transactions t
 WHERE t.deleted_at IS NULL AND t.status = 'completed'
 GROUP BY t.household_id, DATE_TRUNC('month', t.transaction_date);
+
+-- 6c. Restore transactions_with_installments_expanded
+CREATE OR REPLACE VIEW transactions_with_installments_expanded AS
+SELECT 
+  CASE 
+    WHEN t.is_installment = false OR t.total_installments IS NULL OR t.total_installments <= 1
+    THEN t.id::text
+    ELSE t.id::text || '-installment-' || i.installment_number::text
+  END as virtual_id,
+  
+  t.id as transaction_id,
+  t.household_id,
+  t.type,
+  t.description,
+  
+  CASE 
+    WHEN t.is_installment = true AND i.id IS NOT NULL
+    THEN i.amount
+    ELSE t.amount
+  END as amount,
+  
+  CASE 
+    WHEN t.is_installment = true AND i.id IS NOT NULL
+    THEN i.billing_month::date
+    ELSE t.transaction_date
+  END as transaction_date,
+  
+  t.category_id,
+  t.account_id,
+  t.credit_card_id,
+  t.status,
+  t.notes,
+  t.is_installment,
+  t.total_installments,
+  
+  i.installment_number,
+  i.billing_month,
+  i.due_date,
+  i.id as installment_id,
+  
+  t.created_at,
+  t.updated_at,
+  t.deleted_at
+
+FROM transactions t
+LEFT JOIN installments i 
+  ON t.id = i.transaction_id 
+  AND t.is_installment = true
+  AND i.deleted_at IS NULL
+
+WHERE t.deleted_at IS NULL
+  AND (
+    t.is_installment = false 
+    OR t.total_installments IS NULL 
+    OR t.total_installments <= 1
+    OR i.id IS NOT NULL
+  );
+
+GRANT SELECT ON transactions_with_installments_expanded TO authenticated;
+GRANT SELECT ON transactions_with_installments_expanded TO service_role;
+
+-- 6d. Restore get_monthly_transactions
+CREATE OR REPLACE FUNCTION get_monthly_transactions(
+  p_household_id uuid,
+  p_year integer,
+  p_month integer
+)
+RETURNS TABLE (
+  virtual_id text,
+  transaction_id uuid,
+  household_id uuid,
+  type text,
+  description text,
+  amount numeric,
+  transaction_date date,
+  category_id uuid,
+  account_id uuid,
+  credit_card_id uuid,
+  status text,
+  is_installment boolean,
+  total_installments integer,
+  installment_number integer,
+  billing_month date,
+  due_date date
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    v.virtual_id,
+    v.transaction_id,
+    v.household_id,
+    v.type,
+    v.description,
+    v.amount,
+    v.transaction_date,
+    v.category_id,
+    v.account_id,
+    v.credit_card_id,
+    v.status,
+    v.is_installment,
+    v.total_installments,
+    v.installment_number,
+    v.billing_month,
+    v.due_date
+  FROM transactions_with_installments_expanded v
+  WHERE v.household_id = p_household_id
+    AND EXTRACT(YEAR FROM v.transaction_date) = p_year
+    AND EXTRACT(MONTH FROM v.transaction_date) = p_month
+  ORDER BY v.transaction_date DESC, v.description;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION get_monthly_transactions(uuid, integer, integer) TO authenticated;
 
 -- 7. RE-APPLY SAFE TRIGGER
 CREATE OR REPLACE FUNCTION public.fix_transfer_record_robust()
