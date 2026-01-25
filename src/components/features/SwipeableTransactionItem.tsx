@@ -162,7 +162,7 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
               )}
             </div>
             <span className="card-subtitle truncate">
-              {transaction.category?.name || 'Sem categoria'}
+              {transaction.category?.name || (transaction.type === 'transfer' ? 'Transferência' : 'Sem categoria')}
             </span>
           </div>
         </div>

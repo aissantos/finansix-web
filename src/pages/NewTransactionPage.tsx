@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { CustomNumericKeypad } from '@/components/ui/CustomNumericKeypad';
 import { InstallmentConfirmDialog } from '@/components/features/InstallmentConfirmDialog';
-import { useCreateTransaction, useCategories, useCreditCards, useAccounts, useSmartCategorySearch } from '@/hooks';
+import { useCreateTransaction, useCategories, useCreditCards, useAccounts, useSmartCategorySearch, useUpsertSubscription } from '@/hooks';
 import { toast } from '@/hooks/useToast';
 import { formatCurrency, cn } from '@/lib/utils';
 import type { TransactionType } from '@/types';
@@ -44,6 +44,7 @@ export default function NewTransactionPage() {
   const [pendingSubmitData, setPendingSubmitData] = useState<TransactionForm | null>(null);
 
   const { mutate: createTransaction, isPending: isTransactionPending } = useCreateTransaction();
+  const { mutate: upsertSubscription } = useUpsertSubscription();
   const { data: categories } = useCategories();
   const { data: cards } = useCreditCards();
   const { data: accounts } = useAccounts();
@@ -103,7 +104,7 @@ export default function NewTransactionPage() {
     submitTransaction(data);
   };
 
-  const submitTransaction = (data: TransactionForm) => {
+    const submitTransaction = (data: TransactionForm) => {
     const payload = {
         type: data.type as TransactionType,
         amount: data.amount,
@@ -118,13 +119,29 @@ export default function NewTransactionPage() {
         reimbursement_source: data.is_reimbursable ? data.reimbursement_source : null,
     };
 
-
-
     createTransaction(
       payload,
       {
         onSuccess: () => {
+          // Check if it's a subscription category and auto-create subscription
+          const category = categories?.find(c => c.id === data.category_id);
+          const isSubscriptionCategory = category?.name.toLowerCase().includes('assinatura');
           
+          if (isSubscriptionCategory && data.type === 'expense') {
+             upsertSubscription({
+                name: data.description,
+                amount: data.amount,
+                category_id: data.category_id,
+                billing_day: new Date(data.transaction_date).getDate()
+             });
+             
+             toast({
+                title: 'Assinatura detectada',
+                description: 'Adicionada também à aba Assinaturas.',
+                variant: 'default', // Info variant
+             });
+          }
+
           const installmentText = data.is_installment && data.total_installments > 1 
             ? ` em ${data.total_installments}x` 
             : '';
