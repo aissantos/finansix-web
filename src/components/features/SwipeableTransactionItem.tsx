@@ -53,7 +53,7 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
   const Icon = getIcon(transaction.category?.icon || 'default');
   const isIncome = transaction.type === 'income';
   const hasInstallments = transaction.is_installment && (transaction.total_installments ?? 0) > 1;
-  const categoryColor = transaction.category?.color || (isIncome ? '#22c55e' : '#ef4444');
+  const categoryColor = transaction.category?.color || ((isIncome || (transaction.type === 'transfer' && transaction.amount > 0)) ? '#22c55e' : '#ef4444');
 
   // Get current month's installment amount
   const currentInstallment = hasInstallments && transaction.installments?.length
@@ -172,10 +172,12 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
           <span
             className={cn(
               'value-display-sm',
-              isIncome ? 'text-income' : 'text-expense'
+              (isIncome || (transaction.type === 'transfer' && displayAmount > 0)) 
+                ? 'text-income' 
+                : 'text-expense'
             )}
           >
-            {isIncome ? '+' : '-'} {formatCurrency(displayAmount)}
+            {(isIncome || (transaction.type === 'transfer' && displayAmount > 0)) ? '+' : '-'}{formatCurrency(Math.abs(displayAmount))}
           </span>
           <span className="label-overline">
             {formatDateRelative(transaction.transaction_date)}
