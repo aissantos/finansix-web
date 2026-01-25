@@ -7,16 +7,15 @@ const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3Mi
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 async function fixTransfers() {
-  console.log('Starting transfer fix...');
+  console.log('Starting Aggressive Transfer Fix...');
 
-  // 1. Fix Outgoing (Expense -> Transfer, amount should be negative)
-  // Find candidates: type=expense AND description starts with 'Transferência' AND amount > 0
+  // 1. Fix Outgoing (Expense -> Transfer, make negative)
+  // We look for ANY 'expense' with 'Transferência' description
   const { data: outgoing, error: outError } = await supabase
     .from('transactions')
     .select('id, amount, description')
     .eq('type', 'expense')
-    .gt('amount', 0)
-    .ilike('description', 'Transferência:%');
+    .ilike('description', '%Transferência%');
 
   if (outError) {
     console.error('Error fetching outgoing candidates:', outError);
@@ -24,8 +23,9 @@ async function fixTransfers() {
     console.log(`Found ${outgoing?.length} outgoing transfers to fix.`);
     
     for (const tx of outgoing || []) {
-      const newAmount = -Math.round(Math.abs(tx.amount * 100)) / 100; // Force negative
-      const newAmountCents = -Math.round(Math.abs(tx.amount * 100));
+      // Ensure it's negative
+      const newAmount = -Math.abs(tx.amount);
+      const newAmountCents = -Math.abs(Math.round(tx.amount * 100));
 
       const { error } = await supabase
         .from('transactions')
@@ -37,18 +37,16 @@ async function fixTransfers() {
         .eq('id', tx.id);
 
       if (error) console.error(`Failed to update outgoing tx ${tx.id}:`, error);
-      else console.log(`Fixed outgoing tx ${tx.id} (${tx.description})`);
+      else console.log(`Fixed outgoing tx ${tx.id} (${tx.description}) -> Transfer ${newAmount}`);
     }
   }
 
-  // 2. Fix Incoming (Income -> Transfer, amount should be positive)
-  // Find candidates: type=income AND description starts with 'Transferência'
-  // (Amount is already positive, just change type)
+  // 2. Fix Incoming (Income -> Transfer, ensure positive)
   const { data: incoming, error: inError } = await supabase
     .from('transactions')
-    .select('id, description')
+    .select('id, amount, description')
     .eq('type', 'income')
-    .ilike('description', 'Transferência:%');
+    .ilike('description', '%Transferência%');
 
   if (inError) {
     console.error('Error fetching incoming candidates:', inError);
@@ -56,15 +54,20 @@ async function fixTransfers() {
     console.log(`Found ${incoming?.length} incoming transfers to fix.`);
 
     for (const tx of incoming || []) {
+      const newAmount = Math.abs(tx.amount);
+      const newAmountCents = Math.abs(Math.round(tx.amount * 100));
+
       const { error } = await supabase
         .from('transactions')
         .update({
-          type: 'transfer'
+          type: 'transfer',
+          amount: newAmount,
+          amount_cents: newAmountCents
         })
         .eq('id', tx.id);
 
       if (error) console.error(`Failed to update incoming tx ${tx.id}:`, error);
-      else console.log(`Fixed incoming tx ${tx.id} (${tx.description})`);
+      else console.log(`Fixed incoming tx ${tx.id} (${tx.description}) -> Transfer ${newAmount}`);
     }
   }
 }
