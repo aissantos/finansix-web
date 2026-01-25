@@ -84,16 +84,16 @@ export default function AccountDetailPage() {
     });
 
     const currentIncome = currentMonthTxs
-      .filter(t => t.type === 'income')
+      .filter(t => t.type === 'income' || (t.type === 'transfer' && t.amount > 0))
       .reduce((sum, t) => sum + t.amount, 0);
 
     const currentExpense = currentMonthTxs
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter(t => t.type === 'expense' || (t.type === 'transfer' && t.amount < 0))
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
     const lastExpense = lastMonthTxs
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter(t => t.type === 'expense' || (t.type === 'transfer' && t.amount < 0))
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
     const expenseChange = lastExpense > 0 
       ? ((currentExpense - lastExpense) / lastExpense) * 100 
