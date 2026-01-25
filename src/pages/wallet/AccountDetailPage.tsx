@@ -338,11 +338,11 @@ export default function AccountDetailPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                        tx.type === 'income' 
+                        (tx.type === 'income' || (tx.type === 'transfer' && tx.amount > 0))
                           ? 'bg-green-100 dark:bg-green-900/20' 
                           : 'bg-red-100 dark:bg-red-900/20'
                       }`}>
-                        {tx.type === 'income' ? (
+                        {(tx.type === 'income' || (tx.type === 'transfer' && tx.amount > 0)) ? (
                           <TrendingUp className="h-5 w-5 text-green-600" />
                         ) : (
                           <TrendingDown className="h-5 w-5 text-red-600" />
@@ -358,9 +358,9 @@ export default function AccountDetailPage() {
                       </div>
                     </div>
                     <p className={`font-bold ${
-                      tx.type === 'income' ? 'text-green-600' : 'text-red-600'
+                      (tx.type === 'income' || (tx.type === 'transfer' && tx.amount > 0)) ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                      {(tx.type === 'income' || (tx.type === 'transfer' && tx.amount > 0)) ? '+' : '-'}{formatCurrency(Math.abs(tx.amount))}
                     </p>
                   </div>
                 </Card>
