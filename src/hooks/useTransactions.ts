@@ -125,6 +125,7 @@ export function useCreateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['freeBalance'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.installments.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
     },
   });
 }
@@ -145,6 +146,7 @@ export function useUpdateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['freeBalance'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.installments.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
     },
   });
 }
@@ -164,6 +166,7 @@ export function useDeleteTransaction() {
       queryClient.invalidateQueries({ queryKey: ['freeBalance'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.installments.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
     },
   });
 }
