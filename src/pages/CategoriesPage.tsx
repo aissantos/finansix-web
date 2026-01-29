@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, 
@@ -12,6 +12,8 @@ import {
   MoreVertical,
   Search,
   Check,
+  CornerDownRight,
+  FolderOpen
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Icon } from '@/components/ui/icon';
@@ -29,6 +31,15 @@ import {
 import { toast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import type { TransactionType, Category } from '@/types';
+import { IconPicker } from '@/components/ui/icon-picker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 type TabType = 'expense' | 'income';
 
@@ -37,12 +48,6 @@ const CATEGORY_COLORS = [
   '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9',
   '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
   '#ec4899', '#f43f5e', '#64748b', '#1e293b', '#000000',
-];
-
-const CATEGORY_ICONS = [
-  '🍔', '🚗', '🏠', '❤️', '📚', '🎮', '🛒', '🔄',
-  '💼', '💻', '📈', '💰', '🎵', '✈️', '👕', '💊',
-  '📱', '🎬', '⚡', '🌐', '🎁', '🏋️', '🐕', '👶',
 ];
 
 export default function CategoriesPage() {
@@ -57,14 +62,41 @@ export default function CategoriesPage() {
   const { mutate: deleteCategory } = useDeleteCategory();
   const { mutateAsync: checkUsage } = useCheckCategoryUsage();
 
-  // Filtrar categorias pela busca
-  const filteredCategories = categories?.filter(cat => 
-    cat.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Organizar categorias em hierarquia
+  const categorizedData = useMemo(() => {
+    if (!categories) return { system: [], user: [] };
 
-  // Separar categorias do sistema e do usuário
-  const systemCategories = filteredCategories?.filter(cat => cat.household_id === null) ?? [];
-  const userCategories = filteredCategories?.filter(cat => cat.household_id !== null) ?? [];
+    // Filtrar por busca
+    const filtered = categories.filter(cat => 
+        cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Separar pais e filhos
+    const parents = filtered.filter(c => !c.parent_id);
+    const children = filtered.filter(c => c.parent_id);
+
+    // Construir árvore
+    const buildTree = (category: Category) => {
+        const subcategories = children.filter(c => c.parent_id === category.id);
+        return {
+            ...category,
+            subcategories
+        };
+    };
+
+    const tree = parents.map(buildTree);
+
+    // Separar sistema e usuário (baseado no pai)
+    // Se for subcategoria, consideramos o tipo do pai ou se o pai é sistema/usuário?
+    // A regra atual é: household_id null = sistema.
+    
+    // Vamos separar os PAIS. As subcategorias virão aninhadas.
+    const systemCategories = tree.filter(cat => cat.household_id === null);
+    const userCategories = tree.filter(cat => cat.household_id !== null);
+
+    return { system: systemCategories, user: userCategories, raw: categories };
+  }, [categories, searchQuery]);
+
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
@@ -74,6 +106,18 @@ export default function CategoriesPage() {
   const handleDelete = async (category: Category) => {
     // Verificar uso
     const usageCount = await checkUsage(category.id);
+    
+    // Verificar se tem subcategorias
+    const hasChildren = categories?.some(c => c.parent_id === category.id);
+
+    if (hasChildren) {
+        toast({ 
+            title: 'Não é possível excluir', 
+            description: 'Esta categoria possui subcategorias. Exclua-as primeiro.',
+            variant: 'destructive' 
+        });
+        return;
+    }
     
     if (usageCount > 0) {
       const confirmed = confirm(
@@ -171,51 +215,99 @@ export default function CategoriesPage() {
             type={activeTab}
             editingCategory={editingCategory}
             onClose={handleFormClose}
+            existingCategories={categories || []}
           />
         )}
 
         {/* User Categories */}
-        {userCategories.length > 0 && (
+        {categorizedData.user.length > 0 && (
           <section className="mb-6">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">
               Minhas Categorias
             </h3>
             <div className="space-y-2">
-              {userCategories.map(category => (
-                <CategoryItem
-                  key={category.id}
-                  category={category}
-                  onEdit={() => handleEdit(category)}
-                  onDelete={() => handleDelete(category)}
-                  onToggleFavorite={() => handleToggleFavorite(category)}
-                  canEdit
-                />
+              {categorizedData.user.map(category => (
+                <div key={category.id} className="space-y-2">
+                    <CategoryItem
+                      category={category}
+                      onEdit={() => handleEdit(category)}
+                      onDelete={() => handleDelete(category)}
+                      onToggleFavorite={() => handleToggleFavorite(category)}
+                      canEdit
+                    />
+                    {/* Render Subcategories */}
+                    {category.subcategories.map(sub => (
+                        <div key={sub.id} className="pl-6 relative">
+                             <div className="absolute left-0 top-0 bottom-0 w-6 flex items-center justify-center">
+                                 <div className="w-[2px] h-full bg-slate-100 dark:bg-slate-800 absolute left-3 top-[-10px]" />
+                                 <CornerDownRight className="w-4 h-4 text-slate-300 ml-2" />
+                             </div>
+                            <CategoryItem
+                                category={sub}
+                                onEdit={() => handleEdit(sub)}
+                                onDelete={() => handleDelete(sub)}
+                                onToggleFavorite={() => handleToggleFavorite(sub)}
+                                canEdit
+                                isChild
+                            />
+                        </div>
+                    ))}
+                </div>
               ))}
             </div>
           </section>
         )}
 
         {/* System Categories */}
-        {systemCategories.length > 0 && (
+        {categorizedData.system.length > 0 && (
           <section>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">
               Categorias Padrão
             </h3>
             <div className="space-y-2">
-              {systemCategories.map(category => (
-                <CategoryItem
-                  key={category.id}
-                  category={category}
-                  onToggleFavorite={() => handleToggleFavorite(category)}
-                  canEdit={false}
-                />
+              {categorizedData.system.map(category => (
+                <div key={category.id} className="space-y-2">
+                    <CategoryItem
+                        category={category}
+                        onEdit={() => handleEdit(category)} // User allows editing customization
+                        onToggleFavorite={() => handleToggleFavorite(category)}
+                        // Prevent delete for system categories unless we want to allow hiding? 
+                        // Typically system categories shouldn't be deleted, but maybe edited.
+                        // The previous code had `canEdit={false}` for system categories.
+                        // But the requirements say "user can choose icon... customize them".
+                        // So we should allow editing even for system categories (creating a copy or overriding).
+                        // However, let's stick to the previous pattern: 
+                        // If it's system, usually we can't delete, but maybe custom properties are allowed?
+                        // For now we assume we can customize fields, but not delete.
+                        canEdit={true} 
+                        isSystem
+                    />
+                     {/* Render Subcategories */}
+                     {category.subcategories.map(sub => (
+                        <div key={sub.id} className="pl-6 relative">
+                             <div className="absolute left-0 top-0 bottom-0 w-6 flex items-center justify-center">
+                                 <div className="w-[2px] h-full bg-slate-100 dark:bg-slate-800 absolute left-3 top-[-10px]" />
+                                 <CornerDownRight className="w-4 h-4 text-slate-300 ml-2" />
+                             </div>
+                            <CategoryItem
+                                category={sub}
+                                onEdit={() => handleEdit(sub)}
+                                onDelete={() => handleDelete(sub)} // Don't allow delete for system subcategories either?
+                                onToggleFavorite={() => handleToggleFavorite(sub)}
+                                canEdit={true}
+                                isSystem
+                                isChild
+                            />
+                        </div>
+                    ))}
+                </div>
               ))}
             </div>
           </section>
         )}
 
         {/* Empty State */}
-        {!isLoading && filteredCategories?.length === 0 && (
+        {!isLoading && categorizedData.user.length === 0 && categorizedData.system.length === 0 && (
           <Card className="p-8 text-center">
             <div className="h-16 w-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
               <Tag className="h-8 w-8 text-slate-400" />
@@ -249,23 +341,32 @@ function CategoryItem({
   onDelete,
   onToggleFavorite,
   canEdit,
+  isSystem = false,
+  isChild = false
 }: {
   category: Category;
   onEdit?: () => void;
   onDelete?: () => void;
   onToggleFavorite: () => void;
   canEdit: boolean;
+  isSystem?: boolean;
+  isChild?: boolean;
 }) {
   const [showMenu, setShowMenu] = useState(false);
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+    <div className={cn(
+        "flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 relative",
+        isChild && "border-l-4 border-l-slate-200 dark:border-l-slate-600"
+    )}>
       {/* Icon */}
       <div
-        className="h-10 w-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-        style={{ backgroundColor: category.color + '20' }}
+        className={cn(
+            "h-10 w-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-colors",
+        )}
+        style={{ backgroundColor: (category.color || '#94a3b8') + '20', color: category.color || '#94a3b8' }}
       >
-        {category.icon ? <Icon name={category.icon} className="h-6 w-6" /> : '📁'}
+        {category.icon ? <Icon name={category.icon} className="h-6 w-6" /> : <FolderOpen className="h-6 w-6" />}
       </div>
 
       {/* Name */}
@@ -274,7 +375,7 @@ function CategoryItem({
           {category.name}
         </p>
         <p className="text-xs text-slate-500">
-          {category.type === 'expense' ? 'Despesa' : 'Receita'}
+          {/* Show parent name if needed, but we used indentation */}
         </p>
       </div>
 
@@ -319,13 +420,16 @@ function CategoryItem({
                   <Edit3 className="h-4 w-4" />
                   Editar
                 </button>
-                <button
-                  onClick={() => { onDelete?.(); setShowMenu(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Excluir
-                </button>
+                {!isSystem && (
+                     <button
+                     onClick={() => { onDelete?.(); setShowMenu(false); }}
+                     className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                   >
+                     <Trash2 className="h-4 w-4" />
+                     Excluir
+                   </button>
+                )}
+               
               </div>
             </>
           )}
@@ -343,19 +447,32 @@ function CategoryForm({
   type,
   editingCategory,
   onClose,
+  existingCategories,
 }: {
   type: TransactionType;
   editingCategory: Category | null;
   onClose: () => void;
+  existingCategories: Category[];
 }) {
   const [name, setName] = useState(editingCategory?.name || '');
   const [selectedColor, setSelectedColor] = useState(editingCategory?.color || CATEGORY_COLORS[0]);
-  const [selectedIcon, setSelectedIcon] = useState(editingCategory?.icon || CATEGORY_ICONS[0]);
+  const [selectedIcon, setSelectedIcon] = useState(editingCategory?.icon || 'Tag');
+  const [parentId, setParentId] = useState<string | null>(editingCategory?.parent_id || null);
 
   const { mutate: createCategory, isPending: isCreating } = useCreateCategory();
   const { mutate: updateCategory, isPending: isUpdating } = useUpdateCategory();
 
   const isPending = isCreating || isUpdating;
+
+  // Filter possible parents:
+  // Must be same type (expense/income)
+  // Must NOT be a child itself (only 2 levels for now) -> Actually database supports N levels but UI is simpler with 2
+  // Must NOT be the category itself (if editing)
+  const availableParents = existingCategories.filter(c => 
+    c.type === type && 
+    !c.parent_id && // Only top-level categories can be parents
+    c.id !== editingCategory?.id // Can't be own parent
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -371,6 +488,7 @@ function CategoryForm({
       color: selectedColor,
       icon: selectedIcon,
       is_favorite: false,
+      parent_id: parentId === 'none' ? null : parentId,
     };
 
     if (editingCategory) {
@@ -409,8 +527,8 @@ function CategoryForm({
         {/* Preview */}
         <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900">
           <div
-            className="h-12 w-12 rounded-xl flex items-center justify-center text-xl"
-            style={{ backgroundColor: selectedColor + '30' }}
+            className="h-12 w-12 rounded-xl flex items-center justify-center text-xl transition-colors"
+            style={{ backgroundColor: selectedColor + '30', color: selectedColor }}
           >
             {selectedIcon ? <Icon name={selectedIcon} className="h-6 w-6" /> : null}
           </div>
@@ -420,15 +538,16 @@ function CategoryForm({
             </p>
             <p className="text-xs text-slate-500">
               {type === 'expense' ? 'Despesa' : 'Receita'}
+              {parentId && parentId !== 'none' && ` • Subcategoria`}
             </p>
           </div>
         </div>
 
         {/* Name */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2 block">
             Nome
-          </label>
+          </Label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -436,35 +555,55 @@ function CategoryForm({
           />
         </div>
 
-        {/* Icon */}
+        {/* Parent Category */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+            <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2 block">
+                Categoria Principal (Opcional)
+            </Label>
+            <Select 
+                value={parentId || 'none'} 
+                onValueChange={(val) => setParentId(val === 'none' ? null : val)}
+            >
+                <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma categoria pai..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="none">Nenhuma (Categoria Principal)</SelectItem>
+                    {availableParents.map(parent => (
+                        <SelectItem key={parent.id} value={parent.id}>
+                            <div className="flex items-center gap-2">
+                                {/* Cor e ícone do pai para facilitar identificação */}
+                                <div 
+                                    className="w-4 h-4 rounded-full flex items-center justify-center text-[10px]"
+                                    style={{ backgroundColor: (parent.color || '#94a3b8') + '20', color: parent.color || '#94a3b8' }} 
+                                >
+                                    <Icon name={parent.icon} className="w-3 h-3" />
+                                </div>
+                                {parent.name}
+                            </div>
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+
+        {/* Icon Picker */}
+        <div>
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2 block">
             Ícone
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_ICONS.map((icon) => (
-              <button
-                key={icon}
-                type="button"
-                onClick={() => setSelectedIcon(icon)}
-                className={cn(
-                  'h-10 w-10 rounded-xl text-lg transition-all',
-                  selectedIcon === icon
-                    ? 'bg-primary/10 ring-2 ring-primary'
-                    : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200'
-                )}
-              >
-                <Icon name={icon} className="h-6 w-6 mx-auto" />
-              </button>
-            ))}
-          </div>
+          </Label>
+          <IconPicker 
+            value={selectedIcon || ''} 
+            onChange={setSelectedIcon} 
+            modal 
+          />
         </div>
 
         {/* Color */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2 block">
             Cor
-          </label>
+          </Label>
           <div className="flex flex-wrap gap-2">
             {CATEGORY_COLORS.map((color) => (
               <button
