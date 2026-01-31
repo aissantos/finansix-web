@@ -37,7 +37,7 @@ describe('Real PDF Fragmentation Logic', () => {
 
         const result = parseInvoiceText(cleanText);
         
-        console.log('Deep Frag Transactions:', result.transactions);
+        // console.log('Deep Frag Transactions:', result.transactions);
         
         expect(result.transactions).toHaveLength(2);
         

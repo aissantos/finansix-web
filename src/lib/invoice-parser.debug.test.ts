@@ -1,6 +1,5 @@
-
-// @ts-nocheck
-import { describe, it, expect, vi } from 'vitest';
+/* eslint-disable no-console */
+import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parseInvoiceText } from './invoice-parser';
@@ -48,6 +47,7 @@ describe.skip('Real PDF Debugging', () => {
         for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const pageText = textContent.items.map((item: any) => item.str).join('\n');
             fullText += pageText + '\n\n';
         }
