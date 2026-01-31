@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CreditCard, Check, Palette, Trash2, Sparkles } from 'lucide-react';
+import { CreditCard, Check, Palette, Trash2, Sparkles, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -24,6 +24,7 @@ const cardSchema = z.object({
   due_day: z.number().min(1).max(31, 'Dia inválido'),
   color: z.string().optional(),
   account_id: z.string().optional().nullable(),
+  pdf_password: z.string().optional().nullable(),
 });
 
 type CardForm = z.infer<typeof cardSchema>;
@@ -59,6 +60,7 @@ export default function EditCardPage() {
       due_day: 10,
       color: '',
       account_id: null,
+      pdf_password: '',
     },
   });
 
@@ -74,6 +76,7 @@ export default function EditCardPage() {
         due_day: card.due_day,
         color: card.color || '',
         account_id: card.account_id || null,
+        pdf_password: card.pdf_password || '',
       });
       setLimitDisplay(formatCurrency(card.credit_limit).replace('R$', '').trim());
       setSelectedColor(card.color || CARD_COLORS_BY_BANK.default[0]);
@@ -370,6 +373,23 @@ export default function EditCardPage() {
               </div>
             </Card>
           )}
+
+          {/* PDF Password */}
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Lock className="h-4 w-4 text-slate-400" />
+              <label className="label-overline">Senha da Fatura (PDF)</label>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Usada para abrir automaticamente faturas protegidas.
+            </p>
+            <Input
+              type="password"
+              {...register('pdf_password')}
+              placeholder="Senha do PDF (Opcional)"
+              autoComplete="new-password"
+            />
+          </Card>
 
           {/* Usage Info */}
           <Card className="p-4 bg-slate-100 dark:bg-slate-800/50">

@@ -1,0 +1,14 @@
+{
+  "projectPath": "c:\\Versix\\Finansix\\finansix-web",
+  "type": "frontend",
+  "localPort": 5173,
+  "testScope": "codebase",
+  "status": "commited",
+  "executionArgs": {
+    "projectName": "finansix-web",
+    "projectPath": "c:\\Versix\\Finansix\\finansix-web",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {}
+  }
+}

@@ -204,6 +204,7 @@ export interface Database {
           created_at: string
           updated_at: string
           deleted_at: string | null
+          pdf_password: string | null
         }
         Insert: {
           id?: string
@@ -223,6 +224,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
+          pdf_password?: string | null
         }
         Update: {
           account_id?: string | null
@@ -239,6 +241,7 @@ export interface Database {
           is_active?: boolean
           updated_at?: string
           deleted_at?: string | null
+          pdf_password?: string | null
         }
         Relationships: []
       }

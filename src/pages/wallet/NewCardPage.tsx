@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, CreditCard, Check, Palette, Search, Sparkles } from 'lucide-react';
+import { X, CreditCard, Check, Palette, Search, Sparkles, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -28,6 +28,7 @@ const cardSchema = z.object({
   due_day: z.number().min(1).max(31, 'Dia inválido'),
   color: z.string().optional(),
   account_id: z.string().optional(),
+  pdf_password: z.string().optional(),
 });
 
 type CardForm = z.infer<typeof cardSchema>;
@@ -59,6 +60,7 @@ export default function NewCardPage() {
       closing_day: 1,
       due_day: 10,
       color: CARD_COLORS_BY_BANK.default[0],
+      pdf_password: '',
     },
   });
 
@@ -471,6 +473,25 @@ export default function NewCardPage() {
             </div>
           </Card>
         )}
+
+        {/* PDF Password */}
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Lock className="h-4 w-4 text-slate-400" />
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+              Senha da Fatura (PDF)
+            </label>
+          </div>
+          <p className="text-xs text-slate-500 mb-3">
+            Usada para abrir automaticamente faturas protegidas.
+          </p>
+          <Input
+            type="password"
+            {...register('pdf_password')}
+            placeholder="Senha do PDF (Opcional)"
+            autoComplete="new-password"
+          />
+        </Card>
 
         {/* Submit Button */}
         <Button

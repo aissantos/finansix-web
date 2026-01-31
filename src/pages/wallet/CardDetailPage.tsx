@@ -14,7 +14,8 @@ import {
   Check,
   MoreVertical,
   Edit3,
-  Trash2
+  Trash2,
+  FileText
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -30,6 +31,7 @@ import { format, addMonths, differenceInDays, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { InvoiceImportModal } from '@/components/features/InvoiceImportModal';
 
 export default function CardDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +47,7 @@ export default function CardDetailPage() {
 
   // Form state
   const [showForm, setShowForm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     description: '',
@@ -469,6 +472,15 @@ export default function CardDetailPage() {
                 {showForm ? <X className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
                 {showForm ? 'Cancelar' : 'Adicionar'}
               </Button>
+              <Button
+                onClick={() => setShowImportModal(true)}
+                variant="outline"
+                className="rounded-full ml-2"
+                size="icon"
+                title="Importar Fatura (PDF)"
+              >
+                <FileText className="h-4 w-4" />
+              </Button>
             </div>
 
             {/* Quick Add Form */}
@@ -736,6 +748,19 @@ export default function CardDetailPage() {
           </Button>
         </div>
       </PageContainer>
+      
+      {card && (
+        <InvoiceImportModal
+          creditCardId={card.id}
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['installments'] });
+            queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions'] });
+          }}
+        />
+      )}
     </>
   );
 }
