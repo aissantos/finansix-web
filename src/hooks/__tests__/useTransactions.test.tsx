@@ -17,7 +17,7 @@ import {
   updateTransaction,
   deleteTransaction,
   deleteTransactions,
-  getRecentTransactions,
+
   getTransactionsByCategory,
 } from "@/lib/supabase";
 import { useHouseholdId, useSelectedMonth } from "@/stores";
