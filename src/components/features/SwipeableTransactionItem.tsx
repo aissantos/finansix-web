@@ -1,7 +1,7 @@
 import { memo, useState, useRef } from 'react';
 import { motion, useMotionValue, type PanInfo } from 'framer-motion';
 import * as Icons from 'lucide-react';
-import { Trash2, Edit3, Copy, Check } from 'lucide-react';
+import { Trash2, Edit3, Copy, Check, Wallet } from 'lucide-react';
 import { formatCurrency, formatDateRelative, cn } from '@/lib/utils';
 import type { TransactionWithDetails } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -189,9 +189,28 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
                 </Badge>
               )}
             </div>
-            <span className="card-subtitle truncate">
-              {transaction.category?.name || (transaction.type === 'transfer' ? 'Transferência' : 'Sem categoria')}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="card-subtitle truncate max-w-[120px]">
+                {transaction.category?.name || (transaction.type === 'transfer' ? 'Transferência' : 'Sem categoria')}
+              </span>
+              
+              {/* Source Badge (Account or Credit Card) */}
+              {(transaction.account || transaction.credit_card) && (
+                 <div className="flex items-center gap-1 text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5 rounded-full border border-slate-100 dark:border-slate-700">
+                    {transaction.account ? (
+                      <>
+                        <Wallet className="h-3 w-3" />
+                        <span className="truncate max-w-[80px]">{transaction.account.name}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Icons.CreditCard className="h-3 w-3" />
+                         <span className="truncate max-w-[80px]">{transaction.credit_card?.name}</span>
+                      </>
+                    )}
+                 </div>
+              )}
+            </div>
           </div>
         </div>
 
