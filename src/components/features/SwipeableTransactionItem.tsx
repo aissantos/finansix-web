@@ -17,6 +17,30 @@ interface SwipeableTransactionItemProps {
   isSelectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: () => void;
+  onToggleSelection?: () => void;
+}
+
+const iconMap: Record<string, keyof typeof Icons> = {
+  utensils: 'Utensils',
+  car: 'Car',
+  home: 'Home',
+  'heart-pulse': 'HeartPulse',
+  'graduation-cap': 'GraduationCap',
+  'gamepad-2': 'Gamepad2',
+  'shopping-bag': 'ShoppingBag',
+  repeat: 'Repeat',
+  briefcase: 'Briefcase',
+  laptop: 'Laptop',
+  'trending-up': 'TrendingUp',
+  'rotate-ccw': 'RotateCcw',
+  'credit-card': 'CreditCard',
+  receipt: 'Receipt',
+};
+
+function getIcon(iconName?: string) {
+  if (!iconName) return Icons.Receipt;
+  const lucideIconName = iconMap[iconName] || 'Receipt';
+  return (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[lucideIconName] || Icons.Receipt;
 }
 
 export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
