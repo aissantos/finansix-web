@@ -5,6 +5,7 @@ import { Trash2, Edit3, Copy, Check } from 'lucide-react';
 import { formatCurrency, formatDateRelative, cn } from '@/lib/utils';
 import type { TransactionWithDetails } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface SwipeableTransactionItemProps {
   transaction: TransactionWithDetails;
@@ -120,15 +121,22 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
 
       {/* Main Card - COVERS the backgrounds */}
       <motion.div
-        drag="x"
+        drag={isSelectionMode ? false : "x"}
         dragConstraints={{ left: -150, right: 150 }}
         dragElastic={0.2}
         onDragEnd={handleDragEnd}
-        onTap={() => onClick?.()} 
+        onTap={() => {
+          if (isSelectionMode && onToggleSelection) {
+            onToggleSelection();
+          } else {
+            onClick?.();
+          }
+        }} 
         style={{ x, touchAction: 'none' }}
         className={cn(
           'absolute inset-0 list-card flex items-center justify-between bg-white dark:bg-slate-800 rounded-2xl',
-          onClick && 'cursor-pointer'
+          (onClick || isSelectionMode) && 'cursor-pointer',
+          isSelected && 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
         )}
         whileTap={{ scale: 0.98 }}
         animate={
@@ -141,9 +149,23 @@ export const SwipeableTransactionItem = memo(function SwipeableTransactionItem({
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
         <div className="flex items-center gap-4 flex-1 min-w-0">
+          {/* Checkbox (Selection Mode) */}
+          {isSelectionMode && (
+             <div className="pl-4">
+               <Checkbox 
+                 checked={isSelected} 
+                 onCheckedChange={() => onToggleSelection?.()}
+                 onClick={(e) => e.stopPropagation()}
+               />
+             </div>
+          )}
+
           {/* Icon */}
           <div
-            className="icon-container-lg flex-shrink-0"
+            className={cn(
+              "icon-container-lg flex-shrink-0 transition-all",
+              isSelectionMode && "ml-0" // Reset margin if needed, but flex gap handles it
+            )}
             style={{ backgroundColor: `${categoryColor}15`, color: categoryColor }}
           >
             <Icon className="h-5 w-5" />

@@ -200,6 +200,15 @@ export async function deleteTransaction(id: string): Promise<void> {
   if (error) handleSupabaseError(error);
 }
 
+export async function deleteTransactions(ids: string[]): Promise<void> {
+  const { error } = await supabase
+    .from('transactions')
+    .update({ deleted_at: new Date().toISOString() })
+    .in('id', ids);
+
+  if (error) handleSupabaseError(error);
+}
+
 export async function getRecentTransactions(
   householdId: string,
   limit = 10

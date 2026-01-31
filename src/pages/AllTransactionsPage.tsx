@@ -17,7 +17,9 @@ import {
   Plus,
   PieChart,
   Repeat,
-  Wallet
+  Wallet,
+  CheckSquare,
+  Trash2
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -29,7 +31,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { DeleteConfirmDialog } from '@/components/ui';
 import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
 import { SwipeableTransactionItem } from '@/components/features/SwipeableTransactionItem';
-import { useAllTransactions, useCategories, useDeleteTransaction, useUpdateTransaction } from '@/hooks';
+import { useAllTransactions, useCategories, useDeleteTransaction, useUpdateTransaction, useDeleteTransactions } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/useToast';
@@ -133,6 +135,7 @@ function CategoryDistributionChart({ transactions }: { transactions: Transaction
 export default function AllTransactionsPage() {
   const navigate = useNavigate();
   const deleteMutation = useDeleteTransaction();
+  const bulkDeleteMutation = useDeleteTransactions();
   const updateMutation = useUpdateTransaction();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -146,6 +149,11 @@ export default function AllTransactionsPage() {
   
   const [editingTransaction, setEditingTransaction] = useState<TransactionWithDetails | null>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<TransactionWithDetails | null>(null);
+
+  // Selection Mode State
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   const { data: transactions, isLoading } = useAllTransactions();
   const { data: categories } = useCategories();
@@ -234,6 +242,59 @@ export default function AllTransactionsPage() {
 
   const hasActiveFilters = searchQuery || filterType !== 'all' || selectedCategoryId || dateRange.start || dateRange.end;
 
+  // Selection Handlers
+  const toggleSelectionMode = () => {
+    if (isSelectionMode) {
+      // Exit selection mode
+      setIsSelectionMode(false);
+      setSelectedIds(new Set());
+    } else {
+      // Enter selection mode
+      setIsSelectionMode(true);
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === filteredTransactions.length) {
+      setSelectedIds(new Set());
+    } else {
+      const allIds = new Set(filteredTransactions.map(t => t.id));
+      setSelectedIds(allIds);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      await bulkDeleteMutation.mutateAsync(Array.from(selectedIds));
+      toast({
+        title: 'Transações excluídas',
+        description: `${selectedIds.size} transações foram removidas com sucesso`,
+        variant: 'success',
+      });
+      setShowBulkDeleteConfirm(false);
+      setIsSelectionMode(false);
+      setSelectedIds(new Set());
+    } catch (error) {
+      toast({
+        title: 'Erro ao excluir',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Export transactions to CSV
   const exportTransactions = (data: typeof filteredTransactions) => {
     if (data.length === 0) return;
@@ -311,31 +372,44 @@ export default function AllTransactionsPage() {
       <PageContainer className="space-y-4 pt-6 pb-24">
         {/* Search Bar */}
         <div className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 pb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar transações..."
-              className="pl-10 pr-24"
-            />
-            <button
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar transações..."
+                className="pl-10 pr-2 pt-2 pb-2 h-10"
+              />
+            </div>
+            
+            <Button
+                variant={isSelectionMode ? "default" : "outline"}
+                size="icon"
+                onClick={toggleSelectionMode}
+                className={cn(
+                    "h-10 w-10 flex-shrink-0",
+                    isSelectionMode && "bg-blue-600 hover:bg-blue-700 text-white"
+                )}
+                title="Seleção Múltipla"
+            >
+                {isSelectionMode ? <CheckSquare className="h-4 w-4" /> : <CheckSquare className="h-4 w-4 text-slate-500" />}
+            </Button>
+            
+            <Button
+              variant={hasActiveFilters ? "default" : "outline"}
+              size="icon"
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
-                'absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-colors',
-                hasActiveFilters
-                  ? 'bg-primary text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                  "h-10 w-10 flex-shrink-0",
+                  hasActiveFilters && "bg-primary text-white"
               )}
             >
-              <Filter className="h-3.5 w-3.5" />
-              Filtros
-              {hasActiveFilters && (
-                <Badge variant="secondary" className="ml-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center">
-                  {[searchQuery, filterType !== 'all', selectedCategoryId].filter(Boolean).length}
-                </Badge>
-              )}
-            </button>
+               <Filter className={cn("h-4 w-4", !hasActiveFilters && "text-slate-500")} />
+               {hasActiveFilters && (
+                <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
+               )}
+            </Button>
           </div>
         </div>
 
@@ -365,7 +439,7 @@ export default function AllTransactionsPage() {
                     )}
                   >
                     <Icon className="h-4 w-4" />
-                    {label}
+                    <span className="hidden sm:inline">{label}</span>
                   </button>
                 ))}
               </div>
@@ -461,15 +535,36 @@ export default function AllTransactionsPage() {
           </Card>
         )}
 
+        {/* Selection Actions Header */}
+        {isSelectionMode && (
+             <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-900 mb-2">
+                 <div className="flex items-center gap-2">
+                     <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                         {selectedIds.size} selecionados
+                     </span>
+                 </div>
+                 <div className="flex gap-2">
+                     <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         onClick={selectAll}
+                         className="h-8 text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+                     >
+                         {selectedIds.size === filteredTransactions.length ? 'Desmarcar Tudo' : 'Selecionar Tudo'}
+                     </Button>
+                 </div>
+             </div>
+        )}
+
         {/* Totals Summary */}
-        {filteredTransactions.length > 0 && (
+        {filteredTransactions.length > 0 && !isSelectionMode && (
             <div className="grid grid-cols-3 gap-2">
                 <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg">
                             <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Receitas</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">Receitas</p>
                     </div>
                     <p className="text-sm font-black text-slate-900 dark:text-white">
                         {formatCurrency(totals.income)}
@@ -481,7 +576,7 @@ export default function AllTransactionsPage() {
                         <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
                             <ArrowUpRight className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Despesas</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">Despesas</p>
                     </div>
                     <p className="text-sm font-black text-slate-900 dark:text-white">
                         {formatCurrency(totals.expense)}
@@ -493,7 +588,7 @@ export default function AllTransactionsPage() {
                         <div className="p-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
                             <Wallet className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Saldo</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">Saldo</p>
                     </div>
                     <p className={cn(
                         'text-sm font-black',
@@ -506,7 +601,7 @@ export default function AllTransactionsPage() {
         )}
 
         {/* Category Distribution Chart */}
-        {filteredTransactions.length > 0 && (
+        {filteredTransactions.length > 0 && !isSelectionMode && (
              <CategoryDistributionChart transactions={filteredTransactions} />
         )}
 
@@ -545,12 +640,34 @@ export default function AllTransactionsPage() {
                   onEdit={() => setEditingTransaction(transaction)}
                   onDelete={() => setDeletingTransaction(transaction)}
                   onPay={() => handlePay(transaction)}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedIds.has(transaction.id)}
+                  onToggleSelection={() => toggleSelection(transaction.id)}
                 />
               ))}
             </div>
           </div>
         )}
       </PageContainer>
+
+      {/* Floating Bulk Action Bar */}
+      {isSelectionMode && selectedIds.size > 0 && (
+          <div className="fixed bottom-6 left-4 right-4 z-50 animate-in slide-in-from-bottom duration-200">
+              <Card className="p-3 shadow-xl bg-slate-900 border-slate-800 flex items-center justify-between text-white">
+                  <div className="pl-2">
+                       <span className="font-bold">{selectedIds.size}</span>
+                       <span className="text-slate-400 text-sm ml-1">selecionados</span>
+                  </div>
+                  <Button 
+                      variant="destructive" 
+                      onClick={() => setShowBulkDeleteConfirm(true)}
+                  >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir
+                  </Button>
+              </Card>
+          </div>
+      )}
 
       {/* Modals */}
       <EditTransactionModal
@@ -565,6 +682,16 @@ export default function AllTransactionsPage() {
         onConfirm={handleDeleteConfirm}
         entityName="esta transação"
         isLoading={deleteMutation.isPending}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={showBulkDeleteConfirm}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={handleBulkDelete}
+        entityName="as transações selecionadas"
+        isLoading={bulkDeleteMutation.isPending}
+        title={`Excluir ${selectedIds.size} transações?`}
+        description="Esta ação não poderá ser desfeita. Todas as transações selecionadas serão removidas permanentemente."
       />
     </>
   );

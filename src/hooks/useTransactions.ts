@@ -6,6 +6,7 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  deleteTransactions,
   getTransactionsByCategory,
 } from '@/lib/supabase';
 
@@ -159,6 +160,27 @@ export function useDeleteTransaction() {
 
     onError: (err, id) => {
       captureError(err, { context: 'useDeleteTransaction', id });
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
+      queryClient.invalidateQueries({ queryKey: ['freeBalance'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.installments.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
+    },
+  });
+}
+
+
+export function useDeleteTransactions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => deleteTransactions(ids),
+
+    onError: (err, ids) => {
+      captureError(err, { context: 'useDeleteTransactions', ids });
     },
 
     onSettled: () => {
