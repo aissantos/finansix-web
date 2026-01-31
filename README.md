@@ -2,7 +2,7 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.5.7.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.9.0-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
@@ -30,6 +30,11 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 - **Multi-tenancy**: Suporte a famílias (households) com múltiplos membros
 
 ## ✨ Novidades
+
+### v1.5.9.0 (Stability & CI)
+
+- 🔧 **CI/CD Fixes**: Correção no pipeline de testes (Invoice Parser) com polyfills robustos para ambiente Node.js.
+- 🧹 **Code Quality**: Resolução de erros de lint e tipagem em testes de integração com `pdfjs-dist`.
 
 ### v1.5.7.0 (Production Ready)
 
@@ -282,4 +287,4 @@ MIT © Versix Solutions
 
 ---
 
-**Finansix v1.5.7.0** | Built with ❤️ by Versix Team
+**Finansix v1.5.9.0** | Built with ❤️ by Versix Team
