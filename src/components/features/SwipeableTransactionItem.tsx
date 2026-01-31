@@ -17,7 +17,6 @@ interface SwipeableTransactionItemProps {
   isSelectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: () => void;
-  onToggleSelection?: () => void;
 }
 
 const iconMap: Record<string, keyof typeof Icons> = {
