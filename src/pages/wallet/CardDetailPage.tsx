@@ -188,13 +188,25 @@ export default function CardDetailPage() {
     }
   };
 
-  // Group installments by status - using due_date for filtering
+  // Group installments by status - using billing_month for correct filtering
+  // This avoids issues when due_date is in the next month relative to closing date
+  const targetMonthStr = format(closingDate, 'yyyy-MM');
+  const nextTargetMonthStr = format(nextClosingDate, 'yyyy-MM');
+
   const currentBillInstallments = cardInstallments.filter(i => {
-    const dueDate = new Date(i.due_date);
-    const dueMonth = startOfMonth(dueDate);
-    // Current bill: due_date month matches current billing cycle
-    const targetMonth = startOfMonth(closingDate);
-    return dueMonth.getTime() === targetMonth.getTime() && i.status === 'pending';
+    // Determine billing month from installment data ('yyyy-MM-dd')
+    const startOfBillingMonth = i.billing_month ? i.billing_month.substring(0, 7) : ''; 
+    
+    // If billing_month is missing, fallback to due_date logic (but improved)
+    if (!startOfBillingMonth) {
+       const dueDate = new Date(i.due_date);
+       const dueMonth = startOfMonth(dueDate);
+       const targetMonth = startOfMonth(closingDate);
+       // This fallback still has the flaw but handles legacy data without billing_month
+       return dueMonth.getTime() === targetMonth.getTime() && i.status === 'pending';
+    }
+
+    return startOfBillingMonth === targetMonthStr && i.status === 'pending';
   });
   
   // Overdue installments: past due_date but still pending (separate section)
@@ -208,10 +220,16 @@ export default function CardDetailPage() {
   void overdueInstallments.reduce((sum, i) => sum + i.amount, 0);
   
   const upcomingInstallments = cardInstallments.filter(i => {
-    const dueDate = new Date(i.due_date);
-    const dueMonth = startOfMonth(dueDate);
-    const nextBillingMonth = startOfMonth(nextClosingDate);
-    return dueMonth.getTime() === nextBillingMonth.getTime() && i.status === 'pending';
+    const startOfBillingMonth = i.billing_month ? i.billing_month.substring(0, 7) : '';
+    
+    if (!startOfBillingMonth) {
+       const dueDate = new Date(i.due_date);
+       const dueMonth = startOfMonth(dueDate);
+       const nextBillingMonth = startOfMonth(nextClosingDate);
+       return dueMonth.getTime() === nextBillingMonth.getTime() && i.status === 'pending';
+    }
+
+    return startOfBillingMonth === nextTargetMonthStr && i.status === 'pending';
   });
   
   const upcomingTotal = upcomingInstallments.reduce((sum, i) => sum + i.amount, 0);
