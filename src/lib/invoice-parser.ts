@@ -181,7 +181,11 @@ export function parseInvoiceText(text: string): ParseResult {
           if (description.toUpperCase().includes('TOTAL')) continue;
           if (description.toUpperCase().includes('PAGAMENTO')) continue;
           if (description.toUpperCase().includes('SALDO')) continue;
-          if (description.toUpperCase().startsWith('FATURA')) continue; // Ignore "Fatura Anterior" or "Fatura Nubank" body items
+          
+          // Refined Fatura filter: Only filter specific non-transaction items
+          if (description.toUpperCase().includes('FATURA ANTERIOR')) continue; 
+          if (description.toUpperCase() === 'FATURA') continue; // Exact match usually header
+
 
           if (description.length > 2 && amount > 0) {
              transactions.push({
