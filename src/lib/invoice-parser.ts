@@ -28,8 +28,8 @@ export function parseInvoiceText(text: string): ParseResult {
   const lines = text.split('\n');
 
   // Metadata Regexes
-  // Vencimento: supports "Vencimento 10/05", "Vencimento: 10/05/2026"
-  const dueDateRegex = /(?:Vencimento|Vence|Vencer)[\s\S]{0,20}?(\d{2}\/\d{2}(?:\/\d{2,4})?)/i;
+  // Vencimento: supports "Vencimento 10/05", "Vencimento: 10/05/2026", "Vencimento 10 FEV"
+  const dueDateRegex = /(?:Vencimento|Vence|Vencer)[\s\S]{0,30}?(\d{2}(?:\/\d{2}(?:\/\d{2,4})?|\s+(?:JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)))/i;
   
   // Total: supports "Total da fatura R$ 1.200,00", "Total R$ 1.200,00"
   const totalAmountRegex = /(?:Total(?: da fatura)?|Valor total)[\s\S]{0,20}?(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/i;
@@ -67,13 +67,32 @@ export function parseInvoiceText(text: string): ParseResult {
 
   const dueDateMatch = metadataText.match(dueDateRegex);
   if (dueDateMatch) {
-    const parts = dueDateMatch[1].split('/');
-    const day = parts[0];
-    const month = parts[1];
-    // If year is missing, assume current year. If 2 digit year, add 20 prefix.
-    let year = parts[2];
-    if (!year) year = String(currentYear);
-    else if (year.length === 2) year = '20' + year;
+    const rawDate = dueDateMatch[1];
+    let day = '';
+    let month = '';
+    let year = String(currentYear);
+
+    if (rawDate.includes('/')) {
+        const parts = rawDate.split('/');
+        day = parts[0];
+        month = parts[1];
+        if (parts[2]) {
+            year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+        }
+    } else {
+        // Handle "DD MMM" format
+        const parts = rawDate.trim().split(/\s+/);
+        day = parts[0];
+        const monthName = parts[1].toUpperCase();
+        month = monthMap[monthName] || '01';
+    }
+    
+    // Smart year adjustment: if extracted month is Jan and we are in Dec, it's next year
+    const today = new Date();
+    if (Number(month) < today.getMonth() + 1 && Number(month) === 1 && today.getMonth() === 11) {
+        year = String(currentYear + 1);
+    }
+    // Also if extracted is Dec and we are in Jan, it might be prev year (though less likely for "Due Date")
     
     metadataFound.dueDate = `${year}-${month}-${day}`;
   }
@@ -162,6 +181,7 @@ export function parseInvoiceText(text: string): ParseResult {
           if (description.toUpperCase().includes('TOTAL')) continue;
           if (description.toUpperCase().includes('PAGAMENTO')) continue;
           if (description.toUpperCase().includes('SALDO')) continue;
+          if (description.toUpperCase().startsWith('FATURA')) continue; // Ignore "Fatura Anterior" or "Fatura Nubank" body items
 
           if (description.length > 2 && amount > 0) {
              transactions.push({
