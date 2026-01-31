@@ -152,7 +152,7 @@ export async function createTransaction(
   };
 
   // Debug payload
-  console.log('[createTransaction] Payload:', insertData);
+  console.warn('[createTransaction] Payload:', insertData);
 
   const { data, error } = await supabase
     .from('transactions')
