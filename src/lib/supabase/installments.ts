@@ -45,7 +45,7 @@ export async function getInstallments(
   const { data, error } = await query;
 
   if (error) handleSupabaseError(error);
-  return data ?? [];
+  return (data ?? []) as unknown as InstallmentWithDetails[];
 }
 
 export async function getInstallmentProjection(
