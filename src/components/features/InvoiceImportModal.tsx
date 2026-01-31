@@ -181,9 +181,15 @@ export function InvoiceImportModal({
   };
 
   const updateCategory = (index: number, categoryId: string) => {
-    setTransactions(prev => prev.map((t, i) => 
-      i === index ? { ...t, categoryId } : t
-    ));
+    setTransactions(prev => {
+      const targetTransaction = prev[index];
+      // Auto-fill: Update the targeted transaction AND any other with the EXACT same description
+      return prev.map((t, i) => 
+        (i === index || t.description === targetTransaction.description) 
+          ? { ...t, categoryId } 
+          : t
+      );
+    });
   };
 
   const toggleSelection = (index: number) => {
