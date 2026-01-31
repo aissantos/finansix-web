@@ -144,11 +144,18 @@ export function parseInvoiceText(text: string): ParseResult {
        let amountLineIndex = i;
        let isMultiLine = false;
 
-       // Look ahead up to 2 lines for amount if not found on current line
+       // Look ahead up to 8 lines (increased for Nubank fragmentation)
        if (!amountMatch) {
-          for (let offset = 1; offset <= 2 && (i + offset) < lines.length; offset++) {
+          for (let offset = 1; offset <= 8 && (i + offset) < lines.length; offset++) {
              const nextLine = lines[i + offset].trim();
              
+             // Skip empty lines
+             if (!nextLine) continue;
+
+             // Skip Card Mask (e.g., •••• 8658 or similar)
+             // Matches dots followed by 4 digits
+             if (/^[•.*]+\s*\d{4}$/.test(nextLine)) continue;
+
              // If next line has a DATE, stop looking (it's a new transaction)
              const nextLineHasDate = (nextLine.match(dateSlashRegex)?.index === 0) || 
                                      (nextLine.match(dateMonthNameRegex) && nextLine.indexOf(nextLine.match(dateMonthNameRegex)![0]) === 0);
@@ -177,6 +184,10 @@ export function parseInvoiceText(text: string): ParseResult {
              // Join lines from i to amountLineIndex
              for (let k = i; k <= amountLineIndex; k++) {
                 let linePart = lines[k].trim();
+
+                // Skip Card Mask in description too
+                if (/^[•.*]+\s*\d{4}$/.test(linePart)) continue;
+                
                 // Remove Date from first line
                 if (k === i) {
                   linePart = linePart.replace(matchedDateStr, '').trim();
