@@ -26,6 +26,8 @@ const cardSchema = z.object({
   credit_limit: z.number().positive('Limite deve ser maior que zero'),
   closing_day: z.number().min(1).max(31, 'Dia inválido'),
   due_day: z.number().min(1).max(31, 'Dia inválido'),
+  interest_rate: z.number().min(0).max(100).optional(),
+  fine_rate: z.number().min(0).max(100).optional(),
   color: z.string().optional(),
   account_id: z.string().optional(),
   pdf_password: z.string().optional(),
@@ -61,6 +63,8 @@ export default function NewCardPage() {
       due_day: 10,
       color: CARD_COLORS_BY_BANK.default[0],
       pdf_password: '',
+      interest_rate: 0,
+      fine_rate: 0,
     },
   });
 
@@ -403,6 +407,41 @@ export default function NewCardPage() {
                 min={1}
                 max={31}
                 error={errors.due_day?.message}
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* Rates & Fines (NEW) */}
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-slate-400" />
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+              Taxas e Juros (Opcional)
+            </label>
+          </div>
+          <p className="text-xs text-slate-500 mb-3">
+            Utilizado para calcular projeções de atraso e rotativo.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Juros Mensal (%)</label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                {...register('interest_rate', { valueAsNumber: true })}
+                error={errors.interest_rate?.message}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Multa por Atraso (%)</label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                {...register('fine_rate', { valueAsNumber: true })}
+                error={errors.fine_rate?.message}
               />
             </div>
           </div>
