@@ -40,9 +40,10 @@ export async function extractTextFromPDF(
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
       const pageText = textContent.items
-        .map((item: any) => {
-          if ('str' in item) {
-             return item.str + (item.hasEOL ? '\n' : ' ');
+        .map((item) => {
+          const textItem = item as { str: string; hasEOL: boolean };
+          if ('str' in textItem) {
+             return textItem.str + (textItem.hasEOL ? '\n' : ' ');
           }
           return '';
         })

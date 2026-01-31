@@ -116,8 +116,9 @@ export function InvoiceImportModal({
         });
       }
 
-    } catch (err: any) {
-      if (err.message === 'PASSWORD_REQUIRED') {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      if (errorMessage === 'PASSWORD_REQUIRED') {
         setStep('password');
         // If we tried automatically and failed, clear the stored password attempt
         if (!manualPassword && card?.pdf_password) {

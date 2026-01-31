@@ -1,4 +1,4 @@
-import { Category, TransactionWithDetails } from '@/types';
+import type { Category, TransactionWithDetails } from '@/types';
 
 interface Prediction {
   categoryId?: string;
