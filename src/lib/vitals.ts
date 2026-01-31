@@ -32,6 +32,13 @@ export function sendToAnalytics(metric: Metric) {
     speed: getConnectionSpeed(),
   });
 
+  // Also log to console in development and skip sending to server
+  if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log('[Web Vitals]', metric);
+      return;
+  }
+
   if (navigator.sendBeacon) {
     navigator.sendBeacon(vitalsUrl, body);
   } else {
