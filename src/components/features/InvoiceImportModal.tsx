@@ -213,7 +213,7 @@ export function InvoiceImportModal({
 
       // 1. Create Expense Transactions
       // Using proper types for insert
-      const transactionsToInsert = selectedTransactions.map(t => ({
+      const transactionsToInsert: any[] = selectedTransactions.map(t => ({
         household_id: household.id,
         credit_card_id: creditCardId,
         type: 'expense' as const,

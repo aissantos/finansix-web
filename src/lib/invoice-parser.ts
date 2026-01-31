@@ -182,3 +182,27 @@ export function parseInvoiceText(text: string): ParseResult {
     rawText: text
   };
 }
+
+/**
+ * Extracts text content from a PDF file using pdfjs-dist
+ */
+export async function extractTextFromPDF(file: File, password?: string): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  // Using legacy .promise getter if needed, but getDocument returns a loading task directly in recent versions
+  const loadingTask = pdfjsLib.getDocument({ 
+    data: arrayBuffer,
+    password: password
+  });
+  const pdf = await loadingTask.promise;
+
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map((item: any) => item.str).join('\n'); // eslint-disable-line @typescript-eslint/no-explicit-any
+    fullText += pageText + '\n\n';
+  }
+
+  return fullText;
+}

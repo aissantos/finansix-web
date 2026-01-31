@@ -18,6 +18,8 @@ describe('CreditCardItem', () => {
     closing_day: 15,
     due_day: 25,
     grace_period_days: 10,
+    interest_rate: 0,
+    fine_rate: 0,
     color: null,
     icon: null,
     is_active: true,
