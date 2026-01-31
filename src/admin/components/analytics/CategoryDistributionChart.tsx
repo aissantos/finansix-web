@@ -1,6 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
+interface TooltipPayload {
+  name: string;
+  value: number;
+  payload: {
+    percentage: number;
+    name: string;
+    amount: number;
+  };
+}
+
+interface LegendPayload {
+  value: string;
+  id?: string;
+  type?: string;
+  color?: string;
+  payload?: {
+    name?: string;
+    value?: number;
+    [key: string]: unknown;
+  };
+}
+
+
 interface CategoryData {
   category_id: string;
   category_name: string;
@@ -87,15 +110,15 @@ export function CategoryDistributionChart({ data, isLoading }: CategoryDistribut
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
+
             <Tooltip
               contentStyle={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '6px',
               }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: number, name: string, props: any) => {
-                if (name === 'value') {
+              formatter={(value: number, name: string, props: { payload?: TooltipPayload['payload'] }) => {
+                if (name === 'value' && props.payload) {
                   return [
                     `${value} transações (${props.payload.percentage.toFixed(1)}%)`,
                     props.payload.name,
@@ -107,9 +130,9 @@ export function CategoryDistributionChart({ data, isLoading }: CategoryDistribut
             <Legend
               verticalAlign="bottom"
               height={36}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value, entry: any) => {
-                const item = chartData.find((d) => d.name === entry.payload.name);
+              formatter={(value: string, entry: LegendPayload) => {
+                const name = entry.payload?.name;
+                const item = chartData.find((d) => d.name === name);
                 return `${value} (${item?.value || 0})`;
               }}
             />

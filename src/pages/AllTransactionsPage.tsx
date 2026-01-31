@@ -1,25 +1,12 @@
-/**
- * ALL TRANSACTIONS PAGE
- * 
- * Página dedicada para visualização de todas transações
- * com filtros por tipo, categoria, período, etc.
- */
-
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Filter, 
   Search, 
-  ArrowUpRight, 
-  ArrowDownLeft,
   Calendar,
-  X,
   Plus,
-  PieChart,
-  Repeat,
-  Wallet,
   CheckSquare,
-  Trash2
+  Trash2,
+  Filter
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -30,106 +17,29 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { DeleteConfirmDialog } from '@/components/ui';
 import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
 import { SwipeableTransactionItem } from '@/components/features/SwipeableTransactionItem';
-import { useAllTransactions, useCategories, useDeleteTransaction, useUpdateTransaction, useDeleteTransactions } from '@/hooks';
-import { formatCurrency, cn } from '@/lib/utils';
+import { 
+  useAllTransactions, 
+  useCategories, 
+  useDeleteTransaction, 
+  useUpdateTransaction, 
+  useDeleteTransactions,
+  useFilteredTransactions 
+} from '@/hooks';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/useToast';
 import type { TransactionWithDetails } from '@/types';
+import { 
+  CategoryDistributionChart 
+} from '@/components/transactions/CategoryDistributionChart';
+import { 
+  TransactionFilters 
+} from '@/components/transactions/TransactionFilters';
+import { 
+  TransactionMetrics 
+} from '@/components/transactions/TransactionMetrics';
 
 type FilterType = 'all' | 'income' | 'expense' | 'transfer';
-
-// Category Distribution Chart Component
-function CategoryDistributionChart({ transactions }: { transactions: TransactionWithDetails[] }) {
-  const categoryTotals = useMemo(() => {
-    const totals = new Map<string, { name: string; amount: number; color: string; count: number }>();
-    
-    transactions
-      .filter(t => t.type === 'expense') // Only expenses for distribution
-      .forEach(t => {
-        const catId = t.category_id || 'uncategorized';
-        const catName = t.category?.name || 'Sem categoria';
-        const catColor = t.category?.color || '#94a3b8';
-        
-        if (totals.has(catId)) {
-          const existing = totals.get(catId)!;
-          existing.amount += t.amount;
-          existing.count += 1;
-        } else {
-          totals.set(catId, {
-            name: catName,
-            amount: t.amount,
-            color: catColor,
-            count: 1
-          });
-        }
-      });
-
-    return Array.from(totals.values())
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5); // Top 5 categories
-  }, [transactions]);
-
-  const totalExpenses = categoryTotals.reduce((sum, cat) => sum + cat.amount, 0);
-
-  if (categoryTotals.length === 0) return null;
-
-  return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-            Distribuição por Categoria
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Top 5 despesas
-          </p>
-        </div>
-        <PieChart className="h-5 w-5 text-slate-400" />
-      </div>
-
-      <div className="space-y-3">
-        {categoryTotals.map((cat, index) => {
-          const percentage = (cat.amount / totalExpenses) * 100;
-          return (
-            <div key={index}>
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div 
-                    className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: cat.color }}
-                  />
-                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                    {cat.name}
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    ({cat.count})
-                  </span>
-                </div>
-                <div className="flex items-baseline gap-1.5 flex-shrink-0">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">
-                    {formatCurrency(cat.amount)}
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    {percentage.toFixed(0)}%
-                  </span>
-                </div>
-              </div>
-              <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div 
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ 
-                    width: `${percentage}%`,
-                    backgroundColor: cat.color 
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
 
 export default function AllTransactionsPage() {
   const navigate = useNavigate();
@@ -157,6 +67,15 @@ export default function AllTransactionsPage() {
   const { data: transactions, isLoading } = useAllTransactions();
   const { data: categories } = useCategories();
 
+  // Use Custom Hook for Filtering and Totals
+  const { filteredTransactions, totals } = useFilteredTransactions({
+    transactions,
+    searchQuery,
+    filterType,
+    selectedCategoryId,
+    dateRange
+  });
+
   const handlePay = async (transaction: TransactionWithDetails) => {
     try {
       await updateMutation.mutateAsync({
@@ -178,59 +97,6 @@ export default function AllTransactionsPage() {
     }
   };
 
-  // Filter transactions
-  const filteredTransactions = useMemo(() => {
-    if (!transactions) return [];
-
-    let filtered = [...transactions];
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(t => 
-        t.description.toLowerCase().includes(query) ||
-        t.category?.name.toLowerCase().includes(query)
-      );
-    }
-
-    // Filter by type
-    if (filterType !== 'all') {
-      filtered = filtered.filter(t => t.type === filterType);
-    }
-
-    // Filter by category
-    if (selectedCategoryId) {
-      filtered = filtered.filter(t => t.category_id === selectedCategoryId);
-    }
-
-    // Filter by date range
-    if (dateRange.start) {
-      filtered = filtered.filter(t => 
-        new Date(t.transaction_date) >= new Date(dateRange.start!)
-      );
-    }
-    if (dateRange.end) {
-      filtered = filtered.filter(t => 
-        new Date(t.transaction_date) <= new Date(dateRange.end!)
-      );
-    }
-
-    return filtered;
-  }, [transactions, searchQuery, filterType, selectedCategoryId, dateRange]);
-
-  // Calculate totals
-  const totals = useMemo(() => {
-    const income = filteredTransactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-    
-    const expense = filteredTransactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-    
-    return { income, expense, net: income - expense };
-  }, [filteredTransactions]);
-
   // Clear all filters
   const clearFilters = () => {
     setSearchQuery('');
@@ -244,11 +110,9 @@ export default function AllTransactionsPage() {
   // Selection Handlers
   const toggleSelectionMode = () => {
     if (isSelectionMode) {
-      // Exit selection mode
       setIsSelectionMode(false);
       setSelectedIds(new Set());
     } else {
-      // Enter selection mode
       setIsSelectionMode(true);
     }
   };
@@ -295,7 +159,8 @@ export default function AllTransactionsPage() {
   };
 
   // Export transactions to CSV
-  const exportTransactions = (data: typeof filteredTransactions) => {
+  const exportTransactions = () => {
+    const data = filteredTransactions;
     if (data.length === 0) return;
 
     // CSV Headers
@@ -414,124 +279,19 @@ export default function AllTransactionsPage() {
 
         {/* Filter Panel */}
         {showFilters && (
-          <Card className="p-4 space-y-4">
-            {/* Type Filter */}
-            <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
-                Tipo
-              </label>
-              <div className="flex gap-2">
-                {[
-                  { value: 'all' as const, label: 'Todas', icon: Calendar },
-                  { value: 'income' as const, label: 'Receitas', icon: ArrowDownLeft },
-                  { value: 'expense' as const, label: 'Despesas', icon: ArrowUpRight },
-                  { value: 'transfer' as const, label: 'Transferências', icon: Repeat },
-                ].map(({ value, label, icon: Icon }) => (
-                  <button
-                    key={value}
-                    onClick={() => setFilterType(value)}
-                    className={cn(
-                      'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2',
-                      filterType === value
-                        ? 'bg-primary text-white'
-                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
-                Categoria
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedCategoryId(null)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-                    !selectedCategoryId
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                  )}
-                >
-                  Todas
-                </button>
-                {categories?.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategoryId(category.id)}
-                    className={cn(
-                      'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-                      selectedCategoryId === category.id
-                        ? 'text-white'
-                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                    )}
-                    style={selectedCategoryId === category.id ? {
-                      backgroundColor: category.color || '#6366f1'
-                    } : undefined}
-                  >
-                    {category.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Date Range Filter */}
-            <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
-                Período
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-slate-400 mb-1 block">De</label>
-                  <Input
-                    type="date"
-                    value={dateRange.start || ''}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value || null }))}
-                    className="text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-400 mb-1 block">Até</label>
-                  <Input
-                    type="date"
-                    value={dateRange.end || ''}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value || null }))}
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2 text-sm">
-              {hasActiveFilters && (
-                <Button
-                  onClick={clearFilters}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 rounded-xl"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Limpar
-                </Button>
-              )}
-              <Button
-                onClick={() => exportTransactions(filteredTransactions)}
-                variant="outline"
-                size="sm"
-                className="flex-1 rounded-xl"
-                disabled={filteredTransactions.length === 0}
-              >
-                📥 Exportar CSV
-              </Button>
-            </div>
-          </Card>
+          <TransactionFilters
+            filterType={filterType}
+            setFilterType={setFilterType}
+            selectedCategoryId={selectedCategoryId}
+            setSelectedCategoryId={setSelectedCategoryId}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            categories={categories}
+            onClearFilters={clearFilters}
+            onExport={exportTransactions}
+            hasResults={filteredTransactions.length > 0}
+            hasActiveFilters={!!hasActiveFilters}
+          />
         )}
 
         {/* Selection Actions Header */}
@@ -557,46 +317,7 @@ export default function AllTransactionsPage() {
 
         {/* Totals Summary */}
         {filteredTransactions.length > 0 && !isSelectionMode && (
-            <div className="grid grid-cols-3 gap-2">
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                            <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">Receitas</p>
-                    </div>
-                    <p className="text-sm font-black text-slate-900 dark:text-white">
-                        {formatCurrency(totals.income)}
-                    </p>
-                </div>
-
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                            <ArrowUpRight className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">Despesas</p>
-                    </div>
-                    <p className="text-sm font-black text-slate-900 dark:text-white">
-                        {formatCurrency(totals.expense)}
-                    </p>
-                </div>
-
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
-                            <Wallet className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
-                        </div>
-                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">Saldo</p>
-                    </div>
-                    <p className={cn(
-                        'text-sm font-black',
-                        totals.net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                    )}>
-                        {formatCurrency(totals.net)}
-                    </p>
-                </div>
-            </div>
+            <TransactionMetrics totals={totals} />
         )}
 
         {/* Category Distribution Chart */}

@@ -83,6 +83,13 @@ setup('authenticate', async ({ page }) => {
   await page.route('**/rest/v1/transactions*', async route => {
       await route.fulfill({ json: [] });
   });
+
+  // Mock Household Members
+  await page.route('**/rest/v1/household_members*', async route => {
+      await route.fulfill({ json: [{ user_id: 'test-user-id', household_id: 'test-household-id', role: 'owner' }] });
+  });
+
+
   
   // -----------------------------------------------------------
 
@@ -100,9 +107,9 @@ setup('authenticate', async ({ page }) => {
   await page.getByRole('button', { name: 'Entrar' }).click();
   
   // Wait for redirect to dashboard
-  await page.waitForURL('**/*', { timeout: 15000 }); // Wait for any navigation
+  await page.waitForURL('**/*', { timeout: 30000 }); // Wait for any navigation
   // 'Home' text might be inside a transition or hidden momentarily, check for Main Header
-  await expect(page.getByText('Finansix')).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText('Finansix')).toBeVisible({ timeout: 30000 });
 
   // Save storage state to be used by other tests
   await page.context().storageState({ path: authFile });

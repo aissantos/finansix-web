@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi } from 'vitest';
 
 class MockQueryBuilder {
-  data: any;
-  error: any;
+  data: unknown;
+  error: unknown;
   count: number | null;
 
-  constructor(data: any = [], error: any = null, count: number | null = null) {
+  constructor(data: unknown = [], error: unknown = null, count: number | null = null) {
     this.data = data;
     this.error = error;
     this.count = count;
@@ -45,7 +44,7 @@ class MockQueryBuilder {
     });
   });
 
-  then(onfulfilled?: (value: any) => any, onrejected?: (reason: any) => any) {
+  then(onfulfilled?: (value: unknown) => unknown, onrejected?: (reason: unknown) => unknown) {
     const result = { data: this.data, error: this.error, count: this.count };
     return Promise.resolve(result).then(onfulfilled, onrejected);
   }
@@ -64,6 +63,6 @@ export const mockSupabaseAdmin = {
   },
 };
 
-export const createMockQueryBuilder = (data: any = [], error: any = null, count: number | null = null) => {
+export const createMockQueryBuilder = (data: unknown = [], error: unknown = null, count: number | null = null) => {
   return new MockQueryBuilder(data, error, count);
 };

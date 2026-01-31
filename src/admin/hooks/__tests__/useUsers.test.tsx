@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@/test/test-utils';
 import { useUsers } from '@/admin/hooks/useUsers';
@@ -18,7 +17,7 @@ describe('useUsers', () => {
   it('deve buscar usuários com sucesso', async () => {
     // Setup mock query builder
     const queryBuilder = createMockQueryBuilder(mockUsers, null, 2);
-    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as unknown as ReturnType<typeof supabase.from>);
 
     const { result } = renderHook(() => useUsers());
 
@@ -31,7 +30,7 @@ describe('useUsers', () => {
 
   it('deve aplicar filtro de busca por texto', async () => {
     const queryBuilder = createMockQueryBuilder(mockUsers, null, 2);
-    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as unknown as ReturnType<typeof supabase.from>);
 
     const { result } = renderHook(() => useUsers({ search: 'John' }));
 
@@ -42,7 +41,7 @@ describe('useUsers', () => {
 
   it('deve aplicar filtro de role', async () => {
     const queryBuilder = createMockQueryBuilder(mockUsers, null, 2);
-    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as unknown as ReturnType<typeof supabase.from>);
 
     const { result } = renderHook(() => useUsers({ role: 'admin' }));
 
@@ -53,7 +52,7 @@ describe('useUsers', () => {
 
   it('deve aplicar paginação', async () => {
     const queryBuilder = createMockQueryBuilder(mockUsers, null, 20);
-    vi.mocked(supabase.from).mockReturnValue(queryBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(queryBuilder as unknown as ReturnType<typeof supabase.from>);
 
     const { result } = renderHook(() => useUsers({}, { page: 2, pageSize: 10 }));
 
@@ -67,15 +66,17 @@ describe('useUsers', () => {
     const error = { message: 'Failed to fetch' };
     const queryBuilder = createMockQueryBuilder([], error);
     // Force the promise to reject for the error case in useUsers
-    queryBuilder.then = ((_: any, reject: any) => reject(error)) as any;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    queryBuilder.then = ((_: unknown, reject: (reason: unknown) => void) => reject(error));
     
     // Alternative approach: mock the query execution to throw
     const throwingBuilder = {
       ...queryBuilder,
-      then: (_: any, reject: any) => reject(error)
+      then: (_: unknown, reject: (reason: unknown) => void) => reject(error)
     };
     
-    vi.mocked(supabase.from).mockReturnValue(throwingBuilder as any);
+    vi.mocked(supabase.from).mockReturnValue(throwingBuilder as unknown as ReturnType<typeof supabase.from>);
 
     const { result } = renderHook(() => useUsers());
 

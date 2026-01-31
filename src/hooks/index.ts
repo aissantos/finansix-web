@@ -67,3 +67,4 @@ export {
 
 // NEW: v2.0 Smart Hooks
 export { useSmartCategorySearch } from './useSmartCategorySearch';
+export * from './useFilteredTransactions';

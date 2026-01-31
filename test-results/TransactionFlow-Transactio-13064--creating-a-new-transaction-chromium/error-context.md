@@ -1,0 +1,101 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e5]:
+        - banner [ref=e6]:
+          - generic [ref=e7]:
+            - button "Perfil do usuário" [ref=e9] [cursor=pointer]:
+              - generic [ref=e10]: T
+            - generic [ref=e13]:
+              - button "Mês anterior" [ref=e14] [cursor=pointer]:
+                - img [ref=e15]
+              - button "Ir para janeiro 2026" [ref=e17] [cursor=pointer]: janeiro 2026
+              - button "Próximo mês" [ref=e18] [cursor=pointer]:
+                - img [ref=e19]
+            - button "Notificações" [ref=e22] [cursor=pointer]:
+              - img [ref=e23]
+        - main [ref=e26]:
+          - generic [ref=e27]:
+            - generic [ref=e28]:
+              - generic [ref=e29]: Saldo Livre Disponível
+              - button [ref=e30] [cursor=pointer]:
+                - img [ref=e31]
+              - button [ref=e36] [cursor=pointer]:
+                - img [ref=e37]
+            - heading "••••••" [level=2] [ref=e39]
+            - generic [ref=e40]:
+              - img [ref=e41]
+              - paragraph [ref=e44]: Saldo positivo
+          - generic [ref=e45]:
+            - generic [ref=e47] [cursor=pointer]:
+              - generic [ref=e48]:
+                - paragraph [ref=e49]: A Pagar
+                - paragraph [ref=e50]: R$ 0,00
+              - img [ref=e52]
+            - generic [ref=e56] [cursor=pointer]:
+              - generic [ref=e57]:
+                - paragraph [ref=e58]: Pago
+                - paragraph [ref=e59]: R$ 0,00
+              - img [ref=e61]
+            - generic [ref=e65] [cursor=pointer]:
+              - generic [ref=e66]:
+                - paragraph [ref=e67]: Vencido
+                - paragraph [ref=e68]: R$ 0,00
+              - img [ref=e70]
+            - generic [ref=e73]:
+              - generic [ref=e74]:
+                - paragraph [ref=e75]: Saldo Parcial
+                - paragraph [ref=e76]: R$ 0,00
+              - img [ref=e78]
+          - paragraph [ref=e82]: Adicione um cartão de crédito para ver a melhor opção de compra.
+          - generic [ref=e83]:
+            - heading "Transações" [level=3] [ref=e85]
+            - generic [ref=e86]:
+              - img [ref=e89]
+              - heading "Nenhuma transação encontrada" [level=3] [ref=e92]
+              - paragraph [ref=e93]: Comece a registrar suas receitas e despesas para ter controle total.
+              - button "Adicionar Transação" [ref=e95] [cursor=pointer]:
+                - img [ref=e96]
+                - text: Adicionar Transação
+        - navigation "Navegação principal" [ref=e97]:
+          - generic [ref=e98]:
+            - generic [ref=e100]:
+              - link "Navegar para Home" [ref=e101] [cursor=pointer]:
+                - /url: /
+                - img [ref=e103]
+                - generic [ref=e106]: Home
+              - link "Navegar para Análise" [ref=e107] [cursor=pointer]:
+                - /url: /analysis
+                - img [ref=e108]
+                - generic [ref=e110]: Análise
+              - link "Navegar para Carteira" [ref=e111] [cursor=pointer]:
+                - /url: /wallet
+                - img [ref=e112]
+                - generic [ref=e115]: Carteira
+              - link "Navegar para Perfil" [ref=e116] [cursor=pointer]:
+                - /url: /profile
+                - img [ref=e117]
+                - generic [ref=e120]: Perfil
+            - button "Abrir menu de ações" [ref=e122] [cursor=pointer]:
+              - img [ref=e123]
+      - region "Notifications (F8)":
+        - list
+    - generic [ref=e124]:
+      - img [ref=e126]
+      - button "Open Tanstack query devtools" [ref=e174] [cursor=pointer]:
+        - img [ref=e175]
+  - generic [ref=e224]:
+    - alertdialog "👋 Bem-vindo ao Finansix! Aqui você vê seu saldo disponível em tempo real." [ref=e225]:
+      - generic [ref=e227]: 👋 Bem-vindo ao Finansix! Aqui você vê seu saldo disponível em tempo real.
+      - generic [ref=e228]:
+        - button "Pular" [ref=e230] [cursor=pointer]
+        - button "Next (Step 1 of 5)" [active] [ref=e231] [cursor=pointer]
+      - button "Fechar" [ref=e232] [cursor=pointer]:
+        - img [ref=e233]
+    - generic:
+      - generic:
+        - img
+```

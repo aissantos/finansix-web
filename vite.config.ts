@@ -2,10 +2,83 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   plugins: [
     react(),
+    VitePWA({
+      includeAssets: ['favicon.png', 'icons/*.png'],
+      manifest: {
+        name: 'Finansix',
+        short_name: 'Finansix',
+        description: 'Gestão financeira pessoal e familiar',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#f8fafc',
+        theme_color: '#135BEC',
+        orientation: 'portrait-primary',
+        lang: 'pt-BR',
+        categories: ['finance', 'productivity'],
+        icons: [
+          {
+            src: 'icons/icon-72x72.png',
+            sizes: '72x72',
+            type: 'image/png',
+            purpose: 'maskable any'
+          },
+          {
+            src: 'icons/icon-96x96.png',
+            sizes: '96x96',
+            type: 'image/png',
+            purpose: 'maskable any'
+          },
+          {
+            src: 'icons/icon-144x144.png',
+            sizes: '144x144',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable any'
+          },
+          {
+            src: 'icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable any'
+          }
+        ],
+        screenshots: [
+          {
+            src: 'screenshots/home.png',
+            sizes: '390x844',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'Tela inicial do Finansix'
+          }
+        ],
+        shortcuts: [
+          {
+            name: 'Nova Transação',
+            short_name: 'Nova',
+            description: 'Adicionar nova transação',
+            url: '/transactions/new',
+            icons: [{ src: 'icons/shortcut-add.png', sizes: '96x96', type: 'image/png' }]
+          },
+          {
+            name: 'Carteira',
+            short_name: 'Carteira',
+            description: 'Ver cartões e contas',
+            url: '/wallet',
+            icons: [{ src: 'icons/shortcut-wallet.png', sizes: '96x96', type: 'image/png' }]
+          }
+        ]
+      }
+    }),
     // Bundle analyzer - gera stats.html
     visualizer({
       open: false,

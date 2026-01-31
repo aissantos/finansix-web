@@ -1,10 +1,14 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@/test/test-utils";
 import {
   useTransactions,
   useTransaction,
   useCreateTransaction,
   useUpdateTransaction,
   useDeleteTransaction,
+  useRecentTransactions,
+  useTransactionsByCategory,
+  useDeleteTransactions,
+  useAllTransactions,
 } from "@/hooks/useTransactions";
 import {
   getTransactions,
@@ -12,10 +16,14 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  deleteTransactions,
+  getRecentTransactions,
+  getTransactionsByCategory,
 } from "@/lib/supabase";
 import { useHouseholdId, useSelectedMonth } from "@/stores";
 import { vi, describe, it, expect, beforeEach, type Mock } from "vitest";
 import type { InsertTables } from "@/types";
+
 // Mock stores
 vi.mock("@/stores", () => ({
   useHouseholdId: vi.fn(),
@@ -32,6 +40,7 @@ vi.mock("@/lib/supabase", async () => {
     createTransaction: vi.fn(),
     updateTransaction: vi.fn(),
     deleteTransaction: vi.fn(),
+    deleteTransactions: vi.fn(),
     getRecentTransactions: vi.fn(),
     getTransactionsByCategory: vi.fn(),
     supabase: {
@@ -44,20 +53,6 @@ vi.mock("@/lib/supabase", async () => {
     },
   };
 });
-
-// Mock QueryClient
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
-
-const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-);
 
 describe("useTransactions Hooks", () => {
   beforeEach(() => {
@@ -73,7 +68,7 @@ describe("useTransactions Hooks", () => {
       const mockTransactions = [{ id: "1", description: "Test", amount: 100 }];
       (getTransactions as unknown as Mock).mockResolvedValue(mockTransactions);
 
-      const { result } = renderHook(() => useTransactions(), { wrapper });
+      const { result } = renderHook(() => useTransactions());
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -92,7 +87,7 @@ describe("useTransactions Hooks", () => {
       const mockTransaction = { id: "1", description: "Test", amount: 100 };
       (getTransaction as unknown as Mock).mockResolvedValue(mockTransaction);
 
-      const { result } = renderHook(() => useTransaction("1"), { wrapper });
+      const { result } = renderHook(() => useTransaction("1"));
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -113,7 +108,7 @@ describe("useTransactions Hooks", () => {
         ...newTransaction,
       });
 
-      const { result } = renderHook(() => useCreateTransaction(), { wrapper });
+      const { result } = renderHook(() => useCreateTransaction());
 
       await result.current.mutateAsync(
         newTransaction as unknown as Omit<
@@ -139,7 +134,7 @@ describe("useTransactions Hooks", () => {
         ...updateData,
       });
 
-      const { result } = renderHook(() => useUpdateTransaction(), { wrapper });
+      const { result } = renderHook(() => useUpdateTransaction());
 
       await result.current.mutateAsync({ id: "1", data: updateData });
 
@@ -151,11 +146,82 @@ describe("useTransactions Hooks", () => {
     it("should delete a transaction successfully", async () => {
       (deleteTransaction as unknown as Mock).mockResolvedValue(true);
 
-      const { result } = renderHook(() => useDeleteTransaction(), { wrapper });
+      const { result } = renderHook(() => useDeleteTransaction());
 
       await result.current.mutateAsync("1");
 
       expect(deleteTransaction).toHaveBeenCalledWith("1");
+    });
+  });
+
+  describe("useRecentTransactions", () => {
+    it("should fetch recent transactions", async () => {
+      const mockRecent = [{ id: "1", description: "Recent", amount: 50 }];
+      (getTransactions as unknown as Mock).mockResolvedValue(mockRecent);
+
+      const { result } = renderHook(() => useRecentTransactions(5));
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toEqual(mockRecent);
+      expect(getTransactions).toHaveBeenCalledWith(
+        "household-123",
+        expect.objectContaining({ limit: 5 })
+      );
+    });
+  });
+
+  describe("useTransactionsByCategory", () => {
+    it("should fetch transactions by category", async () => {
+      const mockByCategory = [
+        { category: "Food", total: 100 },
+        { category: "Transport", total: 50 },
+      ];
+      (getTransactionsByCategory as unknown as Mock).mockResolvedValue(
+        mockByCategory
+      );
+
+      const { result } = renderHook(() => useTransactionsByCategory());
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toEqual(mockByCategory);
+      expect(getTransactionsByCategory).toHaveBeenCalledWith(
+        "household-123",
+        expect.any(Date)
+      );
+    });
+  });
+
+  describe("useDeleteTransactions", () => {
+    it("should delete multiple transactions successfully", async () => {
+      (deleteTransactions as unknown as Mock).mockResolvedValue(true);
+
+      const { result } = renderHook(() => useDeleteTransactions());
+
+      await result.current.mutateAsync(["1", "2"]);
+
+      expect(deleteTransactions).toHaveBeenCalledWith(["1", "2"]);
+    });
+  });
+
+  describe("useAllTransactions", () => {
+    it("should fetch all transactions for statement", async () => {
+      const mockAll = [{ id: "1", description: "Statement", amount: 200 }];
+      (getTransactions as unknown as Mock).mockResolvedValue(mockAll);
+
+      const { result } = renderHook(() => useAllTransactions());
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toEqual(mockAll);
+      expect(getTransactions).toHaveBeenCalledWith(
+        "household-123",
+        expect.objectContaining({
+          includeInstallments: true,
+          month: expect.any(Date),
+        })
+      );
     });
   });
 });

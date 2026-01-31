@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 import { useAppStore } from '@/stores';
+import { createWrapper } from '@/test/test-utils';
+import React from 'react';
 
 // Mock mocks
 vi.mock('@/lib/supabase', async () => {
@@ -40,6 +42,14 @@ vi.mock('@/stores', () => ({
 describe('useAuth Hook', () => {
   const mockSetHouseholdId = vi.fn();
   
+  // Create a reusable wrapper component that includes QueryClient and Router
+  const Wrapper = createWrapper();
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <Wrapper>
+      <AuthProvider>{children}</AuthProvider>
+    </Wrapper>
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
     
@@ -63,7 +73,7 @@ describe('useAuth Hook', () => {
     // Delay resolution of getSession to verify loading state
     (supabase.auth.getSession as unknown as Mock).mockImplementation(() => new Promise(() => {}));
 
-    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    const { result } = renderHook(() => useAuth(), { wrapper: TestWrapper });
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.isAuthenticated).toBe(false);
@@ -78,7 +88,7 @@ describe('useAuth Hook', () => {
       error: null,
     });
 
-    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    const { result } = renderHook(() => useAuth(), { wrapper: TestWrapper });
 
     await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -93,7 +103,7 @@ describe('useAuth Hook', () => {
     const error = new Error('Invalid credentials');
     (supabase.auth.signInWithPassword as unknown as Mock).mockResolvedValue({ error });
 
-    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    const { result } = renderHook(() => useAuth(), { wrapper: TestWrapper });
 
     // Wait for init
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -104,7 +114,7 @@ describe('useAuth Hook', () => {
   it('should handle signOut successfully', async () => {
     (supabase.auth.signOut as unknown as Mock).mockResolvedValue({ error: null });
 
-    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    const { result } = renderHook(() => useAuth(), { wrapper: TestWrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     await act(async () => {
@@ -117,7 +127,7 @@ describe('useAuth Hook', () => {
   it('should handle session restoration failure safely', async () => {
     (supabase.auth.getSession as unknown as Mock).mockRejectedValue(new Error('Network Error'));
 
-    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    const { result } = renderHook(() => useAuth(), { wrapper: TestWrapper });
 
     await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
