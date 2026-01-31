@@ -1,4 +1,4 @@
-import { Installment, Category } from './database';
+import type { Installment, Category } from './database';
 
 export interface InstallmentWithDetails extends Installment {
   transaction?: {
