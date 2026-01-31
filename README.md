@@ -2,7 +2,7 @@
 
 > Sistema de gestão financeira pessoal e familiar com foco em controle de cartões de crédito e parcelamentos.
 
-![Version](https://img.shields.io/badge/version-1.5.4.7-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.7.0-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E.svg)
@@ -31,7 +31,15 @@ Finansix é uma aplicação PWA mobile-first para gestão financeira pessoal e f
 
 ## ✨ Novidades
 
-### v1.5.4.6 (Atual)
+### v1.5.7.0 (Production Ready)
+
+- ⚡ **Performance**: Refatoração completa da tela de Transações, Code Splitting e Otimização de Bundle.
+- 🗑️ **Bulk Delete**: Seleção múltipla e exclusão em lote de transações.
+- 📱 **PWA Completo**: Configuração de Service Worker e Manifesto para instalabilidade e suporte offline.
+- 🛡️ **Segurança & Qualidade**: Cobertura de testes unitários (Hooks) e E2E (Fluxos críticos), sem erros de lint.
+- 🔧 **Architecture**: Melhoria na organização de código e correção de dívidas técnicas.
+
+### v1.5.4.6 (Anterior)
 
 - 🐛 **Hotfix**: Correção da exibição de parcelas retroativas (parcelas passadas não aparecem mais na fatura atual)
 - ✅ **Bill Payment System**: Sistema de pagamento/baixa de contas (Em Aberto, Pago, Vencido)
@@ -249,7 +257,7 @@ finansix-web/
 
 ### v1.6.0 - Testing & Dashboard
 
-- [ ] Test coverage 40%+
+- [x] Test coverage 40%+ (Hooks & E2E Critical Flows)
 - [ ] Dashboard widgets configuráveis
 - [ ] Category Insights
 - [ ] Spending Alerts
@@ -274,4 +282,4 @@ MIT © Versix Solutions
 
 ---
 
-**Finansix v1.5.4.6** | Built with ❤️ by Versix Team
+**Finansix v1.5.7.0** | Built with ❤️ by Versix Team
