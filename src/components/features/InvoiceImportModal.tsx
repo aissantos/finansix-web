@@ -15,7 +15,7 @@ import { extractTextFromPDF, parseInvoiceText, type ParsedTransaction } from '@/
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/useToast';
-import { useCreditCard, useUpdateCreditCard, useCategories, useRecentTransactions } from '@/hooks';
+import { useCreditCard, useUpdateCreditCard, useCategories, useRecentTransactions, useHousehold } from '@/hooks';
 import { predictCategory } from '@/lib/category-predictor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tag } from 'lucide-react';
@@ -41,6 +41,7 @@ export function InvoiceImportModal({
   const { toast } = useToast();
   const { data: card } = useCreditCard(creditCardId);
   const { mutate: updateCard } = useUpdateCreditCard();
+  const { data: household } = useHousehold();
 
   const { data: categories = [] } = useCategories('expense');
   const { data: recentTransactions = [] } = useRecentTransactions(100);
@@ -175,12 +176,7 @@ export function InvoiceImportModal({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not found');
 
-      const { data: household } = await supabase
-        .from('households')
-        .select('id')
-        .eq('owner_id', user.id)
-        .single();
-        
+      if (!user) throw new Error('User not found');
       if (!household) throw new Error('Household not found');
 
       // Create transactions in batch
