@@ -60,8 +60,8 @@ export function parseInvoiceText(text: string): ParseResult {
   };
 
   // First pass: Metadata extraction (usually in header/footer)
-  // We scan the first and last 20 lines for better performance and accuracy
-  const headerLines = lines.slice(0, 30).join('\n'); // Increased to 30 to catch Nubank header
+  // We scan the first and last 30 lines for better performance and accuracy
+  const headerLines = lines.slice(0, 30).join('\n'); 
   const footerLines = lines.slice(-20).join('\n');
   const metadataText = headerLines + '\n' + footerLines;
 
@@ -92,7 +92,6 @@ export function parseInvoiceText(text: string): ParseResult {
     if (Number(month) < today.getMonth() + 1 && Number(month) === 1 && today.getMonth() === 11) {
         year = String(currentYear + 1);
     }
-    // Also if extracted is Dec and we are in Jan, it might be prev year (though less likely for "Due Date")
     
     metadataFound.dueDate = `${year}-${month}-${day}`;
   }
@@ -142,37 +141,64 @@ export function parseInvoiceText(text: string): ParseResult {
 
     if (isDateAtStart) {
        let amountMatch = line.match(amountRegex);
+       let amountLineIndex = i;
        let isMultiLine = false;
 
-       if (!amountMatch && i + 1 < lines.length) {
-         const nextLine = lines[i + 1].trim();
-         const nextLineHasDate = (nextLine.match(dateSlashRegex)?.index === 0) || 
-                                 (nextLine.match(dateMonthNameRegex) && nextLine.indexOf(nextLine.match(dateMonthNameRegex)![0]) === 0);
-         
-         if (!nextLineHasDate) {
-            const nextLineAmountMatch = nextLine.match(amountRegex);
-            if (nextLineAmountMatch) {
-              amountMatch = nextLineAmountMatch;
-              isMultiLine = true;
-            }
-         }
-       }
+       // Look ahead up to 2 lines for amount if not found on current line
+       if (!amountMatch) {
+          for (let offset = 1; offset <= 2 && (i + offset) < lines.length; offset++) {
+             const nextLine = lines[i + offset].trim();
+             
+             // If next line has a DATE, stop looking (it's a new transaction)
+             const nextLineHasDate = (nextLine.match(dateSlashRegex)?.index === 0) || 
+                                     (nextLine.match(dateMonthNameRegex) && nextLine.indexOf(nextLine.match(dateMonthNameRegex)![0]) === 0);
+             
+             if (nextLineHasDate) break;
 
+             const nextLineAmountMatch = nextLine.match(amountRegex);
+             if (nextLineAmountMatch) {
+                amountMatch = nextLineAmountMatch;
+                amountLineIndex = i + offset;
+                isMultiLine = true;
+                break;
+             }
+          }
+       }
+       
        if (amountMatch) {
           const date = `${year}-${month}-${day}`;
           const amountStr = amountMatch[1];
           const amount = parseAmount(amountStr);
 
-          let description = line;
+          // Construct description by joining lines from current up to amount line
+          let description = "";
           
-          if (!isMultiLine) {
-             description = description.replace(amountMatch[0], '');
+          if (isMultiLine) {
+             // Join lines from i to amountLineIndex
+             for (let k = i; k <= amountLineIndex; k++) {
+                let linePart = lines[k].trim();
+                // Remove Date from first line
+                if (k === i) {
+                  linePart = linePart.replace(matchedDateStr, '').trim();
+                }
+                // Remove Amount from last line
+                if (k === amountLineIndex) {
+                  linePart = linePart.replace(amountMatch[0], '').replace('R$', '').trim();
+                }
+                
+                if (linePart) {
+                   description += (description ? " " : "") + linePart;
+                }
+             }
+             
+             // Advance loop index to avoid re-processing these lines
+             i = amountLineIndex; 
+          } else {
+             // Single line case
+             description = line.replace(matchedDateStr, '').replace(amountMatch[0], '').replace('R$', '').trim();
           }
 
-          description = description
-            .replace(matchedDateStr, '')
-            .replace('R$', '')
-            .trim();
+          description = description.trim();
           
           description = description.replace(/^\s*-\s*/, ''); 
           description = description.replace(/^[•.]+\s*\d+\s+/, '');
@@ -185,7 +211,6 @@ export function parseInvoiceText(text: string): ParseResult {
           // Refined Fatura filter: Only filter specific non-transaction items
           if (description.toUpperCase().includes('FATURA ANTERIOR')) continue; 
           if (description.toUpperCase() === 'FATURA') continue; // Exact match usually header
-
 
           if (description.length > 2 && amount > 0) {
              transactions.push({
