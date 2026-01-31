@@ -25,7 +25,6 @@ import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DeleteConfirmDialog } from '@/components/ui';
