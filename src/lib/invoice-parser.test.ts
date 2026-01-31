@@ -38,7 +38,7 @@ describe('invoice-parser', () => {
   });
 
   it('should handle Nubank format metadata', () => {
-    const text = `
+    const _text = `
       03 FEV
       Vencimento: 08 FEV
       Total da fatura 
