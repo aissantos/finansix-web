@@ -10,6 +10,7 @@ import type {
 
 // Re-export all database types
 export * from './database';
+export * from './installments';
 
 // App-specific types
 

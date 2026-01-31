@@ -1,6 +1,6 @@
 import { supabase } from './client';
 import { handleSupabaseError, NotFoundError } from '@/lib/utils/errors';
-import type { Installment, MonthlyProjection } from '@/types';
+import type { Installment, MonthlyProjection, InstallmentWithDetails } from '@/types';
 import { startOfMonth, addMonths, format } from 'date-fns';
 
 export async function getInstallments(
@@ -10,10 +10,21 @@ export async function getInstallments(
     status?: 'pending' | 'paid' | 'overdue';
     billingMonth?: Date;
   }
-): Promise<Installment[]> {
+): Promise<InstallmentWithDetails[]> {
   let query = supabase
     .from('installments')
-    .select('*')
+    .select(`
+      *,
+      transaction:transactions (
+        description,
+        category:categories (
+          id,
+          name,
+          color,
+          icon
+        )
+      )
+    `)
     .eq('household_id', householdId)
     .is('deleted_at', null)
     .order('due_date');

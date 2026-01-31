@@ -15,18 +15,16 @@ import {
   MoreVertical,
   Edit3,
   Trash2,
-  FileText
+  FileText,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { useCreditCards, useInstallments } from '@/hooks';
-import { useToast } from '@/hooks/useToast';
-import { formatCurrency, formatCardNumber } from '@/lib/utils';
-import type { Installment } from '@/types';
+import type { InstallmentWithDetails } from '@/types';
 import { format, addMonths, differenceInDays, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase/client';
@@ -234,75 +232,7 @@ export default function CardDetailPage() {
   
   const upcomingTotal = upcomingInstallments.reduce((sum, i) => sum + i.amount, 0);
 
-  // Installment Card Component with CRUD
-  function InstallmentCard({ 
-    installment, 
-    onEdit, 
-    onDelete 
-  }: { 
-    installment: Installment; 
-    onEdit: () => void; 
-    onDelete: () => void;
-  }) {
-    const [showMenu, setShowMenu] = useState(false);
 
-    return (
-      <Card className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-            <ShoppingCart className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-              Parcela {installment.installment_number}/{installment.total_installments}
-            </p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Vence {format(new Date(installment.due_date), 'dd/MM/yyyy')}
-            </p>
-          </div>
-          <p className="text-sm font-bold text-slate-900 dark:text-white flex-shrink-0">
-            {formatCurrency(installment.amount)}
-          </p>
-          
-          {/* Menu */}
-          <div className="relative flex-shrink-0">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
-            >
-              <MoreVertical className="h-4 w-4 text-slate-400" />
-            </button>
-            
-            {showMenu && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setShowMenu(false)} 
-                />
-                <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 min-w-[140px] animate-in fade-in slide-in-from-top-2 duration-150">
-                  <button
-                    onClick={() => { onEdit(); setShowMenu(false); }}
-                    className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                  >
-                    <Edit3 className="h-4 w-4 text-slate-400" />
-                    Editar
-                  </button>
-                  <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
-                  <button
-                    onClick={() => { onDelete(); setShowMenu(false); }}
-                    className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Excluir
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </Card>
-    );
-  }
 
   if (cardsLoading || installmentsLoading) {
     return (
@@ -476,76 +406,35 @@ export default function CardDetailPage() {
           
           const closedBillTotal = closedBillInstallments.reduce((sum, i) => sum + i.amount, 0);
           
+          // Use component state for collapse? No, we are in render. 
+          // We need to move this out of IIFE or use a local component.
+          // Let's use a local variable for now, but to handle state, we should extract this to a component 
+          // OR iterate within the main component body. 
+          // Refactoring to a sub-component "ClosedInvoiceSection".
+          
           return (
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-red-600 dark:text-red-400">
-                  Fatura Fechada
-                </h3>
-                <Badge variant="destructive" className="font-mono">
-                  Vence {format(previousClosingDate.getDate() > (card?.due_day || 1) 
-                    ? addMonths(new Date(previousClosingDate.getFullYear(), previousClosingDate.getMonth(), card?.due_day), 1) 
-                    : new Date(previousClosingDate.getFullYear(), previousClosingDate.getMonth(), card?.due_day), "dd/MM")}
-                </Badge>
-              </div>
-
-              <Card className="p-5 mb-3 border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-xs text-red-600/80 dark:text-red-400/80 font-medium mb-1">
-                      Total a Pagar
-                    </p>
-                    <p className="text-2xl font-extrabold text-red-700 dark:text-red-400">
-                      {formatCurrency(closedBillTotal)}
-                    </p>
-                  </div>
-                  <Button 
-                    variant="destructive"
-                    className="rounded-full shadow-md"
-                    onClick={() => {
-                        // TODO: Implement Pay Invoice flow (Mark as Paid)
-                        // For now, guide user or open a specific payment modal
-                        // Or auto-create the payment transaction if confirmed
-                        toast({ title: 'Marcar como paga?', description: 'Funcionalidade em desenvolvimento. Use "Adicionar" para registrar o pagamento manualmente.' })
-                    }}
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Pagar
-                  </Button>
-                </div>
-                
-                <p className="text-xs text-red-600/70 dark:text-red-400/70 mb-4 px-1">
-                  Esta fatura já fechou e aguarda pagamento.
-                </p>
-
-                <div className="space-y-2">
-                  {closedBillInstallments.map((inst) => (
-                    <InstallmentCard
-                      key={inst.id}
-                      installment={inst}
-                      onEdit={() => navigate(`/transactions/${inst.transaction_id}/edit`)}
-                      onDelete={async () => {
-                        if (confirm('Excluir esta parcela e todas as seguintes?')) {
-                          // ... same delete logic ...
-                          try {
-                            const { error } = await supabase
-                              .from('transactions')
-                              .update({ deleted_at: new Date().toISOString() })
-                              .eq('id', inst.transaction_id);
-                            if (error) throw error;
-                            toast({ title: '✅ Compra excluída' });
-                            queryClient.invalidateQueries({ queryKey: ['installments'] });
-                            queryClient.invalidateQueries({ queryKey: ['creditCards'] });
-                          } catch (error) {
-                            console.error(error);
-                          }
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </Card>
-            </div>
+            <ClosedInvoiceSection 
+              installments={closedBillInstallments} 
+              total={closedBillTotal} 
+              closingDate={previousClosingDate}
+              dueDay={card?.due_day}
+              onPay={() => {
+                 toast({ title: 'Marcar como paga?', description: 'Funcionalidade em desenvolvimento.' })
+              }}
+              onEditTransaction={(id) => navigate(`/transactions/${id}/edit`)}
+              onDeleteTransaction={async (id) => {
+                 // ... delete logic passed as prop or handled inside
+                 if (confirm('Excluir esta parcela e todas as seguintes?')) {
+                     try {
+                        const { error } = await supabase.from('transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+                         if (error) throw error;
+                         toast({ title: '✅ Compra excluída' });
+                         queryClient.invalidateQueries({ queryKey: ['installments'] });
+                         queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+                     } catch(e) { console.error(e) }
+                 }
+              }}
+            />
           );
         })()}
 
@@ -868,5 +757,182 @@ export default function CardDetailPage() {
         />
       )}
     </>
+  );
+}
+
+// ============================================================================
+// Sub-components
+// ============================================================================
+
+function InstallmentCard({ 
+  installment, 
+  onEdit, 
+  onDelete 
+}: { 
+  installment: InstallmentWithDetails; 
+  onEdit: () => void; 
+  onDelete: () => void;
+}) {
+  const [showMenu, setShowMenu] = useState(false);
+  
+  // Get description and category from joined transaction data
+  const description = installment.transaction?.description || `Parcela ${installment.installment_number}/${installment.total_installments}`;
+  const category = installment.transaction?.category;
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 text-lg">
+           {category?.icon ? <span className="text-lg">{category.icon}</span> : <ShoppingCart className="h-5 w-5 text-slate-600 dark:text-slate-400" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+            {description}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+             {category && (
+               <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-0">
+                  {category.name}
+               </Badge>
+             )}
+             <span className="text-xs text-slate-500">
+               {installment.total_installments > 1 
+                 ? `Parcela ${installment.installment_number}/${installment.total_installments} • ` 
+                 : ''}
+               {format(new Date(installment.due_date), 'dd/MM')}
+             </span>
+          </div>
+        </div>
+        <p className="text-sm font-bold text-slate-900 dark:text-white flex-shrink-0">
+          {formatCurrency(installment.amount)}
+        </p>
+        
+        {/* Menu */}
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
+          >
+            <MoreVertical className="h-4 w-4 text-slate-400" />
+          </button>
+          
+          {showMenu && (
+            <>
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setShowMenu(false)} 
+              />
+              <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 min-w-[140px] animate-in fade-in slide-in-from-top-2 duration-150">
+                <button
+                  onClick={() => { onEdit(); setShowMenu(false); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                >
+                  <Edit3 className="h-4 w-4 text-slate-400" />
+                  Editar
+                </button>
+                <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
+                <button
+                  onClick={() => { onDelete(); setShowMenu(false); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function ClosedInvoiceSection({
+  installments,
+  total,
+  closingDate,
+  dueDay,
+  onPay,
+  onEditTransaction,
+  onDeleteTransaction
+}: {
+  installments: InstallmentWithDetails[];
+  total: number;
+  closingDate: Date;
+  dueDay?: number;
+  onPay: () => void;
+  onEditTransaction: (id: string) => void;
+  onDeleteTransaction: (id: string) => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+           Fatura Fechada
+        </h3>
+        <Badge variant="destructive" className="font-mono">
+          Vence {format(closingDate.getDate() > (dueDay || 1) 
+            ? addMonths(new Date(closingDate.getFullYear(), closingDate.getMonth(), dueDay || 1), 1) 
+            : new Date(closingDate.getFullYear(), closingDate.getMonth(), dueDay || 1), "dd/MM")}
+        </Badge>
+      </div>
+
+      <Card className="border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10 overflow-hidden">
+        {/* Header - Always Visible & Clickable */}
+        <div 
+           className="p-5 flex items-center justify-between cursor-pointer hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors"
+           onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex items-center gap-4">
+             <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
+               {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+             </div>
+             <div>
+                <p className="text-xs text-red-600/80 dark:text-red-400/80 font-medium mb-1">
+                  Total a Pagar
+                </p>
+                <p className="text-2xl font-extrabold text-red-700 dark:text-red-400">
+                  {formatCurrency(total)}
+                </p>
+             </div>
+          </div>
+          
+          <Button 
+            variant="destructive"
+            className="rounded-full shadow-md ml-4"
+            onClick={(e) => {
+                e.stopPropagation();
+                onPay();
+            }}
+          >
+            <Check className="h-4 w-4 mr-2" />
+            Pagar
+          </Button>
+        </div>
+        
+        {/* Collapsible Content */}
+        {isExpanded && (
+           <div className="px-5 pb-5 pt-0 animate-in slide-in-from-top-2 duration-200">
+              <div className="h-px bg-red-200/50 dark:bg-red-800/30 my-4" />
+              <p className="text-xs text-red-600/70 dark:text-red-400/70 mb-4 px-1">
+                Transações desta fatura ({installments.length}):
+              </p>
+
+              <div className="space-y-2">
+                {installments.map((inst) => (
+                  <InstallmentCard
+                    key={inst.id}
+                    installment={inst}
+                    onEdit={() => onEditTransaction(inst.transaction_id)}
+                    onDelete={() => onDeleteTransaction(inst.transaction_id)}
+                  />
+                ))}
+              </div>
+           </div>
+        )}
+      </Card>
+    </div>
   );
 }
