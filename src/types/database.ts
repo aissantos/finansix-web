@@ -205,6 +205,8 @@ export interface Database {
           updated_at: string
           deleted_at: string | null
           pdf_password: string | null
+          interest_rate: number
+          fine_rate: number
         }
         Insert: {
           id?: string
@@ -225,6 +227,8 @@ export interface Database {
           updated_at?: string
           deleted_at?: string | null
           pdf_password?: string | null
+          interest_rate?: number
+          fine_rate?: number
         }
         Update: {
           account_id?: string | null
@@ -242,6 +246,8 @@ export interface Database {
           updated_at?: string
           deleted_at?: string | null
           pdf_password?: string | null
+          interest_rate?: number
+          fine_rate?: number
         }
         Relationships: []
       }

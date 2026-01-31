@@ -70,6 +70,7 @@ Sincronização automática de transações ✅
 Todos os bancos seguem **mesma especificação** do Banco Central:
 
 **Endpoint exemplo:**
+
 ```
 GET /accounts/v1/accounts
 GET /accounts/v1/accounts/{accountId}/transactions
@@ -77,13 +78,14 @@ GET /credit-cards-accounts/v1/accounts/{creditCardAccountId}/bills
 ```
 
 **Response padronizado:**
+
 ```json
 {
   "data": [
     {
       "transactionId": "abc123",
       "type": "DEBITO",
-      "amount": 150.00,
+      "amount": 150.0,
       "transactionDate": "2026-01-10",
       "description": "COMPRA SUPERMERCADO"
     }
@@ -106,10 +108,12 @@ API Open Finance do Banco
 ```
 
 **Vantagens:**
+
 - ✅ Controle total
 - ✅ Sem custos de terceiros
 
 **Desvantagens:**
+
 - ❌ Precisa integrar cada banco separadamente
 - ❌ Manutenção complexa
 - ❌ Certificados SSL personalizados
@@ -143,6 +147,7 @@ Todos os bancos via Open Finance
    - Pricing: Mais caro, mas robusto
 
 **Por que usar agregador?**
+
 - ✅ **1 integração = todos os bancos**
 - ✅ Manutenção feita pelo agregador
 - ✅ Webhooks de sincronização automática
@@ -179,27 +184,27 @@ npm install pluggy-sdk
 ```typescript
 // supabase/functions/bank-connect/index.ts
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { PluggyClient } from 'npm:pluggy-sdk'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { PluggyClient } from "npm:pluggy-sdk";
 
 const pluggy = new PluggyClient({
-  clientId: Deno.env.get('PLUGGY_CLIENT_ID')!,
-  clientSecret: Deno.env.get('PLUGGY_CLIENT_SECRET')!,
-})
+  clientId: Deno.env.get("PLUGGY_CLIENT_ID")!,
+  clientSecret: Deno.env.get("PLUGGY_CLIENT_SECRET")!,
+});
 
 serve(async (req) => {
-  const { userId } = await req.json()
-  
+  const { userId } = await req.json();
+
   // Criar Connect Token (válido por 30 minutos)
   const connectToken = await pluggy.createConnectToken({
     clientUserId: userId,
-  })
-  
+  });
+
   return new Response(
     JSON.stringify({ accessToken: connectToken.accessToken }),
-    { headers: { 'Content-Type': 'application/json' } }
-  )
-})
+    { headers: { "Content-Type": "application/json" } },
+  );
+});
 ```
 
 ### Passo 5: Implementar Frontend
@@ -213,20 +218,20 @@ import { PluggyConnect } from 'react-pluggy-connect'
 
 export function BankConnection() {
   const [connectToken, setConnectToken] = useState('')
-  
+
   const handleConnect = async () => {
     const response = await supabase.functions.invoke('bank-connect', {
       body: { userId: user.id }
     })
     setConnectToken(response.data.accessToken)
   }
-  
+
   return (
     <div>
       <Button onClick={handleConnect}>
         Conectar Banco
       </Button>
-      
+
       {connectToken && (
         <PluggyConnect
           connectToken={connectToken}
@@ -253,28 +258,28 @@ export function BankConnection() {
 // supabase/functions/bank-webhook/index.ts
 
 serve(async (req) => {
-  const event = await req.json()
-  
-  if (event.event === 'item/updated') {
-    const itemId = event.data.itemId
-    
+  const event = await req.json();
+
+  if (event.event === "item/updated") {
+    const itemId = event.data.itemId;
+
     // Buscar transações novas
-    const transactions = await pluggy.fetchTransactions(itemId)
-    
+    const transactions = await pluggy.fetchTransactions(itemId);
+
     // Inserir no Supabase
-    await supabase.from('transactions').insert(
-      transactions.results.map(tx => ({
+    await supabase.from("transactions").insert(
+      transactions.results.map((tx) => ({
         description: tx.description,
         amount: tx.amount,
         transaction_date: tx.date,
-        type: tx.type === 'DEBIT' ? 'expense' : 'income',
+        type: tx.type === "DEBIT" ? "expense" : "income",
         // ... outros campos
-      }))
-    )
+      })),
+    );
   }
-  
-  return new Response('OK')
-})
+
+  return new Response("OK");
+});
 ```
 
 ---
@@ -284,17 +289,19 @@ serve(async (req) => {
 ### Estratégias
 
 **1. Polling (Simples)**
+
 ```typescript
 // A cada 1 hora, buscar novas transações
 setInterval(async () => {
-  const items = await pluggy.fetchConnectedItems(userId)
+  const items = await pluggy.fetchConnectedItems(userId);
   for (const item of items) {
-    await syncTransactions(item.id)
+    await syncTransactions(item.id);
   }
-}, 3600000) // 1 hora
+}, 3600000); // 1 hora
 ```
 
 **2. Webhooks (Recomendado)**
+
 ```typescript
 // Pluggy notifica quando há novas transações
 // Edge Function processa automaticamente
@@ -307,14 +314,15 @@ setInterval(async () => {
 
 ### Agregador (Pluggy)
 
-| Tier | Usuários | Custo/mês | Custo/usuário |
-|------|----------|-----------|---------------|
-| **Starter** | Até 50 | Grátis | R$ 0 |
-| **Growth** | 50-500 | R$ 150 | R$ 0,30 |
-| **Scale** | 500-5000 | R$ 750 | R$ 0,15 |
-| **Enterprise** | 5000+ | Custom | R$ 0,10 |
+| Tier           | Usuários | Custo/mês | Custo/usuário |
+| -------------- | -------- | --------- | ------------- |
+| **Starter**    | Até 50   | Grátis    | R$ 0          |
+| **Growth**     | 50-500   | R$ 150    | R$ 0,30       |
+| **Scale**      | 500-5000 | R$ 750    | R$ 0,15       |
+| **Enterprise** | 5000+    | Custom    | R$ 0,10       |
 
 **Exemplo:**
+
 - 200 usuários ativos
 - 50% conectam banco (100 usuários)
 - Custo: R$ 150/mês = **R$ 1,50 por usuário que conectou**
@@ -366,6 +374,7 @@ setInterval(async () => {
 ## 🚀 ROADMAP DE IMPLEMENTAÇÃO
 
 ### Fase 1: MVP (2-3 semanas)
+
 ```
 ✅ Conta no Pluggy
 ✅ Edge Function backend
@@ -376,6 +385,7 @@ setInterval(async () => {
 ```
 
 ### Fase 2: Automação (1-2 semanas)
+
 ```
 ✅ Webhook setup
 ✅ Sincronização automática
@@ -384,6 +394,7 @@ setInterval(async () => {
 ```
 
 ### Fase 3: Avançado (2-4 semanas)
+
 ```
 ✅ Iniciar pagamentos PIX
 ✅ Agendar pagamentos
@@ -455,14 +466,14 @@ export function ConnectBankPage() {
   return (
     <div>
       <h1>Conectar Banco via Open Finance</h1>
-      
-      <BankConnectionButton 
+
+      <BankConnectionButton
         onConnect={(itemId) => {
           // Salvar no banco
           // Iniciar primeira sincronização
         }}
       />
-      
+
       <ConnectedBanksList />
     </div>
   )
@@ -482,12 +493,14 @@ export function ConnectBankPage() {
 **Implementar em 2 fases:**
 
 **Fase 1 - MVP (Próxima release v1.6.0.0):**
+
 - Adicionar campos bancários em accounts ✅ (já feito nesta v1.5.0.3)
 - Criar conta no Pluggy
 - Implementar conexão básica
 - Sincronização manual
 
 **Fase 2 - Produção (v1.7.0.0 ou v2.0.0.0):**
+
 - Webhooks automáticos
 - Categorização inteligente
 - Múltiplas contas
@@ -517,6 +530,7 @@ export function ConnectBankPage() {
 ✅ **PRONTO PARA PRÓXIMA FASE**
 
 📚 **Referências:**
+
 - Banco Central: https://openbankingbrasil.org.br
 - Pluggy: https://pluggy.ai
 - Belvo: https://belvo.com

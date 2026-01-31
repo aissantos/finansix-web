@@ -13,72 +13,34 @@ export interface ParseResult {
   transactions: ParsedTransaction[];
   totalAmount?: number;
   dueDate?: string; // YYYY-MM-DD
-  closingDate?: string; // YYYY-MM-DD
+  minimumPayment?: number;
   rawText: string;
 }
 
 /**
- * Extracts text from a PDF file.
- * Handles password-protected files if password is provided.
- */
-export async function extractTextFromPDF(
-  file: File, 
-  password?: string
-): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  
-  try {
-    const loadingTask = pdfjsLib.getDocument({
-      data: arrayBuffer,
-      password: password,
-    });
-
-    const pdf = await loadingTask.promise;
-    let fullText = '';
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item) => {
-          const textItem = item as { str: string; hasEOL: boolean };
-          if ('str' in textItem) {
-             return textItem.str + (textItem.hasEOL ? '\n' : ' ');
-          }
-          return '';
-        })
-        .join('');
-      fullText += pageText + '\n';
-    }
-
-    return fullText;
-  } catch (error: unknown) {
-    if (error instanceof Error && error.name === 'PasswordException') {
-      throw new Error('PASSWORD_REQUIRED');
-    }
-    // Also check for object-like error with name property (common in pdfjs)
-    if (typeof error === 'object' && error !== null && 'name' in error && (error as { name: string }).name === 'PasswordException') {
-       throw new Error('PASSWORD_REQUIRED');
-    }
-    throw error;
-  }
-}
-
-/**
- * Basic regex parser for Brazilian credit card invoices.
- * Tries to find dates (DD/MM), descriptions and amounts (R$ X,XX).
+ * Parses text from Brazilian credit card invoices.
+ * Extracts: 
+ * - Transactions (Date, Description, Amount)
+ * - Metadata (Due Date, Total Amount, Minimum Payment)
  */
 export function parseInvoiceText(text: string): ParseResult {
   const transactions: ParsedTransaction[] = [];
   const lines = text.split('\n');
 
-  // Regex for DD/MM or DD/MM/YYYY
-  const dateSlashRegex = /(\d{2})\/(\d{2})(?:\/(\d{2,4}))?/;
+  // Metadata Regexes
+  // Vencimento: supports "Vencimento 10/05", "Vencimento: 10/05/2026"
+  const dueDateRegex = /(?:Vencimento|Vence|Vencer)[\s\S]{0,20}?(\d{2}\/\d{2}(?:\/\d{2,4})?)/i;
   
-  // Regex for DD MMM (Nubank format: 03 FEV)
-  const dateMonthNameRegex = /(\d{2})\s+(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)/i;
+  // Total: supports "Total da fatura R$ 1.200,00", "Total R$ 1.200,00"
+  const totalAmountRegex = /(?:Total(?: da fatura)?|Valor total)[\s\S]{0,20}?(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+  
+  // Min Payment: supports "Pagamento mínimo R$ 100,00", "Mínimo R$ 100,00"
+  const minPaymentRegex = /(?:Pagamento m[ií]nimo|M[ií]nimo)[\s\S]{0,20}?(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/i;
 
-  // Regex for currency R$ 1.234,56 or 1234,56
+  // Transaction Regexes
+  const dateSlashRegex = /(\d{2})\/(\d{2})(?:\/(\d{2,4}))?/;
+  // Nubank format: 03 FEV
+  const dateMonthNameRegex = /(\d{2})\s+(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)/i;
   const amountRegex = /(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/;
 
   const monthMap: Record<string, string> = {
@@ -86,13 +48,47 @@ export function parseInvoiceText(text: string): ParseResult {
     'JUL': '07', 'AGO': '08', 'SET': '09', 'OUT': '10', 'NOV': '11', 'DEZ': '12'
   };
 
-  // Helper to parse amount string to number
   const parseAmount = (str: string) => {
     return parseFloat(str.replace(/\./g, '').replace(',', '.'));
   };
 
   const currentYear = new Date().getFullYear();
+  const metadataFound = {
+    dueDate: '',
+    totalAmount: 0,
+    minimumPayment: 0
+  };
 
+  // First pass: Metadata extraction (usually in header/footer)
+  // We scan the first and last 20 lines for better performance and accuracy
+  const headerLines = lines.slice(0, 30).join('\n'); // Increased to 30 to catch Nubank header
+  const footerLines = lines.slice(-20).join('\n');
+  const metadataText = headerLines + '\n' + footerLines;
+
+  const dueDateMatch = metadataText.match(dueDateRegex);
+  if (dueDateMatch) {
+    const parts = dueDateMatch[1].split('/');
+    const day = parts[0];
+    const month = parts[1];
+    // If year is missing, assume current year. If 2 digit year, add 20 prefix.
+    let year = parts[2];
+    if (!year) year = String(currentYear);
+    else if (year.length === 2) year = '20' + year;
+    
+    metadataFound.dueDate = `${year}-${month}-${day}`;
+  }
+
+  const totalMatch = metadataText.match(totalAmountRegex);
+  if (totalMatch) {
+    metadataFound.totalAmount = parseAmount(totalMatch[1]);
+  }
+
+  const minMatch = metadataText.match(minPaymentRegex);
+  if (minMatch) {
+    metadataFound.minimumPayment = parseAmount(minMatch[1]);
+  }
+
+  // Second pass: Transactions
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     let day = '';
@@ -114,8 +110,6 @@ export function parseInvoiceText(text: string): ParseResult {
       matchedDateStr = dateSlashMatch[0];
       isDateAtStart = true;
     } else if (dateMonthMatch) {
-       // For MMM format, check if it's at start (ignoring small whitespace)
-       // The regex finds it anywhere, let's verfiy index valid for start
        if (line.trim().indexOf(dateMonthMatch[0]) === 0) {
          day = dateMonthMatch[1];
          const monthName = dateMonthMatch[2].toUpperCase();
@@ -129,10 +123,8 @@ export function parseInvoiceText(text: string): ParseResult {
        let amountMatch = line.match(amountRegex);
        let isMultiLine = false;
 
-       // If no amount on this line, check next line
        if (!amountMatch && i + 1 < lines.length) {
          const nextLine = lines[i + 1];
-         // Ensure next line is not a new transaction start
          const nextLineHasDate = (nextLine.match(dateSlashRegex)?.index === 0) || 
                                  (nextLine.match(dateMonthNameRegex) && nextLine.trim().indexOf(nextLine.match(dateMonthNameRegex)![0]) === 0);
          
@@ -141,25 +133,18 @@ export function parseInvoiceText(text: string): ParseResult {
             if (nextLineAmountMatch) {
               amountMatch = nextLineAmountMatch;
               isMultiLine = true;
-              // We don't advance i here automatically because we only wanted the amount. 
-              // Usually the next line shouldn't be processed as its own transaction if it has no date.
             }
          }
        }
 
        if (amountMatch) {
-          // Formatting date YYYY-MM-DD
           const date = `${year}-${month}-${day}`;
           const amountStr = amountMatch[1];
           const amount = parseAmount(amountStr);
 
-          // Description extraction
-          // If multi-line, description is primarily on the first line.
-          // We might ignore the text on the second line if it looks like metadata (e.g. "Total a pagar")
           let description = line;
           
           if (!isMultiLine) {
-             // Remove amount from description if it was on the same line
              description = description.replace(amountMatch[0], '');
           }
 
@@ -168,13 +153,13 @@ export function parseInvoiceText(text: string): ParseResult {
             .replace('R$', '')
             .trim();
           
-          // Clean up extra spaces/chars
           description = description.replace(/^\s*-\s*/, ''); 
           description = description.replace(/^[•.]+\s*\d+\s+/, '');
           
           // Filter out likely headers/footers
           if (description.toUpperCase().includes('TOTAL')) continue;
           if (description.toUpperCase().includes('PAGAMENTO')) continue;
+          if (description.toUpperCase().includes('SALDO')) continue;
 
           if (description.length > 2 && amount > 0) {
              transactions.push({
@@ -189,6 +174,9 @@ export function parseInvoiceText(text: string): ParseResult {
 
   return {
     transactions,
+    totalAmount: metadataFound.totalAmount > 0 ? metadataFound.totalAmount : undefined,
+    dueDate: metadataFound.dueDate || undefined,
+    minimumPayment: metadataFound.minimumPayment > 0 ? metadataFound.minimumPayment : undefined,
     rawText: text
   };
 }

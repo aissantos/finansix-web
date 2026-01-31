@@ -5,7 +5,9 @@ import {
   AlertCircle, 
   Loader2, 
   Lock, 
-  Calendar
+  Calendar,
+  AlertTriangle,
+  ArrowRight
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,7 @@ import { useCreditCard, useUpdateCreditCard, useCategories, useRecentTransaction
 import { predictCategory } from '@/lib/category-predictor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tag } from 'lucide-react';
+import { addDays, format } from 'date-fns';
 
 type ParsedTransactionWithCategory = ParsedTransaction & {
   categoryId?: string;
@@ -46,12 +49,25 @@ export function InvoiceImportModal({
   const { data: categories = [] } = useCategories('expense');
   const { data: recentTransactions = [] } = useRecentTransactions(100);
 
-  const [step, setStep] = useState<'upload' | 'password' | 'review' | 'importing'>('upload');
+  const [step, setStep] = useState<'upload' | 'password' | 'summary' | 'review' | 'importing'>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState('');
   const [savePassword, setSavePassword] = useState(false);
+  
+  // Data State
   const [transactions, setTransactions] = useState<ParsedTransactionWithCategory[]>([]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  
+  // Metadata State
+  const [extractedTotal, setExtractedTotal] = useState<number>(0);
+  const [extractedMinPayment, setExtractedMinPayment] = useState<number>(0);
+  const [dueDate, setDueDate] = useState<string>('');
+  
+  // User Choices
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [schedulePayment, setSchedulePayment] = useState<boolean>(true);
+
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +80,8 @@ export function InvoiceImportModal({
     setFile(null);
     setPassword('');
     setTransactions([]);
+    setExtractedTotal(0);
+    setDueDate('');
     setError(null);
     onClose();
   };
@@ -97,6 +115,7 @@ export function InvoiceImportModal({
         return;
       }
 
+      // Process Transactions
       setTransactions(result.transactions.map(t => {
         const prediction = predictCategory(t.description, categories, recentTransactions);
         return {
@@ -105,9 +124,20 @@ export function InvoiceImportModal({
           predictionReason: prediction.reason
         };
       }));
+      
       // Select all by default
       setSelectedIndices(new Set(result.transactions.map((_, i) => i)));
-      setStep('review');
+
+      // Process Metadata
+      setExtractedTotal(result.totalAmount || 0);
+      setExtractedMinPayment(result.minimumPayment || 0);
+      setDueDate(result.dueDate || format(addDays(new Date(), 10), 'yyyy-MM-dd')); // Default to 10 days from now if not found
+      
+      // Default user choices
+      setPaymentAmount(result.totalAmount || result.transactions.reduce((acc, t) => acc + t.amount, 0));
+      setSchedulePayment(true);
+
+      setStep('summary'); // Go to summary first
       
       // If we used a manual password and user wants to save
       if (manualPassword && savePassword) {
@@ -157,6 +187,10 @@ export function InvoiceImportModal({
     setSelectedIndices(newSelected);
   };
 
+  const calculateSum = () => {
+    return transactions.reduce((sum, t) => sum + t.amount, 0);
+  };
+
   const handleImport = async () => {
     if (!card) return;
     
@@ -166,8 +200,8 @@ export function InvoiceImportModal({
     try {
       const selectedTransactions = transactions.filter((_, i) => selectedIndices.has(i));
       
-      if (selectedTransactions.length === 0) {
-        toast({ title: 'Nenhuma transação selecionada', variant: 'destructive' });
+      if (selectedTransactions.length === 0 && !schedulePayment) {
+        toast({ title: 'Nenhuma transação selecionada', description: 'Selecione transações ou agende o pagamento.', variant: 'destructive' });
         setStep('review');
         setIsLoading(false);
         return;
@@ -175,12 +209,10 @@ export function InvoiceImportModal({
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not found');
-
-      if (!user) throw new Error('User not found');
       if (!household) throw new Error('Household not found');
 
-      // Create transactions in batch
-      // Note: This matches the structure used in CardDetailPage manual add
+      // 1. Create Expense Transactions
+      // Using proper types for insert
       const transactionsToInsert = selectedTransactions.map(t => ({
         household_id: household.id,
         credit_card_id: creditCardId,
@@ -192,6 +224,20 @@ export function InvoiceImportModal({
         status: 'completed' as const,
       }));
 
+      // 2. Create Bill Payment Transaction (if requested)
+      if (schedulePayment) {
+        transactionsToInsert.push({
+          household_id: household.id,
+          credit_card_id: creditCardId,
+          type: 'expense' as const,
+          amount: paymentAmount, // Use user chosen amount (Total, Min, or Custom)
+          description: `Pagamento Fatura ${card.name} (Venc: ${format(new Date(dueDate), 'dd/MM')})`,
+          transaction_date: dueDate, // Scheduled date
+          category_id: undefined, // Or a specific "Credit Card Payment" category if exists
+          status: 'pending' as const, // "A Vencer"
+        });
+      }
+
       const { error } = await supabase
         .from('transactions')
         .insert(transactionsToInsert);
@@ -200,7 +246,7 @@ export function InvoiceImportModal({
 
       toast({
         title: 'Importação concluída!',
-        description: `${selectedTransactions.length} despesas importadas com sucesso.`,
+        description: `${selectedTransactions.length} despesas importadas. ${schedulePayment ? 'Pagamento agendado.' : ''}`,
         variant: 'success'
       });
 
@@ -219,6 +265,10 @@ export function InvoiceImportModal({
       setIsLoading(false);
     }
   };
+
+  const transactionsSum = calculateSum();
+  const diff = extractedTotal ? Math.abs(extractedTotal - transactionsSum) : 0;
+  const hasSignificantDiff = diff > 0.1; // tolerance for floating point
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -279,14 +329,15 @@ export function InvoiceImportModal({
         {step === 'password' && (
           <form onSubmit={handlePasswordSubmit} className="py-8 px-4">
             <div className="flex flex-col items-center max-w-sm mx-auto">
-              <div className="h-12 w-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-4">
+              {/* Password content same as before ... */}
+               <div className="h-12 w-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-4">
                 <Lock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                 Arquivo Protegido
               </h3>
               <p className="text-sm text-slate-500 mb-6 text-center">
-                Este PDF requer uma senha para ser aberto. Normalmente são os primeiros dígitos do CPF.
+                Este PDF requer uma senha. Normalmente os primeiros dígitos do CPF/CNPJ.
               </p>
 
               <div className="w-full space-y-4">
@@ -330,12 +381,128 @@ export function InvoiceImportModal({
           </form>
         )}
 
+        {step === 'summary' && (
+          <div className="flex flex-col gap-6 py-4 px-2 overflow-y-auto">
+            
+            {/* 1. Comparison Card */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+               <h4 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                 <AlertTriangle className={`h-4 w-4 ${hasSignificantDiff ? 'text-amber-500' : 'text-slate-400'}`} />
+                 Resumo e Reconciliação
+               </h4>
+               
+               <div className="grid grid-cols-2 gap-4">
+                 <div>
+                   <p className="text-xs text-slate-500 mb-1">Total na Fatura (PDF)</p>
+                   <p className="font-mono font-bold text-lg text-slate-900 dark:text-white">
+                     {extractedTotal ? formatCurrency(extractedTotal) : 'Não detectado'}
+                   </p>
+                 </div>
+                 <div>
+                   <p className="text-xs text-slate-500 mb-1">Soma das Transações</p>
+                   <p className="font-mono font-bold text-lg text-slate-900 dark:text-white">
+                     {formatCurrency(transactionsSum)}
+                   </p>
+                 </div>
+               </div>
+
+               {hasSignificantDiff && extractedTotal > 0 && (
+                 <div className="mt-3 text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 p-2 rounded-lg">
+                   Diferença de <strong>{formatCurrency(diff)}</strong> detectada. Verifique se alguma transação não foi lida corretamente.
+                 </div>
+               )}
+            </div>
+
+            {/* 2. Payment Scheduling Options */}
+            <div className="space-y-4">
+               <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="schedule-payment" 
+                    checked={schedulePayment}
+                    onCheckedChange={(c) => setSchedulePayment(!!c)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="schedule-payment"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Agendar pagamento da fatura ("A Vencer")
+                    </label>
+                    <p className="text-xs text-slate-500">
+                      Cria uma despesa pendente para a data de vencimento.
+                    </p>
+                  </div>
+               </div>
+
+               {schedulePayment && (
+                 <div className="pl-6 space-y-4 border-l-2 border-slate-100 dark:border-slate-800 ml-2">
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            Data de Vencimento
+                          </label>
+                          <Input 
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            Valor do Pagamento
+                          </label>
+                          {/* Payment Amount Choice */}
+                          <div className="flex flex-col gap-2">
+                             <Input 
+                                type="number"
+                                value={paymentAmount}
+                                onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                                step="0.01"
+                             />
+                             {extractedMinPayment > 0 && (
+                               <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-6 text-[10px]"
+                                    onClick={() => setPaymentAmount(extractedMinPayment)}
+                                  >
+                                    Mínimo: {formatCurrency(extractedMinPayment)}
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-6 text-[10px]"
+                                    onClick={() => setPaymentAmount(extractedTotal || transactionsSum)}
+                                  >
+                                    Total
+                                  </Button>
+                               </div>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+               )}
+            </div>
+
+            <div className="flex justify-end pt-4">
+               <Button onClick={() => setStep('review')}>
+                 Revisar Transações <ArrowRight className="h-4 w-4 ml-2" />
+               </Button>
+            </div>
+          </div>
+        )}
+
         {step === 'review' && (
           <div className="flex flex-col h-full flex-1 min-h-0">
-             <div className="mb-4">
+             <div className="mb-4 flex items-center justify-between">
                <p className="text-sm text-slate-500">
-                 Encontramos <strong>{transactions.length}</strong> transações. Selecione as que deseja importar.
+                 Selecione as transações para importar.
                </p>
+               <Button variant="ghost" size="sm" onClick={() => setStep('summary')}>
+                 Voltar ao Resumo
+               </Button>
              </div>
 
              <div className="flex-1 overflow-y-auto border rounded-xl bg-slate-50 dark:bg-slate-800/50 min-h-0">
@@ -407,7 +574,7 @@ export function InvoiceImportModal({
 
              <div className="pt-4 mt-auto border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 bg-white dark:bg-slate-900">
                 <div className="text-sm">
-                  <span className="text-slate-500">Total Selecionado: </span>
+                  <span className="text-slate-500">Total: </span>
                   <span className="font-bold text-slate-900 dark:text-white">
                     {formatCurrency(
                       transactions
@@ -422,7 +589,7 @@ export function InvoiceImportModal({
                   </Button>
                   <Button onClick={handleImport} isLoading={isLoading}>
                     <Check className="h-4 w-4 mr-2" />
-                    Importar {selectedIndices.size} Itens
+                    Importar (+Recibo)
                   </Button>
                 </div>
              </div>
