@@ -7,7 +7,8 @@ import {
   Lock, 
   Calendar,
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  Tag
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,6 @@ import { useToast } from '@/hooks/useToast';
 import { useCreditCard, useUpdateCreditCard, useCategories, useRecentTransactions, useHousehold } from '@/hooks';
 import { predictCategory } from '@/lib/category-predictor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tag } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 
 type ParsedTransactionWithCategory = ParsedTransaction & {
@@ -67,7 +67,6 @@ export function InvoiceImportModal({
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [schedulePayment, setSchedulePayment] = useState<boolean>(true);
 
-
   // Manual Transaction State
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualDescription, setManualDescription] = useState('');
@@ -79,7 +78,7 @@ export function InvoiceImportModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ... (reset handleClose)
+  // Reset state when closing/opening
   const handleClose = () => {
     if (step === 'importing') return;
     setStep('upload');
@@ -96,7 +95,110 @@ export function InvoiceImportModal({
     onClose();
   };
 
-  // ... (existing functions)
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile.type !== 'application/pdf') {
+        setError('Por favor, selecione um arquivo PDF.');
+        return;
+      }
+      setFile(selectedFile);
+      processFile(selectedFile);
+    }
+  };
+
+  const processFile = async (pdfFile: File, manualPassword?: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Try with stored password first if available and no manual password provided
+      const passwordToUse = manualPassword ?? card?.pdf_password ?? undefined;
+      
+      const text = await extractTextFromPDF(pdfFile, passwordToUse);
+      const result = parseInvoiceText(text);
+      
+      if (result.transactions.length === 0) {
+        setError('Nenhuma transação encontrada. O formato da fatura pode não ser suportado.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Process Transactions
+      setTransactions(result.transactions.map(t => {
+        const prediction = predictCategory(t.description, categories, recentTransactions);
+        return {
+          ...t,
+          categoryId: prediction.categoryId,
+          predictionReason: prediction.reason
+        };
+      }));
+      
+      // Select all by default
+      setSelectedIndices(new Set(result.transactions.map((_, i) => i)));
+
+      // Process Metadata
+      setExtractedTotal(result.totalAmount || 0);
+      setExtractedMinPayment(result.minimumPayment || 0);
+      setDueDate(result.dueDate || format(addDays(new Date(), 10), 'yyyy-MM-dd')); // Default to 10 days from now if not found
+      
+      // Default user choices
+      setPaymentAmount(result.totalAmount || result.transactions.reduce((acc, t) => acc + t.amount, 0));
+      setSchedulePayment(true);
+
+      setStep('summary'); // Go to summary first
+      
+      // If we used a manual password and user wants to save
+      if (manualPassword && savePassword) {
+        updateCard({
+          id: creditCardId,
+          data: { pdf_password: manualPassword }
+        });
+      }
+
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      if (errorMessage === 'PASSWORD_REQUIRED') {
+        setStep('password');
+        // If we tried automatically and failed, clear the stored password attempt
+        if (!manualPassword && card?.pdf_password) {
+           setError('A senha salva não funcionou. Por favor, digite a senha.');
+        }
+      } else {
+        console.error(err);
+        setError('Erro ao processar o arquivo. Tente novamente.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (file && password) {
+      processFile(file, password);
+    }
+  };
+
+  const updateCategory = (index: number, categoryId: string) => {
+    setTransactions(prev => prev.map((t, i) => 
+      i === index ? { ...t, categoryId } : t
+    ));
+  };
+
+  const toggleSelection = (index: number) => {
+    const newSelected = new Set(selectedIndices);
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    setSelectedIndices(newSelected);
+  };
+
+  const calculateSum = () => {
+    return transactions.reduce((sum, t) => sum + t.amount, 0);
+  };
 
   const handleAddManualTransaction = () => {
     if (!manualDescription || !manualAmount || !manualDate) return;
@@ -121,6 +223,86 @@ export function InvoiceImportModal({
     setShowManualInput(false);
   };
 
+  const handleImport = async () => {
+    if (!card) return;
+    
+    setIsLoading(true);
+    setStep('importing');
+
+    try {
+      const selectedTransactions = transactions.filter((_, i) => selectedIndices.has(i));
+      
+      if (selectedTransactions.length === 0 && !schedulePayment) {
+        toast({ title: 'Nenhuma transação selecionada', description: 'Selecione transações ou agende o pagamento.', variant: 'destructive' });
+        setStep('review');
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not found');
+      if (!household) throw new Error('Household not found');
+
+      // 1. Create Expense Transactions
+      // Using proper types for insert
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const transactionsToInsert: any[] = selectedTransactions.map(t => ({
+        household_id: household.id,
+        credit_card_id: creditCardId,
+        type: 'expense' as const,
+        amount: t.amount,
+        description: t.description,
+        transaction_date: t.date,
+        category_id: t.categoryId,
+        status: 'completed' as const,
+      }));
+
+      // 2. Create Bill Payment Transaction (if requested)
+      if (schedulePayment) {
+        transactionsToInsert.push({
+          household_id: household.id,
+          credit_card_id: creditCardId,
+          type: 'expense' as const,
+          amount: paymentAmount, // Use user chosen amount (Total, Min, or Custom)
+          description: `Pagamento Fatura ${card.name} (Venc: ${format(new Date(dueDate), 'dd/MM')})`,
+          transaction_date: dueDate, // Scheduled date
+          category_id: undefined, // Or a specific "Credit Card Payment" category if exists
+          status: 'pending' as const, // "A Vencer"
+        });
+      }
+
+      const { error } = await supabase
+        .from('transactions')
+        .insert(transactionsToInsert);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Importação concluída!',
+        description: `${selectedTransactions.length} despesas importadas. ${schedulePayment ? 'Pagamento agendado.' : ''}`,
+        variant: 'success'
+      });
+
+      onSuccess();
+      handleClose();
+
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Erro na importação',
+        description: 'Ocorreu um erro ao salvar as transações.',
+        variant: 'destructive'
+      });
+      setStep('review');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const transactionsSum = calculateSum();
+  const diff = extractedTotal ? Math.abs(extractedTotal - transactionsSum) : 0;
+  const hasSignificantDiff = diff > 0.1; // tolerance for floating point
+
   const selectedTotal = transactions
     .filter((_, i) => selectedIndices.has(i))
     .reduce((sum, t) => sum + t.amount, 0);
@@ -132,7 +314,6 @@ export function InvoiceImportModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* ... (Header) */}
         <DialogHeader>
           <DialogTitle>Importar Fatura (PDF)</DialogTitle>
           <DialogDescription className="text-slate-500">
@@ -140,7 +321,6 @@ export function InvoiceImportModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* ... (step === 'upload' && ...) */}
         {step === 'upload' && (
           <div className="flex flex-col items-center justify-center py-12 px-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50">
             {isLoading ? (
@@ -187,18 +367,19 @@ export function InvoiceImportModal({
           </div>
         )}
 
-        {/* ... (step === 'password' && ...) */}
         {step === 'password' && (
           <form onSubmit={handlePasswordSubmit} className="py-8 px-4">
-             {/* ... same implementation ... */}
-             <div className="flex flex-col items-center max-w-sm mx-auto">
+            <div className="flex flex-col items-center max-w-sm mx-auto">
                <div className="h-12 w-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-4">
                 <Lock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                 Arquivo Protegido
               </h3>
-               {/* ... */}
+              <p className="text-sm text-slate-500 mb-6 text-center">
+                Este PDF requer uma senha. Normalmente os primeiros dígitos do CPF/CNPJ.
+              </p>
+
               <div className="w-full space-y-4">
                 <Input
                   type="password"
@@ -208,34 +389,48 @@ export function InvoiceImportModal({
                   className="text-center tracking-widest"
                   autoFocus
                 />
-                {/* ... */}
+                
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="save-pwd" 
                     checked={savePassword}
                     onCheckedChange={(c) => setSavePassword(!!c)}
                   />
-                  <label htmlFor="save-pwd" className="text-sm font-medium leading-none">
+                  <label
+                    htmlFor="save-pwd"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     Salvar senha para este cartão
                   </label>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={!password || isLoading} isLoading={isLoading}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={!password || isLoading}
+                  isLoading={isLoading}
+                >
                   Abrir Fatura
                 </Button>
-                {error && <p className="text-xs text-expense text-center">{error}</p>}
+                
+                {error && (
+                  <p className="text-xs text-expense text-center">{error}</p>
+                )}
               </div>
             </div>
           </form>
         )}
 
-        {/* ... (step === 'summary' && ...) */}
         {step === 'summary' && (
-          // ... same implementation ...
           <div className="flex flex-col gap-6 py-4 px-2 overflow-y-auto">
-            {/* ... Comparison Card & Payment Options ... */}
-             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-               {/* ... */}
+            
+            {/* 1. Comparison Card */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+               <h4 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                 <AlertTriangle className={`h-4 w-4 ${hasSignificantDiff ? 'text-amber-500' : 'text-slate-400'}`} />
+                 Resumo e Reconciliação
+               </h4>
+               
                <div className="grid grid-cols-2 gap-4">
                  <div>
                    <p className="text-xs text-slate-500 mb-1">Total na Fatura (PDF)</p>
@@ -250,11 +445,16 @@ export function InvoiceImportModal({
                    </p>
                  </div>
                </div>
-               {/* ... */}
+
+               {hasSignificantDiff && extractedTotal > 0 && (
+                 <div className="mt-3 text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 p-2 rounded-lg">
+                   Diferença de <strong>{formatCurrency(diff)}</strong> detectada. Verifique se alguma transação não foi lida corretamente.
+                 </div>
+               )}
             </div>
 
+            {/* 2. Payment Scheduling Options */}
             <div className="space-y-4">
-                {/* ... Payment Scheduling Options ... */}
                <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="schedule-payment" 
@@ -262,7 +462,10 @@ export function InvoiceImportModal({
                     onCheckedChange={(c) => setSchedulePayment(!!c)}
                   />
                   <div className="grid gap-1.5 leading-none">
-                    <label htmlFor="schedule-payment" className="text-sm font-medium leading-none">
+                    <label
+                      htmlFor="schedule-payment"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
                       Agendar pagamento da fatura ("A Vencer")
                     </label>
                     <p className="text-xs text-slate-500">
@@ -270,33 +473,57 @@ export function InvoiceImportModal({
                     </p>
                   </div>
                </div>
-                
-                {schedulePayment && (
-                   <div className="pl-6 space-y-4 border-l-2 border-slate-100 dark:border-slate-800 ml-2">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Data de Vencimento</label>
-                          <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                           <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Valor do Pagamento</label>
-                           <div className="flex flex-col gap-2">
-                             <Input type="number" value={paymentAmount} onChange={(e) => setPaymentAmount(Number(e.target.value))} step="0.01" />
+
+               {schedulePayment && (
+                 <div className="pl-6 space-y-4 border-l-2 border-slate-100 dark:border-slate-800 ml-2">
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            Data de Vencimento
+                          </label>
+                          <Input 
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            Valor do Pagamento
+                          </label>
+                          {/* Payment Amount Choice */}
+                          <div className="flex flex-col gap-2">
+                             <Input 
+                                type="number"
+                                value={paymentAmount}
+                                onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                                step="0.01"
+                             />
                              {extractedMinPayment > 0 && (
                                <div className="flex gap-2">
-                                  <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setPaymentAmount(extractedMinPayment)}>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-6 text-[10px]"
+                                    onClick={() => setPaymentAmount(extractedMinPayment)}
+                                  >
                                     Mínimo: {formatCurrency(extractedMinPayment)}
                                   </Button>
-                                  <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setPaymentAmount(extractedTotal || transactionsSum)}>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-6 text-[10px]"
+                                    onClick={() => setPaymentAmount(extractedTotal || transactionsSum)}
+                                  >
                                     Total
                                   </Button>
                                </div>
                              )}
-                           </div>
-                        </div>
-                      </div>
-                   </div>
-                )}
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+               )}
             </div>
 
             <div className="flex justify-end pt-4">
