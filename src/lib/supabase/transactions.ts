@@ -151,6 +151,9 @@ export async function createTransaction(
     current_installment: transaction.current_installment || null,
   };
 
+  // Debug payload
+  console.log('[createTransaction] Payload:', insertData);
+
   const { data, error } = await supabase
     .from('transactions')
     .insert(insertData)
