@@ -461,6 +461,94 @@ export default function CardDetailPage() {
           </div>
         </Card>
 
+        {/* Closed Bill (Waiting Payment) */}
+        {(() => {
+          // Calculate previous closing date to find closed but unpaid bills
+          const previousClosingDate = addMonths(closingDate, -1);
+          const previousTargetMonthStr = format(previousClosingDate, 'yyyy-MM');
+          
+          const closedBillInstallments = cardInstallments.filter(i => {
+            const startOfBillingMonth = i.billing_month ? i.billing_month.substring(0, 7) : '';
+            return startOfBillingMonth === previousTargetMonthStr && i.status === 'pending';
+          });
+          
+          if (closedBillInstallments.length === 0) return null;
+          
+          const closedBillTotal = closedBillInstallments.reduce((sum, i) => sum + i.amount, 0);
+          
+          return (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-red-600 dark:text-red-400">
+                  Fatura Fechada
+                </h3>
+                <Badge variant="destructive" className="font-mono">
+                  Vence {format(previousClosingDate.getDate() > (card?.due_day || 1) 
+                    ? addMonths(new Date(previousClosingDate.getFullYear(), previousClosingDate.getMonth(), card?.due_day), 1) 
+                    : new Date(previousClosingDate.getFullYear(), previousClosingDate.getMonth(), card?.due_day), "dd/MM")}
+                </Badge>
+              </div>
+
+              <Card className="p-5 mb-3 border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-xs text-red-600/80 dark:text-red-400/80 font-medium mb-1">
+                      Total a Pagar
+                    </p>
+                    <p className="text-2xl font-extrabold text-red-700 dark:text-red-400">
+                      {formatCurrency(closedBillTotal)}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="destructive"
+                    className="rounded-full shadow-md"
+                    onClick={() => {
+                        // TODO: Implement Pay Invoice flow (Mark as Paid)
+                        // For now, guide user or open a specific payment modal
+                        // Or auto-create the payment transaction if confirmed
+                        toast({ title: 'Marcar como paga?', description: 'Funcionalidade em desenvolvimento. Use "Adicionar" para registrar o pagamento manualmente.' })
+                    }}
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Pagar
+                  </Button>
+                </div>
+                
+                <p className="text-xs text-red-600/70 dark:text-red-400/70 mb-4 px-1">
+                  Esta fatura já fechou e aguarda pagamento.
+                </p>
+
+                <div className="space-y-2">
+                  {closedBillInstallments.map((inst) => (
+                    <InstallmentCard
+                      key={inst.id}
+                      installment={inst}
+                      onEdit={() => navigate(`/transactions/${inst.transaction_id}/edit`)}
+                      onDelete={async () => {
+                        if (confirm('Excluir esta parcela e todas as seguintes?')) {
+                          // ... same delete logic ...
+                          try {
+                            const { error } = await supabase
+                              .from('transactions')
+                              .update({ deleted_at: new Date().toISOString() })
+                              .eq('id', inst.transaction_id);
+                            if (error) throw error;
+                            toast({ title: '✅ Compra excluída' });
+                            queryClient.invalidateQueries({ queryKey: ['installments'] });
+                            queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+                          } catch (error) {
+                            console.error(error);
+                          }
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              </Card>
+            </div>
+          );
+        })()}
+
         {/* Current Bill */}
         <div>
           <div className="flex items-center justify-between mb-4">
