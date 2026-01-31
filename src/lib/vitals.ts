@@ -22,8 +22,22 @@ export function reportWebVitals(onPerfEntry?: (metric: Metric) => void) {
 }
 
 export function sendToAnalytics(metric: Metric) {
+  const analyticsId = import.meta.env.VITE_ANALYTICS_ID;
+  
+  // Also log to console in development and skip sending to server
+  if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log('[Web Vitals]', metric);
+      return;
+  }
+
+  // If no analytics ID is configured, do not send
+  if (!analyticsId) {
+    return;
+  }
+
   const body = JSON.stringify({
-    dsn: import.meta.env.VITE_ANALYTICS_ID || 'test-analytics-id',
+    dsn: analyticsId,
     id: metric.id,
     page: window.location.pathname,
     href: window.location.href,
@@ -31,13 +45,6 @@ export function sendToAnalytics(metric: Metric) {
     value: metric.value.toString(),
     speed: getConnectionSpeed(),
   });
-
-  // Also log to console in development and skip sending to server
-  if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      console.log('[Web Vitals]', metric);
-      return;
-  }
 
   if (navigator.sendBeacon) {
     navigator.sendBeacon(vitalsUrl, body);
