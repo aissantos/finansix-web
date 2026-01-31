@@ -876,7 +876,7 @@ function ClosedInvoiceSection({
         <h3 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
            Fatura Fechada
         </h3>
-        <Badge variant="destructive" className="font-mono">
+        <Badge variant="danger" className="font-mono">
           Vence {format(closingDate.getDate() > (dueDay || 1) 
             ? addMonths(new Date(closingDate.getFullYear(), closingDate.getMonth(), dueDay || 1), 1) 
             : new Date(closingDate.getFullYear(), closingDate.getMonth(), dueDay || 1), "dd/MM")}
