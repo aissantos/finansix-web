@@ -33,6 +33,7 @@ import { format, addMonths, differenceInDays, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { Icon } from '@/components/ui/icon';
 import { InvoiceImportModal } from '@/components/features/InvoiceImportModal';
 
 export default function CardDetailPage() {
@@ -787,7 +788,11 @@ function InstallmentCard({
     <Card className="p-4">
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 text-lg">
-           {category?.icon ? <span className="text-lg">{category.icon}</span> : <ShoppingCart className="h-5 w-5 text-slate-600 dark:text-slate-400" />}
+           {category?.icon ? (
+             <Icon name={category.icon} className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+           ) : (
+             <ShoppingCart className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+           )}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
