@@ -90,7 +90,9 @@ export function parseInvoiceText(text: string): ParseResult {
 
   // Second pass: Transactions
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    const line = lines[i].trim();
+    if (!line) continue;
+
     let day = '';
     let month = '';
     let year = currentYear;
@@ -110,7 +112,7 @@ export function parseInvoiceText(text: string): ParseResult {
       matchedDateStr = dateSlashMatch[0];
       isDateAtStart = true;
     } else if (dateMonthMatch) {
-       if (line.trim().indexOf(dateMonthMatch[0]) === 0) {
+       if (line.indexOf(dateMonthMatch[0]) === 0) {
          day = dateMonthMatch[1];
          const monthName = dateMonthMatch[2].toUpperCase();
          month = monthMap[monthName] || '01';
@@ -124,9 +126,9 @@ export function parseInvoiceText(text: string): ParseResult {
        let isMultiLine = false;
 
        if (!amountMatch && i + 1 < lines.length) {
-         const nextLine = lines[i + 1];
+         const nextLine = lines[i + 1].trim();
          const nextLineHasDate = (nextLine.match(dateSlashRegex)?.index === 0) || 
-                                 (nextLine.match(dateMonthNameRegex) && nextLine.trim().indexOf(nextLine.match(dateMonthNameRegex)![0]) === 0);
+                                 (nextLine.match(dateMonthNameRegex) && nextLine.indexOf(nextLine.match(dateMonthNameRegex)![0]) === 0);
          
          if (!nextLineHasDate) {
             const nextLineAmountMatch = nextLine.match(amountRegex);
