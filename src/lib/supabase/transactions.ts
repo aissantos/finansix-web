@@ -151,9 +151,11 @@ export async function createTransaction(
     current_installment: transaction.current_installment || null,
   };
 
-  // Debug payload
-  console.warn('[createTransaction] Payload:', insertData);
-
+  /* 
+   * Debug Payload removed after fix.
+   * If debugging is needed again, inspect 'insertData' here.
+   */
+  
   const { data, error } = await supabase
     .from('transactions')
     .insert(insertData)
