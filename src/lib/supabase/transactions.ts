@@ -120,13 +120,14 @@ export async function createTransaction(
 ): Promise<Transaction> {
   // Build the insert object with proper typing - let DB handle defaults
   // FIX: Calculate cents explicitly to satisfy database trigger
-  const amountCents = transaction.amount_cents ?? Math.round(transaction.amount * 100);
+  // Calculate cents explicitly
+  const amountCents = transaction.amount_cents ?? Math.round(Number(transaction.amount) * 100);
 
   const insertData: InsertTables<'transactions'> = {
     household_id: transaction.household_id,
     type: transaction.type,
     status: transaction.status ?? 'completed', // Ensure status is set
-    amount: transaction.amount,
+    amount: Number(transaction.amount),
     amount_cents: amountCents, // Required for installment trigger
     description: transaction.description,
     transaction_date: transaction.transaction_date ?? new Date().toISOString().split('T')[0],
@@ -135,20 +136,20 @@ export async function createTransaction(
     is_reimbursable: transaction.is_reimbursable ?? false,
     is_recurring: transaction.is_recurring ?? false,
     reimbursed_amount: transaction.reimbursed_amount ?? 0,
+    
+    // Optional fields - explicitly null if not provided to ensure consistent payload
+    category_id: transaction.category_id || null,
+    account_id: transaction.account_id || null,
+    credit_card_id: transaction.credit_card_id || null,
+    currency: transaction.currency || 'BRL',
+    notes: transaction.notes || null,
+    reimbursement_status: transaction.reimbursement_status || null,
+    reimbursement_source: transaction.reimbursement_source || null,
+    recurrence_type: transaction.recurrence_type || null,
+    recurrence_end_date: transaction.recurrence_end_date || null,
+    parent_transaction_id: transaction.parent_transaction_id || null,
+    current_installment: transaction.current_installment || null,
   };
-  
-  // Add optional fields if they have values
-  if (transaction.category_id) insertData.category_id = transaction.category_id;
-  if (transaction.account_id) insertData.account_id = transaction.account_id;
-  if (transaction.credit_card_id) insertData.credit_card_id = transaction.credit_card_id;
-  if (transaction.currency) insertData.currency = transaction.currency;
-  if (transaction.notes) insertData.notes = transaction.notes;
-  if (transaction.reimbursement_status) insertData.reimbursement_status = transaction.reimbursement_status;
-  if (transaction.reimbursement_source) insertData.reimbursement_source = transaction.reimbursement_source;
-  if (transaction.recurrence_type) insertData.recurrence_type = transaction.recurrence_type;
-  if (transaction.recurrence_end_date) insertData.recurrence_end_date = transaction.recurrence_end_date;
-  if (transaction.parent_transaction_id) insertData.parent_transaction_id = transaction.parent_transaction_id;
-  if (transaction.current_installment) insertData.current_installment = transaction.current_installment;
 
   const { data, error } = await supabase
     .from('transactions')
