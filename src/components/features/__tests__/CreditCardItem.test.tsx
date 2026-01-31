@@ -26,6 +26,7 @@ describe('CreditCardItem', () => {
     deleted_at: null,
     used_limit: 3000,
     available_limit: 7000,
+    pdf_password: null,
   };
 
   it('should render card name', () => {

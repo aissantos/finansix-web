@@ -37,6 +37,7 @@ describe('getBestCard', () => {
       last_four_digits: '1234',
       grace_period_days: 0,
       credit_limit_cents: 1000000,
+      pdf_password: null,
     },
     {
       id: '2',
@@ -58,6 +59,7 @@ describe('getBestCard', () => {
       last_four_digits: '5678',
       grace_period_days: 0,
       credit_limit_cents: 1500000,
+      pdf_password: null,
     },
   ];
 
