@@ -37,7 +37,12 @@ export function InvoiceCharts({ transactions }: InvoiceChartsProps) {
   const categoryData = useMemo(() => {
     const categoriesMap = new Map<string, number>();
     
-    transactions.forEach(item => {
+    transactions.filter(t => {
+      // Filter out Invoice Payment transactions to avoid double counting
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const desc = ((t as any).transaction?.description || (t as any).description) || '';
+      return !desc.toLowerCase().startsWith('fatura') && !desc.toLowerCase().includes('pagamento de fatura');
+    }).forEach(item => {
       // Check if item is Installment (has transaction property) or Transaction
       let categoryName: string | undefined;
       
@@ -63,7 +68,11 @@ export function InvoiceCharts({ transactions }: InvoiceChartsProps) {
   const dailyData = useMemo(() => {
     const dailyMap = new Map<string, number>();
     
-    transactions.forEach(item => {
+    transactions.filter(t => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const desc = ((t as any).transaction?.description || (t as any).description) || '';
+      return !desc.toLowerCase().startsWith('fatura') && !desc.toLowerCase().includes('pagamento de fatura');
+    }).forEach(item => {
        
        let dateStr: string | undefined;
 

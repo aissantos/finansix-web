@@ -289,6 +289,16 @@ export function InvoiceImportModal({
         variant: 'success'
       });
 
+      // Force a small delay to allow DB triggers to propagate changes to 'credit_cards' table (used_limit update)
+      setIsLoading(true); // Keep loading state
+      await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['installments'] }),
+        queryClient.invalidateQueries({ queryKey: ['creditCards'] }),
+        queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      ]);
+
       onSuccess();
       handleClose();
 

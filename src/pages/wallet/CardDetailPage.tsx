@@ -319,7 +319,7 @@ export default function CardDetailPage() {
               Insights de Gastos
             </h3>
             {/* Filter transactions for current open period/card general usage */}
-            <InvoiceCharts transactions={cardInstallments} />
+            <InvoiceCharts transactions={currentBillInstallments} />
           </div>
         )}
 

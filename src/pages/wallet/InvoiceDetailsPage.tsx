@@ -35,20 +35,22 @@ export default function InvoiceDetailsPage() {
   const targetMonth = month || format(new Date(), 'yyyy-MM');
   
   const invoiceItems = allInstallments?.filter(i => {
-     // Use billing_month if present
+     // 1. Explicit billing_month match
      if (i.billing_month) {
          return i.billing_month.startsWith(targetMonth);
      }
      
-     // Fallback: This is fragile if billing_month is missing, 
-     // but acceptable for now as we are transitioning.
-     // We assume closing day logic has assigned it correctly if we had a backend function, 
-     // but here we rely on what frontend computed previously or just filtering by due_date approximate.
-     // Let's trust billing_month is populated by the backend/ingestion correctly now.
-     
-     // If no billing_month, try to approximate from due_date:
-     // If due_date is in Month M (e.g. Feb), and card due_day is X. 
-     return i.due_date.startsWith(targetMonth);
+     // 2. Fallback: Parse targetMonth (yyyy-MM) to get range
+     // If target is 2026-02:
+     // - Closing date approx: 2026-02-XX.
+     // - Transactions usually from 2026-01-XX to 2026-02-XX.
+     // Simply checking if due_date is in targetMonth is a strong proxy.
+     if (i.due_date.startsWith(targetMonth)) return true;
+
+     // 3. Check transaction_date if available (some imported items might be pure transactions)
+     // This is tricky without knowing exact closing cycle here.
+     // But usually, items listed in a "Invoice Details" view are those DUE in that month.
+     return false;
   }) || [];
 
   const totalAmount = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
