@@ -17,6 +17,7 @@ import {
   Trash2,
   FileText,
   ChevronDown,
+  ChevronRight,
   ChevronUp
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
@@ -449,12 +450,29 @@ export default function CardDetailPage() {
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
               Fatura Atual
             </h3>
-            <Badge variant="outline" className="font-mono">
-              {format(closingDate, 'MMM yyyy', { locale: ptBR })}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 text-xs text-slate-500"
+                onClick={() => navigate(`/cards/${card.id}/invoice/${format(closingDate, 'yyyy-MM')}`)}
+              >
+                Ver tudo <ChevronRight className="h-3 w-3 ml-1" />
+              </Button>
+              <Badge variant="outline" className="font-mono">
+                {format(closingDate, 'MMM yyyy', { locale: ptBR })}
+              </Badge>
+            </div>
           </div>
 
-          <Card className="p-5 mb-3">
+          <Card 
+            className="p-5 mb-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
+            onClick={(e) => {
+               // Prevent navigation if clicking buttons inside
+               if ((e.target as HTMLElement).closest('button')) return;
+               navigate(`/cards/${card.id}/invoice/${format(closingDate, 'yyyy-MM')}`);
+            }}
+          >
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs text-slate-500 font-medium mb-1">

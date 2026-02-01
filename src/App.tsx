@@ -29,6 +29,7 @@ const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const NewCardPage = lazy(() => import('@/pages/wallet/NewCardPage'));
 const EditCardPage = lazy(() => import('@/pages/wallet/EditCardPage'));
 const CardDetailPage = lazy(() => import('@/pages/wallet/CardDetailPage'));
+const InvoiceDetailsPage = lazy(() => import('@/pages/wallet/InvoiceDetailsPage'));
 const NewAccountPage = lazy(() => import('@/pages/wallet/NewAccountPage'));
 const EditAccountPage = lazy(() => import('@/pages/wallet/EditAccountPage'));
 const AccountDetailPage = lazy(() => import('@/pages/wallet/AccountDetailPage'));
@@ -207,6 +208,14 @@ function AnimatedRoutes() {
               element={
                 <ProtectedRoute>
                   <EditCardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cards/:id/invoice/:month"
+              element={
+                <ProtectedRoute>
+                  <InvoiceDetailsPage />
                 </ProtectedRoute>
               }
             />
