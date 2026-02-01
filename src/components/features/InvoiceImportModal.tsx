@@ -45,7 +45,7 @@ export function InvoiceImportModal({
   const { toast } = useToast();
   const { data: card } = useCreditCard(creditCardId);
   const { mutate: updateCard } = useUpdateCreditCard();
-  const { mutate: updateCard } = useUpdateCreditCard();
+
   const { data: household } = useHousehold();
   const queryClient = useQueryClient();
 
