@@ -47,10 +47,25 @@ export default function InvoiceDetailsPage() {
      // Simply checking if due_date is in targetMonth is a strong proxy.
      if (i.due_date.startsWith(targetMonth)) return true;
 
-     // 3. Check transaction_date if available (some imported items might be pure transactions)
-     // This is tricky without knowing exact closing cycle here.
-     // But usually, items listed in a "Invoice Details" view are those DUE in that month.
-     return false;
+      // 3. Check transaction_date - Heuristic for "Current Bill"
+      // If billing_month is missing, and transaction_date is in the likely range (e.g., previous month up to closing)
+      // For now, if due_date matches roughly, or if transaction_date is in the same month as target (simplified)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tDateStr = i.transaction?.transaction_date || (i as any).transaction_date;
+      const tDate = tDateStr ? new Date(tDateStr) : null;
+      
+      if (tDate) {
+         const tMonth = tDate.toISOString().substring(0, 7); 
+         // Most transactions in a bill are from the SAME month or Previous month.
+         // If target is 2026-02. Items could be 2026-01 or 2026-02.
+         // Let's being permissive: if it's strictly in the target month, show it.
+         if (tMonth === targetMonth) return true;
+         
+         // Can add previous month check if needed, but let's stick to simple "Current Month" visibility for now
+         // to avoid showing old stuff.
+      }
+
+      return false;
   }) || [];
 
   const totalAmount = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
