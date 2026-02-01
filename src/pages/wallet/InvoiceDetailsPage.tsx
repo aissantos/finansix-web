@@ -99,20 +99,30 @@ export default function InvoiceDetailsPage() {
                     <TransactionItem
                         key={item.id}
                         transaction={{
-                            ...item.transaction!,
-                            amount: item.amount,
-                            // Ensure description falls back correctly if transaction is missing (legacy compat)
-                            description: item.transaction?.description || `Parcela ${item.installment_number}`,
-                            // Override date to show due date of installment or transaction date? 
-                            // Usually for invoice view, we might want to see the purchase date, but the list is "invoice items".
-                            // Let's keep purchase date if available, or due date.
-                            // The TransactionItem displays "date".
-                            // The TransactionItem expects a full transaction object.
-                            // We construct a compatible object filling in missing fields with defaults/nulls.
-                            // This is safe for display purposes in this list context.
-                            transaction_date: item.transaction?.transaction_date || item.due_date,
+                            // Base fields from the parent transaction (if exists) or defaults
+                            id: item.transaction_id,
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            category: item.transaction?.category as any 
+                            created_at: (item.transaction as any)?.created_at || new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            user_id: '', // Not used by item
+                            household_id: '', // Not used by item
+                            account_id: null,
+                            credit_card_id: item.credit_card_id,
+                            
+                            // Visual fields
+                            amount: item.amount, // The installment amount
+                            description: item.transaction?.description || `Parcela ${item.installment_number}`,
+                            transaction_date: item.due_date, // Show due date effectively
+                            type: 'expense',
+                            status: item.status,
+                            
+                            // Installment logic
+                            is_installment: true,
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            total_installments: (item.transaction as any)?.total_installments || item.installment_number, 
+                            installments: [item],
+                            
+                            category: item.transaction?.category
                         } as unknown as TransactionWithDetails}
                         onClick={() => navigate(`/transactions/${item.transaction_id}/edit`)}
                     />

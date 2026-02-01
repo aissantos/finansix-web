@@ -10,7 +10,7 @@ import {
   Receipt,
   Calculator,
   DollarSign,
-  X,
+  // X removed
   Check,
   MoreVertical,
   Edit3,
@@ -18,14 +18,14 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  Upload
+  // Upload removed
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+// import { Input } from '@/components/ui/input'; // Removed unused import
 import { useCreditCards, useInstallments } from '@/hooks';
 import { useToast } from '@/hooks/useToast';
 import { formatCurrency, formatCardNumber } from '@/lib/utils';
@@ -51,15 +51,10 @@ export default function CardDetailPage() {
   });
 
   // Form state
-  const [showForm, setShowForm] = useState(false);
+  // const [showForm, setShowForm] = useState(false); // Removed inline form
   const [showImportModal, setShowImportModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    description: '',
-    amount: '',
-    totalInstallments: '1',
-    currentInstallment: '1',
-  });
+  // const [isSubmitting, setIsSubmitting] = useState(false); // Removed inline form state
+  // const [formData, setFormData] = useState({...}); // Removed inline form state
 
   const card = cards?.find(c => c.id === id);
   const cardInstallments = allInstallments || [];
@@ -109,89 +104,7 @@ export default function CardDetailPage() {
   const daysUntilClosing = differenceInDays(closingDate, today);
   const daysUntilDue = differenceInDays(dueDate, today);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    
-    if (!card) {
-      return;
-    }
-    
-    const amount = parseFloat(formData.amount);
-    const totalInstallments = parseInt(formData.totalInstallments);
-    const currentInstallment = parseInt(formData.currentInstallment);
-    
-    
-    if (isNaN(amount) || amount <= 0) {
-      toast({ title: 'Valor inválido', variant: 'destructive' });
-      return;
-    }
-    
-    if (currentInstallment > totalInstallments) {
-      toast({ title: 'Parcela atual não pode ser maior que total', variant: 'destructive' });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
-      const { data: household, error: _householdError } = await supabase
-        .from('households')
-        .select('id')
-        .eq('owner_id', user.id)
-        .single();
-
-      if (!household) throw new Error('Household não encontrado');
-
-      // Create transaction
-      const transactionData = {
-        household_id: household.id,
-        type: 'expense' as const,
-        amount: amount,
-        description: formData.description || 'Compra no cartão',
-        credit_card_id: card.id,
-        transaction_date: new Date().toISOString().split('T')[0],
-        is_installment: totalInstallments > 1,
-        total_installments: totalInstallments,
-      };
-      
-      
-      const { data: _transaction, error: txError } = await supabase
-        .from('transactions')
-        .insert(transactionData)
-        .select()
-        .single();
-
-      if (txError) throw txError;
-
-      toast({
-        title: '✅ Compra adicionada',
-        description: totalInstallments > 1 
-          ? `${totalInstallments}x de ${formatCurrency(amount / totalInstallments)}`
-          : formatCurrency(amount),
-      });
-
-      // Reset form
-      setFormData({ description: '', amount: '', totalInstallments: '1', currentInstallment: '1' });
-      setShowForm(false);
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['installments'] });
-      queryClient.invalidateQueries({ queryKey: ['creditCards'] });
-      
-    } catch (error) {
-      toast({
-        title: 'Erro ao adicionar compra',
-        description: error instanceof Error ? error.message : 'Tente novamente',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // handleSubmit removed as inline form is removed
 
   // Group installments by status - using billing_month for correct filtering
   // This avoids issues when due_date is in the next month relative to closing date
@@ -497,149 +410,13 @@ export default function CardDetailPage() {
               </div>
               <Button
                 onClick={() => setShowImportModal(true)}
-                className="rounded-full shadow-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-[1.02] transition-transform"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Importar Fatura
-              </Button>
-              <Button
-                onClick={() => setShowForm((prev) => !prev)}
                 className="rounded-full shadow-lg bg-primary text-white hover:scale-[1.02] transition-transform"
               >
-                {showForm ? <X className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                {showForm ? 'Cancelar' : 'Adicionar'}
+                <Plus className="h-4 w-4 mr-1" />
+                Adicionar
               </Button>
 
             </div>
-
-            {/* Quick Add Form */}
-            {showForm && (
-              <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div>
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
-                    Descrição
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Ex: Compra na Amazon"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="h-11"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
-                    Valor Total
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">R$</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0,00"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="h-11 pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
-                      {parseInt(formData.totalInstallments) > 1 ? 'Total de Parcelas' : 'Parcelas'}
-                    </label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="48"
-                      value={formData.totalInstallments}
-                      onChange={(e) => {
-                        const total = e.target.value;
-                        setFormData({ 
-                          ...formData, 
-                          totalInstallments: total,
-                          currentInstallment: total === '1' ? '1' : formData.currentInstallment
-                        });
-                      }}
-                      className="h-11"
-                      required
-                    />
-                  </div>
-
-                  {parseInt(formData.totalInstallments) > 1 && (
-                    <div>
-                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
-                        Parcela Inicial
-                      </label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max={formData.totalInstallments}
-                        value={formData.currentInstallment}
-                        onChange={(e) => setFormData({ ...formData, currentInstallment: e.target.value })}
-                        className="h-11"
-                        required
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {parseInt(formData.totalInstallments) > 1 && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3">
-                    <div className="flex items-start gap-2">
-                      <Calculator className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                      <div className="text-xs text-blue-700 dark:text-blue-300">
-                        <p className="font-semibold mb-1">📅 Resumo do Parcelamento</p>
-                        <p>
-                          {parseInt(formData.totalInstallments) - parseInt(formData.currentInstallment) + 1} parcelas de{' '}
-                          <strong>
-                            {formatCurrency(parseFloat(formData.amount || '0') / parseInt(formData.totalInstallments))}
-                          </strong>
-                        </p>
-                        <p className="mt-1 text-blue-600 dark:text-blue-400">
-                          Parcela {formData.currentInstallment}/{formData.totalInstallments} vence em{' '}
-                          {format(
-                            today.getDate() <= (card?.closing_day || 1) ? dueDate : addMonths(dueDate, 1),
-                            'MMM/yyyy',
-                            { locale: ptBR }
-                          )}
-                        </p>
-                        <p className="mt-0.5 text-blue-600 dark:text-blue-400">
-                          Última parcela em{' '}
-                          {format(
-                            addMonths(
-                              today.getDate() <= (card?.closing_day || 1) ? dueDate : addMonths(dueDate, 1),
-                              parseInt(formData.totalInstallments) - parseInt(formData.currentInstallment)
-                            ),
-                            'MMM/yyyy',
-                            { locale: ptBR }
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full h-11 bg-gradient-to-r from-primary to-blue-600 text-white font-bold"
-                >
-                  {isSubmitting ? (
-                    <>Salvando...</>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4 mr-2" />
-                      Confirmar Compra
-                    </>
-                  )}
-                </Button>
-              </form>
-            )}
           </Card>
 
           {currentBillInstallments.length > 0 ? (
