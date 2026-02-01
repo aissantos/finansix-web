@@ -95,8 +95,8 @@ export const queryKeys = {
   // Transactions
   transactions: {
     all: ['transactions'] as const,
-    list: (householdId: string, month?: string) =>
-      ['transactions', 'list', householdId, month] as const,
+    list: (householdId: string, month?: string, creditCardId?: string) =>
+      ['transactions', 'list', householdId, month, creditCardId] as const,
     detail: (id: string) => ['transactions', 'detail', id] as const,
     byCategory: (householdId: string, month: string) =>
       ['transactions', 'byCategory', householdId, month] as const,

@@ -3,7 +3,9 @@ import {
   Calendar, 
   Receipt,
   Download,
-  Share2
+  Share2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { TransactionItem } from '@/components/features/TransactionItem';
 import { Header, PageContainer } from '@/components/layout';
@@ -11,11 +13,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { useCreditCards, useInstallments } from '@/hooks';
+import { SmartInsights } from '@/components/features/SmartInsights';
+import { useCreditCards, useTransactions } from '@/hooks';
 import { formatCurrency } from '@/lib/utils';
-import { format, parse } from 'date-fns';
+import { calculateSpendingInsights } from '@/lib/analysis';
+import { format, parse, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { TransactionWithDetails } from '@/types';
 
 export default function InvoiceDetailsPage() {
   const { id: cardId, month } = useParams<{ id: string; month: string }>();
@@ -24,54 +27,87 @@ export default function InvoiceDetailsPage() {
   const { data: cards } = useCreditCards();
   const card = cards?.find(c => c.id === cardId);
 
-  // We need to fetch installments filtering by this billing month
-  // NOTE: efficient hook typically filters in memory or query param. 
-  // reusing useInstallments and filtering locally since supabase logic fetches all usually. 
-  // Ideally, useInstallments should accept a billing month filter for efficiency.
-  const { data: allInstallments, isLoading } = useInstallments({ creditCardId: cardId });
-
-  // Filter Logic
-  // Matches billing month "yyyy-MM"
-  const targetMonth = month || format(new Date(), 'yyyy-MM');
+  // Switch to useTransactions to ensure we see ALL items (including imported PDF items that are just 'transactions')
+  // We fetch a bit broadly and filter locally to handle the billing cycle logic
+  const targetMonthStr = month || format(new Date(), 'yyyy-MM');
+  const dateObj = parse(targetMonthStr, 'yyyy-MM', new Date());
   
-  const invoiceItems = allInstallments?.filter(i => {
-     // 1. Explicit billing_month match
-     if (i.billing_month) {
-         return i.billing_month.startsWith(targetMonth);
-     }
-     
-     // 2. Fallback: Parse targetMonth (yyyy-MM) to get range
-     // If target is 2026-02:
-     // - Closing date approx: 2026-02-XX.
-     // - Transactions usually from 2026-01-XX to 2026-02-XX.
-     // Simply checking if due_date is in targetMonth is a strong proxy.
-     if (i.due_date.startsWith(targetMonth)) return true;
+  // Heuristic: Fetch transactions around this month to catch everything relevant
+  // Ideally backend should handle "Current Bill" logic, but specific closing dates make it complex.
+  const { data: allTransactions, isLoading } = useTransactions({ 
+      creditCardId: cardId,
+      limit: 500 // Increased limit to ensure we have enough history for insights (approx 6-12 months)
+  });
 
-      // 3. Check transaction_date - Heuristic for "Current Bill"
-      // If billing_month is missing, and transaction_date is in the likely range (e.g., previous month up to closing)
-      // For now, if due_date matches roughly, or if transaction_date is in the same month as target (simplified)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tDateStr = i.transaction?.transaction_date || (i as any).transaction_date;
-      const tDate = tDateStr ? new Date(tDateStr) : null;
-      
-      if (tDate) {
-         const tMonth = tDate.toISOString().substring(0, 7); 
-         // Most transactions in a bill are from the SAME month or Previous month.
-         // If target is 2026-02. Items could be 2026-01 or 2026-02.
-         // Let's being permissive: if it's strictly in the target month, show it.
-         if (tMonth === targetMonth) return true;
+  // Filter Logic for Current Invoice View
+  // We want to show:
+  // 1. Installments billed in this month
+  // 2. Transactions made in the cycle
+  
+  const invoiceItems = allTransactions?.filter(t => {
+      // 1. If it's a simple expense (imported from PDF), check transaction_date
+      if (!t.is_installment) {
          
-         // Can add previous month check if needed, but let's stick to simple "Current Month" visibility for now
-         // to avoid showing old stuff.
+         // Strict match on Month/Year for now (Simplest "Invoice View")
+         const tMonth = t.transaction_date.substring(0, 7); // yyyy-MM
+         
+         // Allow Current Month
+         if (tMonth === targetMonthStr) return true;
+         
+         return false;
       }
-
+      
+      // 2. If it is an installment, we need to check if one of its installments is billed in targetMonthStr
+      // The transaction object usually contains ALL installments.
+      if (t.installments && t.installments.length > 0) {
+          return t.installments.some(inst => inst.billing_month === targetMonthStr);
+      }
+      
       return false;
   }) || [];
 
-  const totalAmount = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
+  const totalAmount = invoiceItems.reduce((sum, item) => {
+      // If installment, sum only the installment amount for this month
+      if (item.is_installment && item.installments) {
+          const inst = item.installments.find(i => i.billing_month === targetMonthStr);
+          return sum + (inst ? inst.amount : 0);
+      }
+      return sum + item.amount;
+  }, 0);
 
-  // Parse month for display
-  const dateObj = parse(targetMonth, 'yyyy-MM', new Date());
+  // Navigation Handlers
+  const handlePrevMonth = () => {
+    const prev = subMonths(dateObj, 1);
+    navigate(`/cards/${cardId}/invoices/${format(prev, 'yyyy-MM')}`);
+  };
+
+  const handleNextMonth = () => {
+    const next = addMonths(dateObj, 1);
+    navigate(`/cards/${cardId}/invoices/${format(next, 'yyyy-MM')}`);
+  };
+
+  // Prepare Data for Insights (Aggregation by Month)
+  const historyData = !allTransactions ? [] : Object.values(allTransactions.reduce((acc, t) => {
+      // Group by effective billing month
+      // For installments: split into multiple months
+      if (t.is_installment && t.installments) {
+          t.installments.forEach(inst => {
+             if (!inst.billing_month) return;
+             const m = inst.billing_month.substring(0, 7);
+             if (!acc[m]) acc[m] = { month: m, total: 0 };
+             acc[m].total += inst.amount;
+          });
+      } else {
+          // Simple transaction
+          const m = t.transaction_date.substring(0, 7);
+          if (!acc[m]) acc[m] = { month: m, total: 0 };
+          acc[m].total += t.amount; // Use amount_cents ideally but simple sum works for approximation
+      }
+      return acc;
+  }, {} as Record<string, { month: string; total: number }>)).sort((a, b) => a.month.localeCompare(b.month));
+
+  const insights = calculateSpendingInsights(totalAmount, historyData, targetMonthStr);
+
 
   if (isLoading) return <PageLoaderSkeleton />;
   if (!card) return <div className="p-8 text-center">Cartão não encontrado</div>;
@@ -91,12 +127,23 @@ export default function InvoiceDetailsPage() {
       
       <PageContainer className="pb-24">
         
-        {/* Invoice Summary Header */}
-        <div className="mb-6 text-center">
-            <Badge variant="outline" className="mb-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 border-0">
-                <Calendar className="h-3 w-3 mr-1" />
-                {format(dateObj, 'MMMM yyyy', { locale: ptBR })}
-            </Badge>
+        {/* Invoice Summary Header with Navigation */}
+        <div className="mb-6 flex flex-col items-center">
+            <div className="flex items-center gap-4 mb-2">
+               <Button variant="ghost" size="icon" onClick={handlePrevMonth} className="h-8 w-8 rounded-full">
+                  <ChevronLeft className="h-5 w-5 text-slate-400" />
+               </Button>
+               
+               <Badge variant="outline" className="px-3 py-1 bg-slate-100 dark:bg-slate-800 border-0">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {format(dateObj, 'MMMM yyyy', { locale: ptBR })}
+               </Badge>
+
+               <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-8 w-8 rounded-full">
+                  <ChevronRight className="h-5 w-5 text-slate-400" />
+               </Button>
+            </div>
+
             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-1">
                 {formatCurrency(totalAmount)}
             </h1>
@@ -105,6 +152,13 @@ export default function InvoiceDetailsPage() {
             </p>
         </div>
 
+        {/* Smart Insights */}
+        {insights.length > 0 && (
+          <div className="mb-6 px-1">
+             <SmartInsights insights={insights} />
+          </div>
+        )}
+
         {invoiceItems.length === 0 ? (
             <Card className="p-12 text-center bg-slate-50 dark:bg-slate-900/50 border-dashed">
                 <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-3" />
@@ -112,38 +166,34 @@ export default function InvoiceDetailsPage() {
             </Card>
         ) : (
             <div className="space-y-3">
-                {invoiceItems.map(item => (
-                    <TransactionItem
-                        key={item.id}
-                        transaction={{
-                            // Base fields from the parent transaction (if exists) or defaults
-                            id: item.transaction_id,
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            created_at: (item.transaction as any)?.created_at || new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                            user_id: '', // Not used by item
-                            household_id: '', // Not used by item
-                            account_id: null,
-                            credit_card_id: item.credit_card_id,
-                            
-                            // Visual fields
-                            amount: item.amount, // The installment amount
-                            description: item.transaction?.description || `Parcela ${item.installment_number}`,
-                            transaction_date: item.due_date, // Show due date effectively
-                            type: 'expense',
-                            status: item.status,
-                            
-                            // Installment logic
-                            is_installment: true,
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            total_installments: (item.transaction as any)?.total_installments || item.installment_number, 
-                            installments: [item],
-                            
-                            category: item.transaction?.category
-                        } as unknown as TransactionWithDetails}
-                        onClick={() => navigate(`/transactions/${item.transaction_id}/edit`)}
-                    />
-                ))}
+                {invoiceItems.map(item => {
+                    // Prepare display amount (installment portion or full)
+                    let displayAmount = item.amount;
+                    let displayDate = item.transaction_date;
+                    let description = item.description;
+                    
+                    if (item.is_installment && item.installments) {
+                        const inst = item.installments.find(i => i.billing_month === targetMonthStr);
+                        if (inst) {
+                             displayAmount = inst.amount;
+                             displayDate = inst.due_date;
+                             description = `${item.description} (${inst.installment_number}/${item.total_installments})`;
+                        }
+                    }
+
+                    return (
+                        <TransactionItem
+                            key={item.id}
+                            transaction={{
+                                ...item,
+                                amount: displayAmount,
+                                description: description,
+                                transaction_date: displayDate
+                            }}
+                            onClick={() => navigate(`/transactions/${item.id}/edit`)}
+                        />
+                    );
+                })}
             </div>
         )}
 

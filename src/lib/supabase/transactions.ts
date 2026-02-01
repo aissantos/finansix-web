@@ -18,6 +18,7 @@ export async function getTransactions(
     status?: 'pending' | 'completed' | 'cancelled';
     beforeDate?: string;
     includeInstallments?: boolean; // If true, includes installments billed in the selected month
+    creditCardId?: string;
   }
 ): Promise<TransactionWithDetails[]> {
   let query = supabase
@@ -32,6 +33,10 @@ export async function getTransactions(
     .eq('household_id', householdId)
     .is('deleted_at', null)
     .order('transaction_date', { ascending: false });
+
+  if (options?.creditCardId) {
+    query = query.eq('credit_card_id', options.creditCardId);
+  }
 
   if (options?.month) {
     const start = format(startOfMonth(options.month), 'yyyy-MM-dd');

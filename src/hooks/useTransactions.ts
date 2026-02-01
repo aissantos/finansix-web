@@ -18,6 +18,7 @@ export function useTransactions(options?: {
   month?: Date;
   limit?: number;
   type?: 'income' | 'expense' | 'transfer';
+  creditCardId?: string;
 }) {
   const householdId = useHouseholdId();
   const selectedMonth = useSelectedMonth();
@@ -25,12 +26,13 @@ export function useTransactions(options?: {
   const monthKey = format(month, 'yyyy-MM');
 
   return useQuery({
-    queryKey: queryKeys.transactions.list(householdId!, monthKey),
+    queryKey: queryKeys.transactions.list(householdId!, monthKey, options?.creditCardId),
     queryFn: () =>
       getTransactions(householdId!, {
         month,
         limit: options?.limit,
         type: options?.type,
+        creditCardId: options?.creditCardId,
       }),
     enabled: !!householdId,
   });

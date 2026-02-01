@@ -152,20 +152,7 @@ export default function CardDetailPage() {
   
   const upcomingTotal = upcomingInstallments.reduce((sum, i) => sum + i.amount, 0);
 
-  // Create a superset of transactions for the chart to ensure we show the breakdown
-  // even if individual items are marked as 'completed' (imported expenses)
-  const transactionsForCharts = cardInstallments.filter(i => {
-    const startOfBillingMonth = i.billing_month ? i.billing_month.substring(0, 7) : '';
-    
-    if (!startOfBillingMonth) {
-       const dueDate = new Date(i.due_date);
-       const dueMonth = startOfMonth(dueDate);
-       const targetMonth = startOfMonth(closingDate);
-       return dueMonth.getTime() === targetMonth.getTime();
-    }
 
-    return startOfBillingMonth === targetMonthStr;
-  });
 
 
 
@@ -327,15 +314,15 @@ export default function CardDetailPage() {
         </Card>
 
 
-        {/* Insights & Charts (Moved from InvoiceDetailsPage) */}
+        {/* Insights & Charts (Global Analysis) */}
         {cardInstallments.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Insights de Gastos
+              Análise Global de Gastos
             </h3>
-            {/* Pass transactionsForCharts to include all relevant items (pending + completed) */}
-            <InvoiceCharts transactions={transactionsForCharts} />
+            {/* Pass FULL history (cardInstallments) for global patterns */}
+            <InvoiceCharts transactions={cardInstallments} viewMode="monthly" />
           </div>
         )}
 

@@ -18,6 +18,7 @@ import { format, parseISO } from 'date-fns';
 
 interface InvoiceChartsProps {
   transactions: (Transaction | InstallmentWithDetails)[];
+  viewMode?: 'daily' | 'monthly';
 }
 
 const COLORS = [
@@ -31,7 +32,7 @@ const COLORS = [
   '#f97316'  // Orange
 ];
 
-export function InvoiceCharts({ transactions }: InvoiceChartsProps) {
+export function InvoiceCharts({ transactions, viewMode = 'daily' }: InvoiceChartsProps) {
   
   // 1. Calculate Category Distribution
   const categoryData = useMemo(() => {
@@ -64,9 +65,9 @@ export function InvoiceCharts({ transactions }: InvoiceChartsProps) {
       .sort((a, b) => b.value - a.value); // Sort descending
   }, [transactions]);
 
-  // 2. Calculate Daily Spending
-  const dailyData = useMemo(() => {
-    const dailyMap = new Map<string, number>();
+  // 2. Calculate Spending Trend (Daily or Monthly)
+  const trendData = useMemo(() => {
+    const trendMap = new Map<string, number>();
     
     transactions.filter(t => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,15 +89,25 @@ export function InvoiceCharts({ transactions }: InvoiceChartsProps) {
        
        if (!dateStr) return;
        
-       // Group by day 
-       const day = format(parseISO(dateStr), 'dd');
-       dailyMap.set(day, (dailyMap.get(day) || 0) + item.amount);
+       // Grouping
+       let key = ''; 
+       if (viewMode === 'monthly') {
+          // Format as "MMM/yy" (e.g. Fev/26)
+          key = format(parseISO(dateStr), 'MMM/yy');
+       } else {
+          // Daily: "dd"
+          key = format(parseISO(dateStr), 'dd');
+       }
+       
+       trendMap.set(key, (trendMap.get(key) || 0) + item.amount);
     });
 
-    return Array.from(dailyMap.entries())
-      .map(([day, total]) => ({ day, total }))
-      .sort((a, b) => parseInt(a.day) - parseInt(b.day));
-  }, [transactions]);
+    return Array.from(trendMap.entries())
+      .map(([label, total]) => ({ label, total }));
+      // .sort logic removed as map iteration usually preserves insertion order for string keys in modern JS
+      // or we accept chronological order from input if transactions are ordered.
+      // If sort needed later, use proper date parsing.
+  }, [transactions, viewMode]);
 
   if (transactions.length === 0) return null;
 
@@ -105,7 +116,7 @@ export function InvoiceCharts({ transactions }: InvoiceChartsProps) {
       {/* Category Chart */}
       <Card className="p-4 bg-white dark:bg-slate-900 shadow-sm border-slate-100 dark:border-slate-800">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
-          Por Categoria
+          Por Categoria {viewMode === 'monthly' ? '(Global)' : ''}
         </h3>
         <div className="h-[200px] flex items-center">
           <ResponsiveContainer width="50%" height="100%">
@@ -147,17 +158,17 @@ export function InvoiceCharts({ transactions }: InvoiceChartsProps) {
         </div>
       </Card>
 
-      {/* Daily Chart */}
+      {/* Consumption Trend Chart */}
       <Card className="p-4 bg-white dark:bg-slate-900 shadow-sm border-slate-100 dark:border-slate-800">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
-          Gasto Diário
+          {viewMode === 'monthly' ? 'Histórico Mensal' : 'Gasto Diário'}
         </h3>
         <div className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dailyData}>
+            <BarChart data={trendData}>
                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
               <XAxis 
-                dataKey="day" 
+                dataKey="label" 
                 tick={{ fontSize: 10 }} 
                 tickLine={false}
                 axisLine={false}
@@ -169,7 +180,7 @@ export function InvoiceCharts({ transactions }: InvoiceChartsProps) {
                   if (active && payload && payload.length) {
                     return (
                       <div className="bg-slate-900 text-white text-xs p-2 rounded-lg shadow-xl">
-                        <p className="font-bold mb-1">Dia {payload[0].payload.day}</p>
+                        <p className="font-bold mb-1">{payload[0].payload.label}</p>
                         <p>{formatCurrency(payload[0].value as number)}</p>
                       </div>
                     );
