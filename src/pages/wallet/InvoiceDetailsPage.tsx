@@ -17,7 +17,7 @@ import { SmartInsights } from '@/components/features/SmartInsights';
 import { useCreditCards, useTransactions } from '@/hooks';
 import { formatCurrency } from '@/lib/utils';
 import { calculateSpendingInsights } from '@/lib/analysis';
-import { format, parse, addMonths, subMonths } from 'date-fns';
+import { format, parse, addMonths, subMonths, setDate, endOfMonth, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function InvoiceDetailsPage() {
@@ -40,27 +40,35 @@ export default function InvoiceDetailsPage() {
   });
 
   // Filter Logic for Current Invoice View
-  // We want to show:
-  // 1. Installments billed in this month
-  // 2. Transactions made in the cycle
-  
+  const currentCard = cards?.find(c => c.id === cardId);
+  const closingDay = currentCard?.closing_day || 1;
+  const invoiceRefDate = parse(targetMonthStr + '-01', 'yyyy-MM-dd', new Date());
+
+  let cycleEndDate = setDate(invoiceRefDate, closingDay);
+  // Handle end of month overflow
+  if (closingDay > 28) {
+     const endOfMonthDate = endOfMonth(invoiceRefDate);
+     if (closingDay > endOfMonthDate.getDate()) {
+         cycleEndDate = endOfMonthDate;
+     }
+  }
+  const cycleStartDate = addDays(subMonths(cycleEndDate, 1), 1);
+
   const invoiceItems = allTransactions?.filter(t => {
-      // 1. If it's a simple expense (imported from PDF), check transaction_date
-      if (!t.is_installment) {
-         
-         // Strict match on Month/Year for now (Simplest "Invoice View")
-         const tMonth = t.transaction_date.substring(0, 7); // yyyy-MM
-         
-         // Allow Current Month
-         if (tMonth === targetMonthStr) return true;
-         
-         return false;
-      }
-      
-      // 2. If it is an installment, we need to check if one of its installments is billed in targetMonthStr
-      // The transaction object usually contains ALL installments.
-      if (t.installments && t.installments.length > 0) {
+      // 1. Installments: Check if specific installment billing month matches
+      if (t.is_installment && t.installments && t.installments.length > 0) {
           return t.installments.some(inst => inst.billing_month === targetMonthStr);
+      }
+
+      // 2. Regular Transactions (One-time or Imported)
+      if (!t.is_installment) {
+         if (t.credit_card_id !== cardId) return false;
+
+         const tDate = parse(t.transaction_date, 'yyyy-MM-dd', new Date());
+         const isInCycle = (tDate >= cycleStartDate && tDate <= cycleEndDate);
+         const isSameMonthStr = t.transaction_date.startsWith(targetMonthStr);
+
+         return isInCycle || isSameMonthStr;
       }
       
       return false;
