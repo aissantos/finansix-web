@@ -17,6 +17,7 @@ export async function getInstallments(
       *,
       transaction:transactions (
         description,
+        transaction_date,
         category:categories (
           id,
           name,
