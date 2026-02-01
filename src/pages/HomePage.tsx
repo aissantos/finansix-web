@@ -11,7 +11,7 @@ import {
   OnboardingTour,
   PaymentSummaryCards,
   // NEW v2.0: Elite features
-  SmartInsights,
+  // SmartInsights, // Temporarily disabled
 } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { DeleteConfirmDialog } from '@/components/ui';
@@ -65,8 +65,8 @@ export default function HomePage() {
           <>
             <BalanceHero />
             
-            {/* NEW v2.0: Smart Insights - Context-aware tips */}
-            <SmartInsights />
+            {/* NEW v2.0: Smart Insights - Context-aware tips (Disabled until global logic implemented) */}
+            {/* <SmartInsights insights={[]} /> */}
             
             <PaymentSummaryCards />
             <CardOptimizer />
