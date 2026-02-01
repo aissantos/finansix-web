@@ -270,7 +270,7 @@ export function InvoiceImportModal({
           credit_card_id: creditCardId,
           type: 'expense' as const,
           amount: paymentAmount, // Use user chosen amount (Total, Min, or Custom)
-          description: `Pagamento Fatura ${card.name} (Venc: ${format(new Date(dueDate), 'dd/MM')})`,
+          description: `Fatura ${card.name} ${format(new Date(dueDate), 'MM/yyyy')}`,
           transaction_date: dueDate, // Scheduled date
           category_id: undefined, // Or a specific "Credit Card Payment" category if exists
           status: 'pending' as const, // "A Vencer"

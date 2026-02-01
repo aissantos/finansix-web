@@ -15,10 +15,10 @@ import {
   MoreVertical,
   Edit3,
   Trash2,
-  FileText,
   ChevronDown,
   ChevronRight,
-  ChevronUp
+  ChevronUp,
+  Upload
 } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -496,22 +496,20 @@ export default function CardDetailPage() {
                 </p>
               </div>
               <Button
-                onClick={() => setShowForm(!showForm)}
-                variant={showForm ? 'outline' : 'default'}
-                className="rounded-full"
+                onClick={() => setShowImportModal(true)}
+                className="rounded-full shadow-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-[1.02] transition-transform"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Importar Fatura
+              </Button>
+              <Button
+                onClick={() => setShowForm((prev) => !prev)}
+                className="rounded-full shadow-lg bg-primary text-white hover:scale-[1.02] transition-transform"
               >
                 {showForm ? <X className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
                 {showForm ? 'Cancelar' : 'Adicionar'}
               </Button>
-              <Button
-                onClick={() => setShowImportModal(true)}
-                variant="outline"
-                className="rounded-full ml-2"
-                size="icon"
-                title="Importar Fatura (PDF)"
-              >
-                <FileText className="h-4 w-4" />
-              </Button>
+
             </div>
 
             {/* Quick Add Form */}

@@ -5,6 +5,7 @@ import {
   Download,
   Share2
 } from 'lucide-react';
+import { TransactionItem } from '@/components/features/TransactionItem';
 import { Header, PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useCreditCards, useInstallments } from '@/hooks';
 import { formatCurrency } from '@/lib/utils';
-import { format, parse, parseISO } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function InvoiceDetailsPage() {
@@ -94,39 +95,22 @@ export default function InvoiceDetailsPage() {
         ) : (
             <div className="space-y-3">
                 {invoiceItems.map(item => (
-                    <div 
-                        key={item.id} 
-                        className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                    <TransactionItem
+                        key={item.id}
+                        transaction={{
+                            ...item.transaction!,
+                            amount: item.amount,
+                            // Ensure description falls back correctly if transaction is missing (legacy compat)
+                            description: item.transaction?.description || `Parcela ${item.installment_number}`,
+                            // Override date to show due date of installment or transaction date? 
+                            // Usually for invoice view, we might want to see the purchase date, but the list is "invoice items".
+                            // Let's keep purchase date if available, or due date.
+                            // The TransactionItem displays "date".
+                            transaction_date: item.transaction?.transaction_date || item.due_date,
+                            category: item.transaction?.category
+                        }}
                         onClick={() => navigate(`/transactions/${item.transaction_id}/edit`)}
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl">
-                                {/* Icon based on category if available */}
-                                <span role="img" aria-label="icon">🛒</span> 
-                            </div>
-                            <div>
-                                <p className="font-bold text-sm text-slate-900 dark:text-white">
-                                    {item.transaction?.description || `Parcela ${item.installment_number}`}
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                    {item.total_installments > 1 ? (
-                                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded text-[10px] mr-2">
-                                            {item.installment_number}/{item.total_installments}
-                                        </span>
-                                    ) : null}
-                                    {item.transaction?.category?.name || 'Sem categoria'}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <p className="font-bold text-slate-900 dark:text-white">
-                                {formatCurrency(item.amount)}
-                            </p>
-                            <p className="text-[10px] text-slate-400">
-                                {format(parseISO(item.due_date), 'dd MMM')}
-                            </p>
-                        </div>
-                    </div>
+                    />
                 ))}
             </div>
         )}
