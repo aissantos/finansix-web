@@ -12,7 +12,7 @@
             - generic [ref=e13]:
               - button "Mês anterior" [ref=e14] [cursor=pointer]:
                 - img [ref=e15]
-              - button "Ir para janeiro 2026" [ref=e17] [cursor=pointer]: janeiro 2026
+              - button "Ir para fevereiro 2026" [ref=e17] [cursor=pointer]: fevereiro 2026
               - button "Próximo mês" [ref=e18] [cursor=pointer]:
                 - img [ref=e19]
             - button "Notificações" [ref=e22] [cursor=pointer]:
