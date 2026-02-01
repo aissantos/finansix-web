@@ -6,7 +6,6 @@ test('Verify Invoice Details List', async ({ page }) => {
   
   // Check if logged in, if not try login manual fallback
   if (await page.isVisible('input[type="email"]')) {
-      console.log('Not logged in automatically, trying manual login...');
       await page.fill('input[type="email"]', 'admin@finansix.com');
       await page.fill('input[type="password"]', 'password123');
       await page.click('button[type="submit"]');
@@ -40,14 +39,8 @@ test('Verify Invoice Details List', async ({ page }) => {
   const transactions = page.locator('.space-y-3 > div'); // TransactionItem usually wrapped in div
   const count = await transactions.count();
   
-  console.log(`Found ${count} transactions in invoice list.`);
-  
   // Expect at least 1 transaction (the imported one or others)
   expect(count).toBeGreaterThan(0);
   
-  // Check if we can find a date from previous month (e.g. "JAN" or "01/")
-  const content = await page.content();
-  const hasJanTransaction = content.includes('/01/') || content.includes('JAN');
-  
-  console.log('Has January Transaction visible:', hasJanTransaction);
+
 });
