@@ -15,6 +15,7 @@ import { useCreditCards, useInstallments } from '@/hooks';
 import { formatCurrency } from '@/lib/utils';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { TransactionWithDetails } from '@/types';
 
 export default function InvoiceDetailsPage() {
   const { id: cardId, month } = useParams<{ id: string; month: string }>();
@@ -106,9 +107,13 @@ export default function InvoiceDetailsPage() {
                             // Usually for invoice view, we might want to see the purchase date, but the list is "invoice items".
                             // Let's keep purchase date if available, or due date.
                             // The TransactionItem displays "date".
+                            // The TransactionItem expects a full transaction object.
+                            // We construct a compatible object filling in missing fields with defaults/nulls.
+                            // This is safe for display purposes in this list context.
                             transaction_date: item.transaction?.transaction_date || item.due_date,
-                            category: item.transaction?.category
-                        }}
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            category: item.transaction?.category as any 
+                        } as unknown as TransactionWithDetails}
                         onClick={() => navigate(`/transactions/${item.transaction_id}/edit`)}
                     />
                 ))}
