@@ -11,13 +11,22 @@ import {
   OnboardingTour,
   PaymentSummaryCards,
   // NEW v2.0: Elite features
-  // SmartInsights, // Temporarily disabled
+  SmartInsights,
 } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { DeleteConfirmDialog } from '@/components/ui';
 import { EditTransactionModal } from '@/components/modals/EditTransactionModal';
-import { useFreeBalance, useRecentTransactions, useCreditCards, useSubscriptionTotal, useDeleteTransaction } from '@/hooks';
+import { 
+  useFreeBalance, 
+  useRecentTransactions, 
+  useCreditCards, 
+  useSubscriptionTotal, 
+  useDeleteTransaction,
+  useMonthlyTrend 
+} from '@/hooks';
+import { calculateSpendingInsights } from '@/lib/analysis';
 import { formatCurrency } from '@/lib/utils';
+import { format } from 'date-fns';
 import { toast } from '@/hooks/useToast';
 import type { TransactionWithDetails } from '@/types';
 
@@ -65,8 +74,8 @@ export default function HomePage() {
           <>
             <BalanceHero />
             
-            {/* NEW v2.0: Smart Insights - Context-aware tips (Disabled until global logic implemented) */}
-            {/* <SmartInsights insights={[]} /> */}
+            {/* NEW v2.0: Smart Insights - Context-aware tips */}
+            <HomeSmartInsights />
             
             <PaymentSummaryCards />
             <CardOptimizer />
@@ -104,6 +113,32 @@ export default function HomePage() {
       <OnboardingTour />
     </>
   );
+}
+
+function HomeSmartInsights() {
+  const { data: trendData, isLoading } = useMonthlyTrend(6);
+  
+  if (isLoading || !trendData || trendData.length < 2) return null;
+
+  // Prepare data for analysis
+  // trendData is sorted old -> new (from useMonthlyTrend implementation)
+  const currentMonthStr = format(new Date(), 'yyyy-MM');
+  
+  // Find current month data or use 0
+  const currentMonthData = trendData.find(d => d.month === currentMonthStr);
+  const currentTotal = currentMonthData ? currentMonthData.expenses : 0;
+
+  // Map to format expected by analysis (using expenses as 'total')
+  const history = trendData.map(d => ({
+    month: d.month,
+    total: d.expenses
+  }));
+
+  const insights = calculateSpendingInsights(currentTotal, history, currentMonthStr);
+
+  if (insights.length === 0) return null;
+
+  return <SmartInsights insights={insights} className="mb-6" />;
 }
 
 function SubscriptionsSummary() {
