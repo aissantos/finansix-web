@@ -10,12 +10,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCreditCards, useInstallments } from '@/hooks';
 import { formatCurrency } from '@/lib/utils';
 import { format, parse, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { InvoiceCharts } from '@/components/features/InvoiceCharts';
 
 export default function InvoiceDetailsPage() {
   const { id: cardId, month } = useParams<{ id: string; month: string }>();
@@ -88,81 +86,50 @@ export default function InvoiceDetailsPage() {
             </p>
         </div>
 
-        <Tabs defaultValue="transactions" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="transactions">Transações</TabsTrigger>
-                <TabsTrigger value="insights">Insights</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="transactions" className="space-y-4">
-                
-                {invoiceItems.length === 0 ? (
-                    <Card className="p-12 text-center bg-slate-50 dark:bg-slate-900/50 border-dashed">
-                        <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-slate-500 font-medium">Nenhuma transação nesta fatura</p>
-                    </Card>
-                ) : (
-                    <div className="space-y-3">
-                        {/* Group by Date maybe? For now simple list */}
-                        {invoiceItems.map(item => (
-                            <div 
-                                key={item.id} 
-                                className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm"
-                                onClick={() => navigate(`/transactions/${item.transaction_id}/edit`)}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl">
-                                        {/* Icon based on category if available */}
-                                        <span role="img" aria-label="icon">🛒</span> 
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-sm text-slate-900 dark:text-white">
-                                            {item.transaction?.description || `Parcela ${item.installment_number}`}
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                            {item.total_installments > 1 ? (
-                                                <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded text-[10px] mr-2">
-                                                    {item.installment_number}/{item.total_installments}
-                                                </span>
-                                            ) : null}
-                                            {item.transaction?.category?.name || 'Sem categoria'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-slate-900 dark:text-white">
-                                        {formatCurrency(item.amount)}
-                                    </p>
-                                    <p className="text-[10px] text-slate-400">
-                                        {format(parseISO(item.due_date), 'dd MMM')}
-                                    </p>
-                                </div>
+        {invoiceItems.length === 0 ? (
+            <Card className="p-12 text-center bg-slate-50 dark:bg-slate-900/50 border-dashed">
+                <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 font-medium">Nenhuma transação nesta fatura</p>
+            </Card>
+        ) : (
+            <div className="space-y-3">
+                {invoiceItems.map(item => (
+                    <div 
+                        key={item.id} 
+                        className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                        onClick={() => navigate(`/transactions/${item.transaction_id}/edit`)}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl">
+                                {/* Icon based on category if available */}
+                                <span role="img" aria-label="icon">🛒</span> 
                             </div>
-                        ))}
+                            <div>
+                                <p className="font-bold text-sm text-slate-900 dark:text-white">
+                                    {item.transaction?.description || `Parcela ${item.installment_number}`}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                    {item.total_installments > 1 ? (
+                                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded text-[10px] mr-2">
+                                            {item.installment_number}/{item.total_installments}
+                                        </span>
+                                    ) : null}
+                                    {item.transaction?.category?.name || 'Sem categoria'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="font-bold text-slate-900 dark:text-white">
+                                {formatCurrency(item.amount)}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                                {format(parseISO(item.due_date), 'dd MMM')}
+                            </p>
+                        </div>
                     </div>
-                )}
-            </TabsContent>
-            
-            <TabsContent value="insights">
-                <InvoiceCharts transactions={invoiceItems} />
-                
-                {/* Additional Stats */}
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                     <Card className="p-4 bg-slate-50 dark:bg-slate-800/50 border-0">
-                        <p className="text-xs text-slate-500 mb-1">Média por dia</p>
-                        <p className="font-bold text-lg">
-                           {formatCurrency(totalAmount / 30)}
-                        </p>
-                     </Card>
-                     <Card className="p-4 bg-slate-50 dark:bg-slate-800/50 border-0">
-                        <p className="text-xs text-slate-500 mb-1">Maior gasto</p>
-                        <p className="font-bold text-lg text-red-600 dark:text-red-400">
-                           {formatCurrency(Math.max(...invoiceItems.map(i => i.amount), 0))}
-                        </p>
-                     </Card>
-                </div>
-            </TabsContent>
-        </Tabs>
+                ))}
+            </div>
+        )}
 
         {/* Floating Action Button for Payment or Export */}
         <div className="fixed bottom-6 left-0 right-0 px-6">

@@ -12,7 +12,6 @@ The Admin Dashboard requires a **Supabase Service Role Key** to bypass Row Level
 ### Setup Instructions
 
 1. **Get Your Service Role Key**
-
    - Go to [Supabase Dashboard](https://supabase.com/dashboard)
    - Navigate to: `Project Settings` → `API`
    - Find the **service_role** key (marked as "secret")
@@ -23,7 +22,7 @@ The Admin Dashboard requires a **Supabase Service Role Key** to bypass Row Level
    ```env
    VITE_SUPABASE_URL=https://your-project.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-   VITE_SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   VITE_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
    ```
 
 3. **Restart Dev Server**

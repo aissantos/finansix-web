@@ -36,6 +36,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@/components/ui/icon';
 import { InvoiceImportModal } from '@/components/features/InvoiceImportModal';
+import { InvoiceCharts } from '@/components/features/InvoiceCharts';
 
 export default function CardDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -397,6 +398,18 @@ export default function CardDetailPage() {
           </div>
         </Card>
 
+        {/* Insights & Charts (Moved from InvoiceDetailsPage) */}
+        {cardInstallments.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Insights de Gastos
+            </h3>
+            {/* Filter transactions for current open period/card general usage */}
+            <InvoiceCharts transactions={cardInstallments} />
+          </div>
+        )}
+
         {/* Closed Bill (Waiting Payment) */}
         {(() => {
           // Calculate previous closing date to find closed but unpaid bills
@@ -637,6 +650,19 @@ export default function CardDetailPage() {
                 <InstallmentCard
                   key={inst.id}
                   installment={inst}
+                  onClick={() => {
+                     // Check if it looks like an invoice payment or just a transaction
+                     // For now, always open edit, BUT if user wants "invoice details" on click, 
+                     // he probably means clicking the *list* itself opens the deep dive?
+                     // The requirement says: "clicar na fatura cadastrada".
+                     // If he sees "Pagamento Fatura Nubank", that's likely an imported invoice.
+                     // Let's add specific logic: if description contains "Fatura", go to invoice details.
+                     if (inst.transaction?.description.toLowerCase().includes('fatura')) {
+                        navigate(`/cards/${card.id}/invoice/${format(closingDate, 'yyyy-MM')}`);
+                     } else {
+                        navigate(`/transactions/${inst.transaction_id}/edit`);
+                     }
+                  }}
                   onEdit={() => {
                     // Navigate to transaction edit
                     navigate(`/transactions/${inst.transaction_id}/edit`);
@@ -790,11 +816,13 @@ export default function CardDetailPage() {
 function InstallmentCard({ 
   installment, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onClick
 }: { 
   installment: InstallmentWithDetails; 
   onEdit: () => void; 
   onDelete: () => void;
+  onClick?: () => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   
@@ -803,7 +831,10 @@ function InstallmentCard({
   const category = installment.transaction?.category;
 
   return (
-    <Card className="p-4">
+    <Card 
+      className={`p-4 ${onClick ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 text-lg">
            {category?.icon ? (

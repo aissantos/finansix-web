@@ -68,9 +68,8 @@ export function useAccountsPayable(selectedMonth: Date) {
             const invoice = invoicesMap.get(tx.credit_card_id)!;
             invoice.transactions.push(tx);
             invoice.totalAmount += tx.amount;
-            if (tx.status === 'completed') {
-                invoice.paidAmount += tx.amount;
-            }
+            // Removed incorrect paidAmount increment based on expense status.
+            // Purchase completion != Bill payment.
         } 
         // Direct Bill (Account Expense or null account)
         else if (!tx.credit_card_id) {

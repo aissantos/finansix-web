@@ -14,6 +14,10 @@ export default defineConfig({
         clientsClaim: true,
         skipWaiting: true
       },
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
       includeAssets: ['favicon.png', 'icons/*.png'],
       manifest: {
         name: 'Finansix',
