@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/useToast';
 import { useCreditCard, useUpdateCreditCard, useCategories, useRecentTransactions, useHousehold } from '@/hooks';
 import { predictCategory } from '@/lib/category-predictor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQueryClient } from '@tanstack/react-query';
 import { addDays, format } from 'date-fns';
 
 type ParsedTransactionWithCategory = ParsedTransaction & {
@@ -44,7 +45,9 @@ export function InvoiceImportModal({
   const { toast } = useToast();
   const { data: card } = useCreditCard(creditCardId);
   const { mutate: updateCard } = useUpdateCreditCard();
+  const { mutate: updateCard } = useUpdateCreditCard();
   const { data: household } = useHousehold();
+  const queryClient = useQueryClient();
 
   const { data: categories = [] } = useCategories('expense');
   const { data: recentTransactions = [] } = useRecentTransactions(100);
