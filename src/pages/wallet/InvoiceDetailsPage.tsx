@@ -65,9 +65,9 @@ export default function InvoiceDetailsPage() {
         title="Detalhes da Fatura" 
         showBack 
         onBack={() => navigate(-1)} 
-        rightElement={
-          <Button variant="ghost" size="icon" className="text-slate-400">
-            <Share2 className="h-5 w-5" />
+        right={
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Share2 className="w-5 h-5 text-slate-600 dark:text-slate-400" />
           </Button>
         }
       />
