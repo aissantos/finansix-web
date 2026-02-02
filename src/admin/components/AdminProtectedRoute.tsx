@@ -2,7 +2,9 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { usePermissions } from '@/admin/hooks/usePermissions';
 
-export default function AdminProtectedRoute() {
+import type { ReactNode } from 'react';
+
+export default function AdminProtectedRoute({ children }: { children?: ReactNode }) {
   const { user, loading } = usePermissions();
   const location = useLocation();
 
@@ -21,5 +23,5 @@ export default function AdminProtectedRoute() {
     return <Navigate to="/admin/auth/login" state={{ from: location }} replace />;
   }
 
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 }

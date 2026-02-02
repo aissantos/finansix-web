@@ -3,11 +3,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 // Use a CDN for the worker to avoid complex bundler configuration
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
-export interface ParsedTransaction {
-  date: string; // YYYY-MM-DD
-  description: string;
-  amount: number;
-}
+import type { ParsedTransaction } from './invoice-parsers';
 
 export interface ParseResult {
   transactions: ParsedTransaction[];
@@ -15,6 +11,23 @@ export interface ParseResult {
   dueDate?: string; // YYYY-MM-DD
   minimumPayment?: number;
   rawText: string;
+  bankName?: string;
+}
+
+/**
+ * Parses text from Brazilian credit card invoices.
+ * Extracts: 
+ * - Transactions (Date, Description, Amount)
+ * - Metadata (Due Date, Total Amount, Minimum Payment)
+ */
+import { bankParsers } from './invoice-parsers';
+import { itauParser } from './invoice-parsers/itau';
+import { bradescoParser } from './invoice-parsers/bradesco';
+
+// Register parsers manually for now (in a real app, this could be dynamic)
+if (bankParsers.length === 0) {
+    bankParsers.push(itauParser);
+    bankParsers.push(bradescoParser);
 }
 
 /**
@@ -24,6 +37,28 @@ export interface ParseResult {
  * - Metadata (Due Date, Total Amount, Minimum Payment)
  */
 export function parseInvoiceText(text: string): ParseResult {
+  // 1. Try to detect specific bank
+  for (const parser of bankParsers) {
+    if (parser.detectBank(text)) {
+      const transactions = parser.parseTransactions(text);
+      const metadata = parser.parseMetadata(text);
+      
+      return {
+        transactions,
+        totalAmount: metadata.totalAmount,
+        dueDate: metadata.dueDate,
+        minimumPayment: undefined, // specific parsers might not extract this yet
+        rawText: text,
+        bankName: parser.bankName
+      };
+    }
+  }
+
+  // 2. Fallback to default (Nubank-optimized) parser
+  return parseDefault(text);
+}
+
+function parseDefault(text: string): ParseResult {
   const transactions: ParsedTransaction[] = [];
   const lines = text.split('\n');
 

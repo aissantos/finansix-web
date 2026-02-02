@@ -17,8 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 // Types only - erased at runtime
 import type { ParsedTransaction } from '@/lib/invoice-parser';
-import type { ExistingTransaction } from '@/lib/invoice-parsers/deduplication';
-import type { CategoryPredictor } from '@/lib/ml/category-model';
+import type { ExistingTransaction, MatchScore } from '../../lib/invoice-parsers/deduplication';
+import type { CategoryPredictor } from '../../lib/ml/category-model';
 
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabase/client';
@@ -141,9 +141,9 @@ export function InvoiceImportModal({
 
     try {
       // Dynamic imports for heavy libraries
-      const { parseInvoiceText, extractTextFromPDF } = await import('@/lib/invoice-parser');
-      // const { extractTextFromImage } = await import('@/lib/invoice-parsers/ocr');
-      const { findDuplicates } = await import('@/lib/invoice-parsers/deduplication');
+      const { parseInvoiceText, extractTextFromPDF } = await import('../../lib/invoice-parser');
+      // const { extractTextFromImage } = await import('../../lib/invoice-parsers/ocr');
+      const { findDuplicates } = await import('../../lib/invoice-parsers/deduplication');
 
 
       // Try with stored password first if available and no manual password provided
@@ -201,7 +201,7 @@ export function InvoiceImportModal({
       );
 
       const duplicateMap = new Map();
-      duplicates.forEach(d => {
+      duplicates.forEach((d: MatchScore) => {
         duplicateMap.set(d.importedIndex, d.score);
       });
 
