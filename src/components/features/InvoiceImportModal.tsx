@@ -59,7 +59,7 @@ export function InvoiceImportModal({
   const { data: categories = [] } = useCategories('expense');
   const { data: recentTransactions = [] } = useRecentTransactions(100);
 
-  const [predictor, setPredictor] = useState<CategoryPredictor | null>(null);
+  const [predictor] = useState<CategoryPredictor | null>(null);
 
   // Initialize ML Model - Lazy Load
   useEffect(() => {
