@@ -162,7 +162,7 @@ describe('usePaymentSummary', () => {
 
   it('should handle Supabase errors', async () => {
     // Return error by rejecting
-    mockBuilder.then = (resolve: any, reject: any) => {
+    mockBuilder.then = (_resolve: any, reject: any) => {
         reject(new Error('Database error'));
     };
 

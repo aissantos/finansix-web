@@ -5,7 +5,7 @@ import { interParser } from './inter';
 import { c6Parser } from './c6';
 import { btgParser } from './btg';
 
-import { BankParser } from './types';
+import type { BankParser } from './types';
 export * from './types';
 
 // Registry will be populated as we add parsers

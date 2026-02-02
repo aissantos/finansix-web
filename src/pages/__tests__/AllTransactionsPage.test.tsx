@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import AllTransactionsPage from '@/pages/AllTransactionsPage';
@@ -210,7 +211,7 @@ describe('AllTransactionsPage', () => {
 
   it('should show loading state', async () => {
     mockUseAllTransactions.mockReturnValue({
-      data: null,
+      data: [],
       isLoading: true,
     });
     mockUseFilteredTransactionsHook.mockReturnValue({
