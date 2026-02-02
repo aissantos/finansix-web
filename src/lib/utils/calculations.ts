@@ -166,16 +166,11 @@ export function getBestCard(
 // FREE BALANCE CALCULATION (CENTS-BASED)
 // ============================================
 
-export async function calculateFreeBalance(
-  householdId: string,
-  targetDate: Date,
-  includeProjections = true
-): Promise<FreeBalanceResult> {
-  const today = startOfMonth(new Date());
-  const monthEnd = endOfMonth(targetDate);
-  const targetDateStr = format(monthEnd, 'yyyy-MM-dd');
+// ========== HELPER FUNCTIONS FOR FREE BALANCE CALCULATION ==========
 
-  // 1. Current balance from all accounts
+async function fetchCurrentBalance(
+  householdId: string
+): Promise<number> {
   const { data: accounts } = await supabase
     .from('accounts')
     .select('current_balance')
@@ -183,11 +178,15 @@ export async function calculateFreeBalance(
     .eq('is_active', true)
     .is('deleted_at', null);
 
-  const currentBalanceCents = addCents(
+  return addCents(
     ...(accounts ?? []).map(a => toCents(a.current_balance ?? 0))
   );
+}
 
-  // 3. Pending expenses (not on credit card)
+async function fetchPendingExpenses(
+  householdId: string,
+  targetDateStr: string
+): Promise<number> {
   const { data: pendingTx } = await supabase
     .from('transactions')
     .select('amount')
@@ -198,11 +197,16 @@ export async function calculateFreeBalance(
     .lte('transaction_date', targetDateStr)
     .is('deleted_at', null);
 
-  const pendingExpensesCents = addCents(
-    ...(pendingTx ?? []).map(t => toCents(t.amount ?? 0))
+  // Expenses are negative in DB, return absolute value (positive)
+  return addCents(
+    ...(pendingTx ?? []).map(t => Math.abs(toCents(t.amount ?? 0)))
   );
+}
 
-  // 4. Credit card due (pending installments until target date)
+async function fetchCreditCardDue(
+  householdId: string,
+  targetDateStr: string
+): Promise<number> {
   const { data: installments } = await supabase
     .from('installments')
     .select('amount')
@@ -211,36 +215,47 @@ export async function calculateFreeBalance(
     .lte('due_date', targetDateStr)
     .is('deleted_at', null);
 
-  const creditCardDueCents = addCents(
+  return addCents(
     ...(installments ?? []).map(i => toCents(i.amount ?? 0))
   );
+}
 
-  // 4 & 5. Expected income and expenses (if projections enabled)
-  let expectedIncomeCents = 0;
-  let expectedExpensesCents = 0;
+async function fetchProjectedTransactions(
+  householdId: string,
+  targetDateStr: string,
+  todayStr: string
+): Promise<{ incomeCents: number; expensesCents: number }> {
+  const { data: expectations } = await supabase
+    .from('expected_transactions')
+    .select('amount, confidence_percent, type')
+    .eq('household_id', householdId)
+    .eq('is_active', true)
+    .lte('start_date', targetDateStr)
+    .or(`end_date.is.null,end_date.gte.${todayStr}`);
 
-  if (includeProjections) {
-    const { data: expectations } = await supabase
-      .from('expected_transactions')
-      .select('amount, confidence_percent, type')
-      .eq('household_id', householdId)
-      .eq('is_active', true)
-      .lte('start_date', targetDateStr)
-      .or(`end_date.is.null,end_date.gte.${format(today, 'yyyy-MM-dd')}`);
+  let incomeCents = 0;
+  let expensesCents = 0;
 
-    for (const exp of (expectations ?? [])) {
-      const amountCents = toCents(exp.amount ?? 0);
-      const projectedCents = multiplyCents(amountCents, (exp.confidence_percent ?? 0) / 100);
+  for (const exp of (expectations ?? [])) {
+    const amountCents = toCents(exp.amount ?? 0);
+    const projectedCents = multiplyCents(
+      amountCents,
+      (exp.confidence_percent ?? 0) / 100
+    );
 
-      if (exp.type === 'income') {
-        expectedIncomeCents = addCents(expectedIncomeCents, projectedCents);
-      } else if (exp.type === 'expense') {
-        expectedExpensesCents = addCents(expectedExpensesCents, projectedCents);
-      }
+    if (exp.type === 'income') {
+      incomeCents = addCents(incomeCents, projectedCents);
+    } else if (exp.type === 'expense') {
+      expensesCents = addCents(expensesCents, projectedCents);
     }
   }
 
-  // 6. Pending reimbursements
+  return { incomeCents, expensesCents };
+}
+
+async function fetchPendingReimbursements(
+  householdId: string
+): Promise<number> {
   const { data: reimbursements } = await supabase
     .from('transactions')
     .select('amount, reimbursed_amount')
@@ -249,14 +264,18 @@ export async function calculateFreeBalance(
     .in('reimbursement_status', ['pending', 'partial'])
     .is('deleted_at', null);
 
-  const pendingReimbursementsCents = addCents(
+  return addCents(
     ...(reimbursements ?? []).map(t => {
       const amountCents = toCents(t.amount ?? 0);
       return subtractCents(amountCents, toCents(t.reimbursed_amount ?? 0));
     })
   );
+}
 
-  // 7. Pending transfers (signed amounts)
+async function fetchPendingTransfers(
+  householdId: string,
+  targetDateStr: string
+): Promise<number> {
   const { data: pendingTransfers } = await supabase
     .from('transactions')
     .select('amount')
@@ -266,26 +285,34 @@ export async function calculateFreeBalance(
     .lte('transaction_date', targetDateStr)
     .is('deleted_at', null);
 
-  const pendingTransfersCents = addCents(
+  return addCents(
     ...(pendingTransfers ?? []).map(t => toCents(t.amount ?? 0))
   );
+}
 
-  // FINAL FORMULA (ALL IN CENTS - NO FLOATING POINT!)
-  const freeBalanceCents = addCents(
+function buildBalanceBreakdown(components: {
+  currentBalanceCents: number;
+  pendingExpensesCents: number;
+  creditCardDueCents: number;
+  expectedIncomeCents: number;
+  expectedExpensesCents: number;
+  pendingReimbursementsCents: number;
+  pendingTransfersCents: number;
+  includeProjections: boolean;
+}): BalanceBreakdownItem[] {
+  const {
     currentBalanceCents,
-    // Removed duplicate income addition
-    -pendingExpensesCents,
-    -creditCardDueCents,
+    pendingExpensesCents,
+    creditCardDueCents,
     expectedIncomeCents,
-    -expectedExpensesCents,
+    expectedExpensesCents,
     pendingReimbursementsCents,
-    pendingTransfersCents
-  );
+    pendingTransfersCents,
+    includeProjections,
+  } = components;
 
-  // Convert to reais for display
   const breakdown: BalanceBreakdownItem[] = [
     { label: 'Saldo em contas', value: toReais(currentBalanceCents), type: 'positive' },
-    // Removed 'Receitas recebidas' as it is implicitly in current balance
     { label: 'Despesas pendentes', value: -toReais(pendingExpensesCents), type: 'negative' },
     { label: 'Faturas de cartão', value: -toReais(creditCardDueCents), type: 'negative' },
   ];
@@ -310,6 +337,66 @@ export async function calculateFreeBalance(
       type: pendingTransfersCents >= 0 ? 'positive' : 'negative',
     });
   }
+
+  return breakdown;
+}
+
+// ========== MAIN FUNCTION (REFACTORED) ==========
+
+export async function calculateFreeBalance(
+  householdId: string,
+  targetDate: Date,
+  includeProjections = true
+): Promise<FreeBalanceResult> {
+  const today = startOfMonth(new Date());
+  const monthEnd = endOfMonth(targetDate);
+  const targetDateStr = format(monthEnd, 'yyyy-MM-dd');
+  const todayStr = format(today, 'yyyy-MM-dd');
+
+  // Fetch all components in parallel for better performance
+  const [
+    currentBalanceCents,
+    pendingExpensesCents,
+    creditCardDueCents,
+    projectedTransactions,
+    pendingReimbursementsCents,
+    pendingTransfersCents,
+  ] = await Promise.all([
+    fetchCurrentBalance(householdId),
+    fetchPendingExpenses(householdId, targetDateStr),
+    fetchCreditCardDue(householdId, targetDateStr),
+    includeProjections
+      ? fetchProjectedTransactions(householdId, targetDateStr, todayStr)
+      : Promise.resolve({ incomeCents: 0, expensesCents: 0 }),
+    fetchPendingReimbursements(householdId),
+    fetchPendingTransfers(householdId, targetDateStr),
+  ]);
+
+  const { incomeCents: expectedIncomeCents, expensesCents: expectedExpensesCents } =
+    projectedTransactions;
+
+  // Calculate final balance (ALL IN CENTS - NO FLOATING POINT!)
+  const freeBalanceCents = addCents(
+    currentBalanceCents,
+    -pendingExpensesCents,
+    -creditCardDueCents,
+    expectedIncomeCents,
+    -expectedExpensesCents,
+    pendingReimbursementsCents,
+    pendingTransfersCents
+  );
+
+  // Build breakdown for UI
+  const breakdown = buildBalanceBreakdown({
+    currentBalanceCents,
+    pendingExpensesCents,
+    creditCardDueCents,
+    expectedIncomeCents,
+    expectedExpensesCents,
+    pendingReimbursementsCents,
+    pendingTransfersCents,
+    includeProjections,
+  });
 
   return {
     currentBalance: toReais(currentBalanceCents),

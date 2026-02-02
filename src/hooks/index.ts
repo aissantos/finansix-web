@@ -1,4 +1,5 @@
 export { useAuth } from './useAuth';
+export * from './useTheme';
 export { useScrollDirection } from './useScrollDirection';
 export { usePaymentSummary } from './usePaymentSummary';
 export {

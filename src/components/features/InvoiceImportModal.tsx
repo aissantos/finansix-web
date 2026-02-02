@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useRef, useEffect } from 'react';
 import { 
   Upload, 
@@ -16,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 // Types only - erased at runtime
-import type { ParsedTransaction } from '@/lib/invoice-parser';
+import type { ParsedTransaction } from '../../lib/invoice-parsers/types';
 import type { ExistingTransaction, MatchScore } from '../../lib/invoice-parsers/deduplication';
 import type { CategoryPredictor } from '../../lib/ml/category-model';
 
@@ -59,19 +60,22 @@ export function InvoiceImportModal({
   const { data: categories = [] } = useCategories('expense');
   const { data: recentTransactions = [] } = useRecentTransactions(100);
 
-  const [predictor] = useState<CategoryPredictor | null>(null);
+
+  // ML State
+  const [predictor, setPredictor] = useState<CategoryPredictor | null>(null);
 
   // Initialize ML Model - Lazy Load
   useEffect(() => {
     // HEAVY LIB DISABLE: TensorFlow.js causes build heap overflow/crash on some environments.
     // Uncomment to enable ML categorization feature if environment supports it.
     // if (household?.id) {
-    //     // Dynamic import to avoid loading TensorFlow.js immediately
-    //     import('@/lib/ml/model-storage').then(({ getCategoryPredictor }) => {
-    //         getCategoryPredictor(household.id).then(setPredictor);
-    //     });
+        // Load ML model in background
+        import('../../lib/ml/category-model').then(({ CategoryPredictor }) => {
+           const model = new CategoryPredictor();
+           model.load().then(() => setPredictor(model));
+        });
     // }
-  }, [household?.id]);
+  }, []);
 
   const [step, setStep] = useState<'upload' | 'password' | 'summary' | 'review' | 'importing'>('upload');
   const [file, setFile] = useState<File | null>(null);
@@ -140,9 +144,8 @@ export function InvoiceImportModal({
     setError(null);
 
     try {
-      // Dynamic imports for heavy libraries
       const { parseInvoiceText, extractTextFromPDF } = await import('../../lib/invoice-parser');
-      // const { extractTextFromImage } = await import('../../lib/invoice-parsers/ocr');
+      const { extractTextFromImage } = await import('../../lib/invoice-parsers/ocr');
       const { findDuplicates } = await import('../../lib/invoice-parsers/deduplication');
 
 
@@ -154,7 +157,7 @@ export function InvoiceImportModal({
          text = await extractTextFromPDF(pdfFile, passwordToUse);
       } else {
          // It's an image
-         // text = await extractTextFromImage(pdfFile);
+         text = await extractTextFromImage(pdfFile);
       }
       const result = parseInvoiceText(text);
 

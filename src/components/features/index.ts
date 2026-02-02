@@ -1,4 +1,5 @@
 export { BalanceHero } from './BalanceHero';
+export * from './InsightsCard';
 export { CardOptimizer } from './CardOptimizer';
 export { ReliefChart } from './ReliefChart';
 export { TransactionItem } from './TransactionItem';

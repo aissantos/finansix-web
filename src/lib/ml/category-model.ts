@@ -1,5 +1,5 @@
-/* eslint-disable */
-// @ts-nocheck
+
+
 import * as tf from '@tensorflow/tfjs';
 
 export interface TrainingData {

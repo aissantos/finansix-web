@@ -1,5 +1,4 @@
-/* eslint-disable */
-// @ts-nocheck
+
 import { describe, it, expect } from 'vitest';
 import { InsightService } from './InsightService'; // Assuming same directory for test
 import type { Transaction } from '@/types';
@@ -24,7 +23,17 @@ const createTx = (id: string, amount: number, categoryId: string, description: s
     reimbursed_amount: 0,
     credit_card_id: null,
     account_id: 'acc1',
-    currency: 'BRL'
+    currency: 'BRL',
+    notes: null,
+    current_installment: null,
+    recurrence_type: null,
+    recurrence_end_date: null,
+    updated_by: null,
+    parent_transaction_id: null,
+    reimbursement_status: null,
+    reimbursement_source: null,
+    deleted_at: null,
+    created_by: null
 });
 
 describe('InsightService', () => {

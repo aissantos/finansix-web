@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Repeat, ChevronRight } from 'lucide-react';
 import { Header, PageContainer } from '@/components/layout';
@@ -10,8 +10,7 @@ import {
   DashboardSkeleton,
   OnboardingTour,
   PaymentSummaryCards,
-  // NEW v2.0: Elite features
-  SmartInsights,
+  InsightsCard
 } from '@/components/features';
 import { Card } from '@/components/ui/card';
 import { DeleteConfirmDialog } from '@/components/ui';
@@ -22,11 +21,13 @@ import {
   useCreditCards, 
   useSubscriptionTotal, 
   useDeleteTransaction,
-  useMonthlyTrend 
+  useTransactions,
+  useCategories
 } from '@/hooks';
-import { calculateSpendingInsights } from '@/lib/analysis';
+import { useSelectedMonth } from '@/stores';
+import { InsightService } from '@/lib/services/InsightService';
 import { formatCurrency } from '@/lib/utils';
-import { format } from 'date-fns';
+import { subMonths } from 'date-fns';
 import { toast } from '@/hooks/useToast';
 import type { TransactionWithDetails } from '@/types';
 
@@ -116,29 +117,34 @@ export default function HomePage() {
 }
 
 function HomeSmartInsights() {
-  const { data: trendData, isLoading } = useMonthlyTrend(6);
+  const selectedMonth = useSelectedMonth();
+  const previousMonth = subMonths(selectedMonth, 1);
   
-  if (isLoading || !trendData || trendData.length < 2) return null;
+  const { data: currentTxs } = useTransactions({ month: selectedMonth });
+  const { data: previousTxs } = useTransactions({ month: previousMonth });
+  const { data: categories } = useCategories();
 
-  // Prepare data for analysis
-  // trendData is sorted old -> new (from useMonthlyTrend implementation)
-  const currentMonthStr = format(new Date(), 'yyyy-MM');
-  
-  // Find current month data or use 0
-  const currentMonthData = trendData.find(d => d.month === currentMonthStr);
-  const currentTotal = currentMonthData ? currentMonthData.expenses : 0;
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
 
-  // Map to format expected by analysis (using expenses as 'total')
-  const history = trendData.map(d => ({
-    month: d.month,
-    total: d.expenses
-  }));
+  const insights = useMemo(() => {
+    if (!currentTxs || !previousTxs || !categories) return [];
+    
+    // 1. Trends (Spending increase > 20%)
+    const trends = InsightService.analyzeTrends(currentTxs, previousTxs, categories);
+    
+    // 2. Outliers (Single large transactions)
+    const outliers = InsightService.detectOutliers(currentTxs);
+    
+    // 3. Subscriptions (Simple check on current + previous month)
+    // Note: Better detection usually requires 3+ months, but we check what we have
+    const potentialSubs = InsightService.detectSubscriptions([...previousTxs, ...currentTxs]);
 
-  const insights = calculateSpendingInsights(currentTotal, history, currentMonthStr);
+    return [...trends, ...outliers, ...potentialSubs].filter(i => !dismissedIds.includes(i.id));
+  }, [currentTxs, previousTxs, categories, dismissedIds]);
 
   if (insights.length === 0) return null;
 
-  return <SmartInsights insights={insights} className="mb-6" />;
+  return <InsightsCard insights={insights} onDismiss={id => setDismissedIds(prev => [...prev, id])} />;
 }
 
 function SubscriptionsSummary() {

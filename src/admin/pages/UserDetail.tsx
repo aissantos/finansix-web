@@ -43,11 +43,18 @@ export default function UserDetailPage() {
   }
 
   const handleEdit = () => {
-    // TODO: Navigate to edit user page
+    navigate(`/admin/users/${userId}/edit`);
   };
 
   const handleDeactivate = () => {
-    // TODO: Implement deactivate user
+    // TODO: Implement deactivate user functionality
+    // NOTE: This requires adding a 'status' field to household_members table
+    // Suggested implementation:
+    // 1. Add 'status' enum column: 'active' | 'inactive'
+    // 2. Update RLS policies to filter inactive users
+    // 3. Create mutation in useUserMutations hook
+    // 4. Add confirmation dialog before deactivation
+    console.warn('Deactivate user not yet implemented - requires database schema changes');
   };
 
   return (

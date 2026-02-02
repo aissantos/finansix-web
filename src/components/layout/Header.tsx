@@ -1,4 +1,4 @@
-import { Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bell, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAppStore, useSelectedMonth } from '@/stores';
@@ -118,6 +118,13 @@ export function Header({ title, showMonthSelector = false, showBack, onBack, sho
               Offline
             </div>
           )}
+          <button 
+            onClick={() => navigate('/settings')}
+            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Configurações"
+          >
+            <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+          </button>
           <button 
             className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Notificações"
