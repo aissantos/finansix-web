@@ -35,8 +35,10 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@/components/ui/icon';
-import { InvoiceImportModal } from '@/components/features/InvoiceImportModal';
 import { InvoiceCharts } from '@/components/features/InvoiceCharts';
+
+// Lazy load big components
+const InvoiceImportModal = lazy(() => import('@/components/features/InvoiceImportModal').then(module => ({ default: module.InvoiceImportModal })));
 
 export default function CardDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -321,7 +323,6 @@ export default function CardDetailPage() {
               <TrendingUp className="h-5 w-5 text-primary" />
               Análise Global de Gastos
             </h3>
-            {/* Pass FULL history (cardInstallments) for global patterns */}
             <InvoiceCharts transactions={cardInstallments} viewMode="monthly" />
           </div>
         )}
@@ -341,12 +342,6 @@ export default function CardDetailPage() {
           
           const closedBillTotal = closedBillInstallments.reduce((sum, i) => sum + i.amount, 0);
           
-          // Use component state for collapse? No, we are in render. 
-          // We need to move this out of IIFE or use a local component.
-          // Let's use a local variable for now, but to handle state, we should extract this to a component 
-          // OR iterate within the main component body. 
-          // Refactoring to a sub-component "ClosedInvoiceSection".
-          
           return (
             <ClosedInvoiceSection 
               installments={closedBillInstallments} 
@@ -358,7 +353,6 @@ export default function CardDetailPage() {
               }}
               onEditTransaction={(id) => navigate(`/transactions/${id}/edit`)}
               onDeleteTransaction={async (id) => {
-                 // ... delete logic passed as prop or handled inside
                  if (confirm('Excluir esta parcela e todas as seguintes?')) {
                      try {
                         const { error } = await supabase.from('transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
@@ -429,12 +423,6 @@ export default function CardDetailPage() {
                   key={inst.id}
                   installment={inst}
                   onClick={() => {
-                     // Check if it looks like an invoice payment or just a transaction
-                     // For now, always open edit, BUT if user wants "invoice details" on click, 
-                     // he probably means clicking the *list* itself opens the deep dive?
-                     // The requirement says: "clicar na fatura cadastrada".
-                     // If he sees "Pagamento Fatura Nubank", that's likely an imported invoice.
-                     // Let's add specific logic: if description contains "Fatura", go to invoice details.
                      if (inst.transaction?.description.toLowerCase().includes('fatura')) {
                         navigate(`/cards/${card.id}/invoice/${format(closingDate, 'yyyy-MM')}`);
                      } else {
@@ -442,26 +430,19 @@ export default function CardDetailPage() {
                      }
                   }}
                   onEdit={() => {
-                    // Navigate to transaction edit
                     navigate(`/transactions/${inst.transaction_id}/edit`);
                   }}
                   onDelete={async () => {
                     if (confirm('Excluir esta parcela e todas as seguintes?')) {
                       try {
-                        
-                        // Soft delete the transaction (trigger will cascade to installments)
                         const { error } = await supabase
                           .from('transactions')
                           .update({ deleted_at: new Date().toISOString() })
                           .eq('id', inst.transaction_id)
                           .select();
 
-
                         if (error) throw error;
-
                         toast({ title: '✅ Compra excluída' });
-                        
-                        // Invalidate queries to refresh data
                         await queryClient.invalidateQueries({ queryKey: ['installments'] });
                         await queryClient.invalidateQueries({ queryKey: ['creditCards'] });
                         await queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -520,18 +501,14 @@ export default function CardDetailPage() {
                   onDelete={async () => {
                     if (confirm('Excluir esta parcela e todas as seguintes?')) {
                       try {
-                        
                         const { error } = await supabase
                           .from('transactions')
                           .update({ deleted_at: new Date().toISOString() })
                           .eq('id', inst.transaction_id)
                           .select();
 
-
                         if (error) throw error;
-
                         toast({ title: '✅ Compra excluída' });
-                        
                         await queryClient.invalidateQueries({ queryKey: ['installments'] });
                         await queryClient.invalidateQueries({ queryKey: ['creditCards'] });
                         await queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -572,16 +549,18 @@ export default function CardDetailPage() {
       </PageContainer>
       
       {card && (
-        <InvoiceImportModal
-          creditCardId={card.id}
-          isOpen={showImportModal}
-          onClose={() => setShowImportModal(false)}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['installments'] });
-            queryClient.invalidateQueries({ queryKey: ['creditCards'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions'] });
-          }}
-        />
+        <Suspense fallback={null}>
+          <InvoiceImportModal
+            creditCardId={card.id}
+            isOpen={showImportModal}
+            onClose={() => setShowImportModal(false)}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ['installments'] });
+              queryClient.invalidateQueries({ queryKey: ['creditCards'] });
+              queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            }}
+          />
+        </Suspense>
       )}
     </>
   );

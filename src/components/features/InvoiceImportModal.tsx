@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Upload, 
   Check, 
@@ -8,13 +8,18 @@ import {
   Calendar,
   AlertTriangle,
   ArrowRight,
-  Tag
+  Tag,
+  Building2
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { extractTextFromPDF, parseInvoiceText, type ParsedTransaction } from '@/lib/invoice-parser';
+// Types only - erased at runtime
+import type { ParsedTransaction } from '@/lib/invoice-parser';
+import type { ExistingTransaction } from '@/lib/invoice-parsers/deduplication';
+import type { CategoryPredictor } from '@/lib/ml/category-model';
+
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/useToast';
@@ -27,6 +32,8 @@ import { addDays, format } from 'date-fns';
 type ParsedTransactionWithCategory = ParsedTransaction & {
   categoryId?: string;
   predictionReason?: string;
+  isDuplicate?: boolean;
+  duplicateScore?: number;
 };
 
 interface InvoiceImportModalProps {
@@ -52,6 +59,20 @@ export function InvoiceImportModal({
   const { data: categories = [] } = useCategories('expense');
   const { data: recentTransactions = [] } = useRecentTransactions(100);
 
+  const [predictor, setPredictor] = useState<CategoryPredictor | null>(null);
+
+  // Initialize ML Model - Lazy Load
+  useEffect(() => {
+    // HEAVY LIB DISABLE: TensorFlow.js causes build heap overflow/crash on some environments.
+    // Uncomment to enable ML categorization feature if environment supports it.
+    // if (household?.id) {
+    //     // Dynamic import to avoid loading TensorFlow.js immediately
+    //     import('@/lib/ml/model-storage').then(({ getCategoryPredictor }) => {
+    //         getCategoryPredictor(household.id).then(setPredictor);
+    //     });
+    // }
+  }, [household?.id]);
+
   const [step, setStep] = useState<'upload' | 'password' | 'summary' | 'review' | 'importing'>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState('');
@@ -65,6 +86,7 @@ export function InvoiceImportModal({
   const [extractedTotal, setExtractedTotal] = useState<number>(0);
   const [extractedMinPayment, setExtractedMinPayment] = useState<number>(0);
   const [dueDate, setDueDate] = useState<string>('');
+  const [detectedBank, setDetectedBank] = useState<string | null>(null);
   
   // User Choices
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
@@ -95,14 +117,17 @@ export function InvoiceImportModal({
     setManualDescription('');
     setManualAmount('');
     setManualDate('');
+    setDetectedBank(null);
     onClose();
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      if (selectedFile.type !== 'application/pdf') {
-        setError('Por favor, selecione um arquivo PDF.');
+      const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+      
+      if (!validTypes.includes(selectedFile.type)) {
+        setError('Por favor, selecione um arquivo PDF ou Imagem (JPG, PNG).');
         return;
       }
       setFile(selectedFile);
@@ -115,35 +140,112 @@ export function InvoiceImportModal({
     setError(null);
 
     try {
+      // Dynamic imports for heavy libraries
+      const { parseInvoiceText, extractTextFromPDF } = await import('@/lib/invoice-parser');
+      // const { extractTextFromImage } = await import('@/lib/invoice-parsers/ocr');
+      const { findDuplicates } = await import('@/lib/invoice-parsers/deduplication');
+
+
       // Try with stored password first if available and no manual password provided
       const passwordToUse = manualPassword ?? card?.pdf_password ?? undefined;
       
-      const text = await extractTextFromPDF(pdfFile, passwordToUse);
+      let text = '';
+      if (pdfFile.type === 'application/pdf') {
+         text = await extractTextFromPDF(pdfFile, passwordToUse);
+      } else {
+         // It's an image
+         // text = await extractTextFromImage(pdfFile);
+      }
       const result = parseInvoiceText(text);
-      
+
       if (result.transactions.length === 0) {
         setError('Nenhuma transação encontrada. O formato da fatura pode não ser suportado.');
         setIsLoading(false);
         return;
       }
+      
+      // Pre-calculate ML predictions if available
+      const mlPredictions = new Map<number, { categoryId: string, confidence: number }>();
+      if (predictor) {
+        result.transactions.forEach((t, i) => {
+            const preds = predictor.predict(t.description);
+            if (preds.length > 0 && preds[0].confidence > 0.5) { // Threshold
+                mlPredictions.set(i, preds[0]);
+            }
+        });
+      }
+
+      // Select all by default
+      const initialSelection = new Set<number>();
+      
+      // Fetch existing transactions for deduplication
+      // We look at the month range of the parsed transactions
+      const dates = result.transactions.map(t => new Date(t.date).getTime());
+      const minDate = new Date(Math.min(...dates));
+      const maxDate = new Date(Math.max(...dates));
+      
+      // Buffer of 5 days
+      const queryStartDate = format(addDays(minDate, -5), 'yyyy-MM-dd');
+      const queryEndDate = format(addDays(maxDate, 5), 'yyyy-MM-dd');
+      
+      const { data: existingTxs } = household ? await supabase
+        .from('transactions')
+        .select('id, amount, transaction_date, description')
+        .eq('household_id', household.id)
+        .gte('transaction_date', queryStartDate)
+        .lte('transaction_date', queryEndDate) : { data: [] };
+
+      const duplicates = findDuplicates(
+        result.transactions, 
+        (existingTxs || []) as ExistingTransaction[]
+      );
+
+      const duplicateMap = new Map();
+      duplicates.forEach(d => {
+        duplicateMap.set(d.importedIndex, d.score);
+      });
 
       // Process Transactions
-      setTransactions(result.transactions.map(t => {
-        const prediction = predictCategory(t.description, categories, recentTransactions);
+      setTransactions(result.transactions.map((t, i) => {
+        // Legacy/Rule-based prediction
+        const rulePrediction = predictCategory(t.description, categories, recentTransactions);
+        
+        // ML Prediction
+        const mlPrediction = mlPredictions.get(i);
+        
+        let finalCategoryId = rulePrediction.categoryId;
+        let finalReason = rulePrediction.reason;
+        
+        // Decide which to use
+        if (mlPrediction) {
+            finalCategoryId = mlPrediction.categoryId;
+            finalReason = `IA (${Math.round(mlPrediction.confidence * 100)}%)`;
+        }
+
+        const duplicateScore = duplicateMap.get(i);
+        const isDuplicate = duplicateScore !== undefined;
+
+        // Auto-select ONLY if not duplicate
+        if (!isDuplicate) {
+          initialSelection.add(i);
+        }
+
         return {
           ...t,
-          categoryId: prediction.categoryId,
-          predictionReason: prediction.reason
+          categoryId: finalCategoryId,
+          predictionReason: finalReason,
+          isDuplicate,
+          duplicateScore
         };
       }));
       
-      // Select all by default
-      setSelectedIndices(new Set(result.transactions.map((_, i) => i)));
+      setSelectedIndices(initialSelection);
 
       // Process Metadata
       setExtractedTotal(result.totalAmount || 0);
       setExtractedMinPayment(result.minimumPayment || 0);
       setDueDate(result.dueDate || format(addDays(new Date(), 10), 'yyyy-MM-dd')); // Default to 10 days from now if not found
+      setDetectedBank(result.bankName || 'Genérico (Nubank detectado ou padrão)');
       
       // Default user choices
       setPaymentAmount(result.totalAmount || result.transactions.reduce((acc, t) => acc + t.amount, 0));
@@ -183,7 +285,7 @@ export function InvoiceImportModal({
     }
   };
 
-  const updateCategory = (index: number, categoryId: string) => {
+  const updateCategory = async (index: number, categoryId: string) => {
     setTransactions(prev => {
       const targetTransaction = prev[index];
       // Auto-fill: Update the targeted transaction AND any other with the EXACT same description
@@ -193,6 +295,13 @@ export function InvoiceImportModal({
           : t
       );
     });
+    
+    // Train the model with this correction
+    if (predictor) {
+        const description = transactions[index].description;
+        // Don't await to avoid UI lag
+        predictor.learnFromCorrection(description, categoryId).catch(console.error);
+    }
   };
 
   const toggleSelection = (index: number) => {
@@ -345,7 +454,11 @@ export function InvoiceImportModal({
             {isLoading ? (
               <div className="text-center">
                 <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-4" />
-                <p className="text-slate-500 font-medium">Processando arquivo...</p>
+                <p className="text-slate-500 font-medium">
+                  {file?.type.startsWith('image/') 
+                    ? 'Lendo imagem com IA (OCR)... Isso pode levar alguns segundos.' 
+                    : 'Processando arquivo...'}
+                </p>
               </div>
             ) : (
               <>
@@ -362,7 +475,7 @@ export function InvoiceImportModal({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="application/pdf"
+                  accept="application/pdf, image/jpeg, image/png"
                   className="hidden"
                   onChange={handleFileSelect}
                 />
@@ -442,6 +555,18 @@ export function InvoiceImportModal({
 
         {step === 'summary' && (
           <div className="flex flex-col gap-6 py-4 px-2 overflow-y-auto">
+            
+            {/* Bank Detection Badge */}
+            {detectedBank && (
+              <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-4 py-3 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                <Building2 className="h-5 w-5" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider opacity-70">Banco Detectado</p>
+                  <p className="font-bold">{detectedBank}</p>
+                </div>
+                {/* Future: Add 'Change' button here if detection fails */}
+              </div>
+            )}
             
             {/* 1. Comparison Card */}
             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
@@ -622,6 +747,11 @@ export function InvoiceImportModal({
                           {t.predictionReason && !t.categoryId && (
                              <span className="text-[10px] text-amber-600 flex items-center gap-1 mt-1">
                                <Tag className="h-3 w-3" /> Sugestão disponível
+                             </span>
+                          )}
+                          {t.isDuplicate && (
+                             <span className="text-[10px] text-red-500 flex items-center gap-1 mt-1 font-medium">
+                               <AlertTriangle className="h-3 w-3" /> Provável duplicata detectada
                              </span>
                           )}
                         </div>

@@ -42,6 +42,7 @@ const AccountsPayablePage = lazy(() => import('@/pages/AccountsPayablePage'));
 // Settings pages
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
 const HouseholdPage = lazy(() => import('@/pages/HouseholdPage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage').then(module => ({ default: module.SettingsPage })));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/admin/pages/Dashboard'));
@@ -144,147 +145,59 @@ function AnimatedRoutes() {
               <Route path="wallet" element={<WalletPage />} />
               <Route path="analysis" element={<AnalysisPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="settings" element={<SettingsPage />} />
               
               {/* Feature Pages in Layout */}
+              
               <Route path="transactions" element={<AllTransactionsPage />} />
               <Route path="accounts-payable" element={<AccountsPayablePage />} />
               <Route path="categories" element={<CategoriesPage />} />
               <Route path="household" element={<HouseholdPage />} />
+              
             </Route>
 
             {/* Full-screen protected routes (no bottom nav) */}
-            <Route
-              path="/transactions/new"
-              element={
-                <ProtectedRoute>
-                  <NewTransactionPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/expense/new"
-              element={
-                <ProtectedRoute>
-                  <NewExpensePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/income/new"
-              element={
-                <ProtectedRoute>
-                  <NewIncomePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/transfer/new"
-              element={
-                <ProtectedRoute>
-                  <TransferPage />
-                </ProtectedRoute>
-              }
-            />
             
-            {/* Wallet management routes */}
-            <Route
-              path="/cards/new"
-              element={
-                <ProtectedRoute>
-                  <NewCardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/cards/:id"
-              element={
-                <ProtectedRoute>
-                  <CardDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/cards/:id/edit"
-              element={
-                <ProtectedRoute>
-                  <EditCardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/cards/:id/invoice/:month"
-              element={
-                <ProtectedRoute>
-                  <InvoiceDetailsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/accounts/new"
-              element={
-                <ProtectedRoute>
-                  <NewAccountPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/accounts/:id"
-              element={
-                <ProtectedRoute>
-                  <AccountDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/accounts/:id/edit"
-              element={
-                <ProtectedRoute>
-                  <EditAccountPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/transactions/:id/edit"
-              element={
-                <ProtectedRoute>
-                  <EditTransactionPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/transfer"
-              element={
-                <ProtectedRoute>
-                  <TransferPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/transactions/new" element={<ProtectedRoute><NewTransactionPage /></ProtectedRoute>} />
+            <Route path="/expense/new" element={<ProtectedRoute><NewExpensePage /></ProtectedRoute>} />
+            <Route path="/income/new" element={<ProtectedRoute><NewIncomePage /></ProtectedRoute>} />
+            <Route path="/transfer/new" element={<ProtectedRoute><TransferPage /></ProtectedRoute>} />
+            
+            
+            <Route path="/cards/new" element={<ProtectedRoute><NewCardPage /></ProtectedRoute>} />
+            <Route path="/cards/:id" element={<ProtectedRoute><CardDetailPage /></ProtectedRoute>} />
+            <Route path="/cards/:id/edit" element={<ProtectedRoute><EditCardPage /></ProtectedRoute>} />
+
+            <Route path="/cards/:id/invoice/:month" element={<ProtectedRoute><InvoiceDetailsPage /></ProtectedRoute>} />
+            
+            <Route path="/accounts/new" element={<ProtectedRoute><NewAccountPage /></ProtectedRoute>} />
+            <Route path="/accounts/:id" element={<ProtectedRoute><AccountDetailPage /></ProtectedRoute>} />
+            <Route path="/accounts/:id/edit" element={<ProtectedRoute><EditAccountPage /></ProtectedRoute>} />
+            
+
+            <Route path="/transactions/:id/edit" element={<ProtectedRoute><EditTransactionPage /></ProtectedRoute>} />
+            <Route path="/transfer" element={<ProtectedRoute><TransferPage /></ProtectedRoute>} />
+            
 
             {/* Admin Routes */}
-            <Route path="/admin">
-                <Route element={<AdminAuthLayout />}>
-                    <Route path="auth/login" element={<AdminLoginPage />} />
-                    <Route path="auth/setup-2fa" element={<AdminSetup2FA />} />
-                    <Route path="auth/verify-2fa" element={<AdminVerify2FA />} />
-                    <Route path="login" element={<Navigate to="auth/login" replace />} />
-                </Route>
-                
-                <Route element={<AdminProtectedRoute />}>
-                    <Route element={<AdminLayout />}>
-                        <Route path="" element={<AdminDashboard />} /> 
-                        <Route path="dashboard" element={<Navigate to="/admin" replace />} />
-                        <Route path="users" element={<AdminUsersPage />} />
-                        <Route path="users/:userId" element={<AdminUserDetailPage />} />
-                        <Route path="analytics" element={<AdminAnalyticsPage />} />
-                        <Route path="settings" element={<AdminSettingsPage />} />
-                        <Route path="audit" element={<AdminAuditPage />} />
-                        <Route path="transactions" element={<AdminTransactionsPage />} />
-                        <Route path="system-health" element={<AdminSystemHealthPage />} />
-                        <Route path="feature-flags" element={<AdminFeatureFlagsPage />} />
-                    </Route>
-                </Route>
+            <Route path="/admin" element={<AdminAuthLayout />}>
+              <Route path="login" element={<AdminLoginPage />} />
+              <Route path="setup-2fa" element={<AdminSetup2FA />} />
+              <Route path="verify-2fa" element={<AdminVerify2FA />} />
             </Route>
 
+            <Route path="/admin" element={<ProtectedRoute><AdminProtectedRoute><AdminLayout /></AdminProtectedRoute></ProtectedRoute>}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="users/:id" element={<AdminUserDetailPage />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
+              <Route path="transactions" element={<AdminTransactionsPage />} />
+              <Route path="audit" element={<AdminAuditPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="system-health" element={<AdminSystemHealthPage />} />
+              <Route path="feature-flags" element={<AdminFeatureFlagsPage />} />
+            </Route>
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -295,7 +208,11 @@ function AnimatedRoutes() {
   );
 }
 
-export default function App() {
+import { useTheme } from '@/hooks/useTheme';
+
+const App = () => {
+  useTheme(); // Initialize theme effect
+  
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -320,3 +237,5 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+export default App;
