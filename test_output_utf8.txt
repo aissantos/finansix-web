@@ -1,0 +1,34 @@
+﻿
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Versix/Finansix/finansix-web[39m
+
+ [31mÔØ»[39m src/pages/__tests__/AllTransactionsPage.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[33m 1180[2mms[22m[39m
+[31m   [31m├ù[31m AllTransactionsPage[2m > [22mshould render list of transactions[33m 591[2mms[22m[31m[39m
+[31m     ÔåÆ [vitest] No "useDeleteTransaction" export is defined on the "@/hooks/useTransactions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+[31m   [31m├ù[31m AllTransactionsPage[2m > [22mshould display transaction amounts correctly[90m 120[2mms[22m[31m[39m
+[31m     ÔåÆ [vitest] No "useDeleteTransaction" export is defined on the "@/hooks/useTransactions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+[31m   [31m├ù[31m AllTransactionsPage[2m > [22mshould have search/filter functionality[90m 135[2mms[22m[31m[39m
+[31m     ÔåÆ [vitest] No "useDeleteTransaction" export is defined on the "@/hooks/useTransactions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+[31m   [31m├ù[31m AllTransactionsPage[2m > [22mshould show transaction metrics/totals[90m 132[2mms[22m[31m[39m
+[31m     ÔåÆ [vitest] No "useDeleteTransaction" export is defined on the "@/hooks/useTransactions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+[31m   [31m├ù[31m AllTransactionsPage[2m > [22mshould handle empty transaction list[90m 93[2mms[22m[31m[39m
+[31m     ÔåÆ [vitest] No "useDeleteTransaction" export is defined on the "@/hooks/useTransactions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+[31m   [31m├ù[31m AllTransactionsPage[2m > [22mshould show loading state[90m 78[2mms[22m[31m[39m
+[31m     ÔåÆ [vitest] No "useDeleteTransaction" export is defined on the "@/hooks/useTransactions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[90m (6)[39m
+[2m   Start at [22m 13:58:27
+[2m   Duration [22m 36.22s[2m (transform 5.87s, setup 2.14s, collect 19.40s, tests 1.18s, environment 5.59s, prepare 541ms)[22m
+

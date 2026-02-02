@@ -1,0 +1,22 @@
+﻿
+ RUN  v2.1.9 C:/Versix/Finansix/finansix-web
+
+ ÔØ» src/pages/__tests__/AllTransactionsPage.test.tsx (6 tests | 6 failed) 695ms
+   ├ù AllTransactionsPage > should render list of transactions 359ms
+     ÔåÆ setIsOnline is not a function
+   ├ù AllTransactionsPage > should display transaction amounts correctly 89ms
+     ÔåÆ setIsOnline is not a function
+   ├ù AllTransactionsPage > should have search/filter functionality 54ms
+     ÔåÆ setIsOnline is not a function
+   ├ù AllTransactionsPage > should show transaction metrics/totals 69ms
+     ÔåÆ setIsOnline is not a function
+   ├ù AllTransactionsPage > should handle empty transaction list 76ms
+     ÔåÆ setIsOnline is not a function
+   ├ù AllTransactionsPage > should show loading state 38ms
+     ÔåÆ setIsOnline is not a function
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  14:06:00
+   Duration  27.67s (transform 3.90s, setup 2.85s, collect 15.32s, tests 695ms, environment 4.44s, prepare 759ms)
+
