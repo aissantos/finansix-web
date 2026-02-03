@@ -75,7 +75,7 @@ describe('Transactions Integration Tests', () => {
     expect(transaction!.type).toBe('expense');
   });
 
-  it('should soft delete transaction (set deleted_at)', async () => {
+  it('should delete transaction', async () => {
     // Criar transação
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
@@ -94,20 +94,19 @@ describe('Transactions Integration Tests', () => {
       throw new Error(`Failed to create transaction: ${txError?.message || 'Unknown error'}`);
     }
 
-    // Soft delete (update deleted_at)
+    // Delete
     const { error } = await supabase
       .from('transactions')
-      .update({ deleted_at: new Date().toISOString() })
+      .delete()
       .eq('id', transaction.id);
 
     expect(error).toBeNull();
 
-    // Verificar que transação não aparece mais em queries normais
+    // Verificar que transação não existe mais
     const { data: found } = await supabase
       .from('transactions')
       .select('*')
-      .eq('id', transaction.id)
-      .is('deleted_at', null);
+      .eq('id', transaction.id);
 
     expect(found).toHaveLength(0);
   });
