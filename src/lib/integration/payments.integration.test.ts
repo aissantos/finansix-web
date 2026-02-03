@@ -15,12 +15,16 @@ describe('Payment Summary Integration Tests', () => {
   let testHouseholdId: string;
 
   beforeAll(async () => {
-    const { data: household } = await supabase
+    const { data: household, error: householdError } = await supabase
       .from('households')
       .insert({ name: 'Payment Test Household' })
       .select()
       .single();
-    testHouseholdId = household!.id;
+
+    if (householdError || !household) {
+      throw new Error(`Failed to create household: ${householdError?.message || 'Unknown error'}`);
+    }
+    testHouseholdId = household.id;
   });
 
   afterAll(async () => {
@@ -29,7 +33,7 @@ describe('Payment Summary Integration Tests', () => {
 
   it('should calculate correct free balance with pending expenses', async () => {
     // Criar conta com saldo
-    const { data: account } = await supabase
+    const { data: account, error: accountError } = await supabase
       .from('accounts')
       .insert({
         household_id: testHouseholdId,
@@ -40,16 +44,24 @@ describe('Payment Summary Integration Tests', () => {
       .select()
       .single();
 
+    if (accountError || !account) {
+      throw new Error(`Failed to create account: ${accountError?.message || 'Unknown error'}`);
+    }
+
     // Criar despesa pendente
-    await supabase.from('transactions').insert({
+    const { error: txError } = await supabase.from('transactions').insert({
       household_id: testHouseholdId,
-      account_id: account!.id,
+      account_id: account.id,
       description: 'Pending Expense',
       amount: -200,
       type: 'expense',
       status: 'pending',
       transaction_date: new Date().toISOString(),
     });
+
+    if (txError) {
+      throw new Error(`Failed to create transaction: ${txError.message}`);
+    }
 
     // Calcular free balance
     const result = await calculateFreeBalance(
@@ -68,10 +80,14 @@ describe('Payment Summary Integration Tests', () => {
     const householdId = testHouseholdId;
 
     // Criar 2 contas
-    await supabase.from('accounts').insert([
+    const { error: accountsError } = await supabase.from('accounts').insert([
       { household_id: householdId, name: 'Account 1', current_balance: 500, is_active: true },
       { household_id: householdId, name: 'Account 2', current_balance: 300, is_active: true },
     ]);
+
+    if (accountsError) {
+      throw new Error(`Failed to create accounts: ${accountsError.message}`);
+    }
 
     const result = await calculateFreeBalance(householdId, new Date(), false);
 

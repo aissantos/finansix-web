@@ -17,15 +17,19 @@ describe('Transactions Integration Tests', () => {
 
   beforeAll(async () => {
     // Criar household de teste
-    const { data: household } = await supabase
+    const { data: household, error: householdError } = await supabase
       .from('households')
       .insert({ name: 'Transactions Test Household' })
       .select()
       .single();
-    testHouseholdId = household!.id;
+
+    if (householdError || !household) {
+      throw new Error(`Failed to create household: ${householdError?.message || 'Unknown error'}`);
+    }
+    testHouseholdId = household.id;
 
     // Criar conta de teste
-    const { data: account } = await supabase
+    const { data: account, error: accountError } = await supabase
       .from('accounts')
       .insert({
         household_id: testHouseholdId,
@@ -36,7 +40,11 @@ describe('Transactions Integration Tests', () => {
       })
       .select()
       .single();
-    testAccountId = account!.id;
+
+    if (accountError || !account) {
+      throw new Error(`Failed to create account: ${accountError?.message || 'Unknown error'}`);
+    }
+    testAccountId = account.id;
   });
 
   afterAll(async () => {
@@ -68,7 +76,7 @@ describe('Transactions Integration Tests', () => {
 
   it('should soft delete transaction (set deleted_at)', async () => {
     // Criar transação
-    const { data: transaction } = await supabase
+    const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .insert({
         household_id: testHouseholdId,
@@ -81,11 +89,15 @@ describe('Transactions Integration Tests', () => {
       .select()
       .single();
 
+    if (txError || !transaction) {
+      throw new Error(`Failed to create transaction: ${txError?.message || 'Unknown error'}`);
+    }
+
     // Soft delete (update deleted_at)
     const { error } = await supabase
       .from('transactions')
       .update({ deleted_at: new Date().toISOString() })
-      .eq('id', transaction!.id);
+      .eq('id', transaction.id);
 
     expect(error).toBeNull();
 
@@ -93,7 +105,7 @@ describe('Transactions Integration Tests', () => {
     const { data: found } = await supabase
       .from('transactions')
       .select('*')
-      .eq('id', transaction!.id)
+      .eq('id', transaction.id)
       .is('deleted_at', null);
 
     expect(found).toHaveLength(0);
@@ -101,17 +113,21 @@ describe('Transactions Integration Tests', () => {
 
   it('should enforce RLS - cannot access other household transactions', async () => {
     // Criar outro household
-    const { data: otherHousehold } = await supabase
+    const { data: otherHousehold, error: hhError } = await supabase
       .from('households')
       .insert({ name: 'Other Household' })
       .select()
       .single();
 
+    if (hhError || !otherHousehold) {
+      throw new Error(`Failed to create other household: ${hhError?.message || 'Unknown error'}`);
+    }
+
     // Criar conta em outro household
-    const { data: otherAccount } = await supabase
+    const { data: otherAccount, error: accError } = await supabase
       .from('accounts')
       .insert({
-        household_id: otherHousehold!.id,
+        household_id: otherHousehold.id,
         name: 'Other Account',
         type: 'checking',
         current_balance: 500,
@@ -120,12 +136,16 @@ describe('Transactions Integration Tests', () => {
       .select()
       .single();
 
+    if (accError || !otherAccount) {
+      throw new Error(`Failed to create other account: ${accError?.message || 'Unknown error'}`);
+    }
+
     // Criar transação em outro household
-    const { data: otherTransaction } = await supabase
+    const { data: otherTransaction, error: txError } = await supabase
       .from('transactions')
       .insert({
-        household_id: otherHousehold!.id,
-        account_id: otherAccount!.id,
+        household_id: otherHousehold.id,
+        account_id: otherAccount.id,
         description: 'Other Household Transaction',
         amount: -200,
         type: 'expense',
@@ -134,16 +154,20 @@ describe('Transactions Integration Tests', () => {
       .select()
       .single();
 
+    if (txError || !otherTransaction) {
+      throw new Error(`Failed to create other transaction: ${txError?.message || 'Unknown error'}`);
+    }
+
     // Tentar buscar transação de outro household (deve retornar vazio com RLS)
     const { data: found } = await supabase
       .from('transactions')
       .select('*')
-      .eq('id', otherTransaction!.id);
+      .eq('id', otherTransaction.id);
 
     // Com RLS, não deve ter acesso
     expect(found).toHaveLength(0);
 
     // Cleanup
-    await supabase.from('households').delete().eq('id', otherHousehold!.id);
+    await supabase.from('households').delete().eq('id', otherHousehold.id);
   });
 });

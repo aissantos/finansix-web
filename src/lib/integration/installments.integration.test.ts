@@ -18,24 +18,36 @@ describe('Installments Integration Tests', () => {
 
   beforeAll(async () => {
     // Criar household e usuário de teste
-    const { data: household } = await supabase
+    const { data: household, error: householdError } = await supabase
       .from('households')
       .insert({ name: 'Test Household' })
       .select()
       .single();
-    testHouseholdId = household!.id;
 
-    const { data: { user } } = await supabase.auth.signUp({
-      email: 'test@example.com',
+    if (householdError || !household) {
+      throw new Error(`Failed to create household: ${householdError?.message || 'Unknown error'}`);
+    }
+    testHouseholdId = household.id;
+
+    const { data: { user }, error: authError } = await supabase.auth.signUp({
+      email: `test-${Date.now()}@example.com`,
       password: 'test123456',
     });
-    testUserId = user!.id;
 
-    await supabase.from('household_members').insert({
+    if (authError || !user) {
+      throw new Error(`Failed to create user: ${authError?.message || 'Unknown error'}`);
+    }
+    testUserId = user.id;
+
+    const { error: memberError } = await supabase.from('household_members').insert({
       household_id: testHouseholdId,
       user_id: testUserId,
       role: 'owner',
     });
+
+    if (memberError) {
+      throw new Error(`Failed to create household member: ${memberError.message}`);
+    }
   });
 
   afterAll(async () => {
@@ -46,7 +58,7 @@ describe('Installments Integration Tests', () => {
 
   it('should create installments via trigger when transaction has installments > 1', async () => {
     // Criar transação parcelada
-    const { data: transaction } = await supabase
+    const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .insert({
         household_id: testHouseholdId,
@@ -59,12 +71,20 @@ describe('Installments Integration Tests', () => {
       .select()
       .single();
 
+    if (txError || !transaction) {
+      throw new Error(`Failed to create transaction: ${txError?.message || 'Unknown error'}`);
+    }
+
     // Verificar que parcelas foram criadas
-    const { data: installments } = await supabase
+    const { data: installments, error: instError } = await supabase
       .from('installments')
       .select('*')
-      .eq('transaction_id', transaction!.id)
+      .eq('transaction_id', transaction.id)
       .order('installment_number');
+
+    if (instError) {
+      throw new Error(`Failed to fetch installments: ${instError.message}`);
+    }
 
     expect(installments).toHaveLength(3);
     expect(installments![0].amount).toBe(100); // 300 / 3
@@ -73,7 +93,7 @@ describe('Installments Integration Tests', () => {
   });
 
   it('should not create installments for single payment transaction', async () => {
-    const { data: transaction } = await supabase
+    const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .insert({
         household_id: testHouseholdId,
@@ -86,26 +106,38 @@ describe('Installments Integration Tests', () => {
       .select()
       .single();
 
-    const { data: installments } = await supabase
+    if (txError || !transaction) {
+      throw new Error(`Failed to create transaction: ${txError?.message || 'Unknown error'}`);
+    }
+
+    const { data: installments, error: instError } = await supabase
       .from('installments')
       .select('*')
-      .eq('transaction_id', transaction!.id);
+      .eq('transaction_id', transaction.id);
+
+    if (instError) {
+      throw new Error(`Failed to fetch installments: ${instError.message}`);
+    }
 
     expect(installments).toHaveLength(0);
   });
 
   it('should respect RLS policies - user can only see own household installments', async () => {
     // Criar outro household
-    const { data: otherHousehold } = await supabase
+    const { data: otherHousehold, error: otherHhError } = await supabase
       .from('households')
       .insert({ name: 'Other Household' })
       .select()
       .single();
 
-    const { data: otherTransaction } = await supabase
+    if (otherHhError || !otherHousehold) {
+      throw new Error(`Failed to create other household: ${otherHhError?.message || 'Unknown error'}`);
+    }
+
+    const { data: otherTransaction, error: otherTxError } = await supabase
       .from('transactions')
       .insert({
-        household_id: otherHousehold!.id,
+        household_id: otherHousehold.id,
         description: 'Other Transaction',
         amount: 200,
         type: 'expense',
@@ -115,16 +147,24 @@ describe('Installments Integration Tests', () => {
       .select()
       .single();
 
+    if (otherTxError || !otherTransaction) {
+      throw new Error(`Failed to create other transaction: ${otherTxError?.message || 'Unknown error'}`);
+    }
+
     // Tentar buscar parcelas de outro household (deve falhar ou retornar vazio)
-    const { data: installments } = await supabase
+    const { data: installments, error: instError } = await supabase
       .from('installments')
       .select('*')
-      .eq('transaction_id', otherTransaction!.id);
+      .eq('transaction_id', otherTransaction.id);
+
+    if (instError) {
+      throw new Error(`Failed to fetch installments: ${instError.message}`);
+    }
 
     // Com RLS, não deve ter acesso
     expect(installments).toHaveLength(0);
 
     // Cleanup
-    await supabase.from('households').delete().eq('id', otherHousehold!.id);
+    await supabase.from('households').delete().eq('id', otherHousehold.id);
   });
 });
