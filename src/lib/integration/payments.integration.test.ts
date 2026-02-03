@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
-import { calculateFreeBalance } from '@/lib/utils/calculations';
 
 // Use service role key to bypass RLS policies during integration tests
 // Default service role key is the standard Supabase local development service key

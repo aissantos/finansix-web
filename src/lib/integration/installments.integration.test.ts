@@ -15,7 +15,6 @@ const supabase = createClient<Database>(
 
 describe('Installments Integration Tests', () => {
   let testHouseholdId: string;
-  let testUserId: string;
 
   beforeAll(async () => {
     // Criar household e usuário de teste
@@ -29,10 +28,6 @@ describe('Installments Integration Tests', () => {
       throw new Error(`Failed to create household: ${householdError?.message || 'Unknown error'}`);
     }
     testHouseholdId = household.id;
-
-    // Note: With service role key, we don't need to create household_members
-    // Service role bypasses RLS policies
-    testUserId = crypto.randomUUID(); // Placeholder ID for cleanup
   });
 
   afterAll(async () => {
