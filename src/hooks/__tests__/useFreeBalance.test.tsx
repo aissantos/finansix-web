@@ -4,15 +4,19 @@ import { useFreeBalance } from '@/hooks/useFreeBalance';
 import { createWrapper } from '@/test/test-utils';
 import * as calculationsModule from '@/lib/utils/calculations';
 
+// Controllable mock values
+let mockHouseholdId: string | null = 'test-household-id';
+
 vi.mock('@/lib/utils/calculations');
 vi.mock('@/stores/app-store', () => ({
-  useHouseholdId: () => 'test-household-id',
+  useHouseholdId: () => mockHouseholdId,
   useSelectedMonth: () => new Date('2026-02-01'),
 }));
 
 describe('useFreeBalance', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHouseholdId = 'test-household-id'; // Reset to default
   });
 
   it('should return free balance data on success', async () => {
@@ -40,12 +44,8 @@ describe('useFreeBalance', () => {
   });
 
   it('should be disabled when householdId is not available', () => {
-    // Mock para retornar null como householdId
-    vi.resetModules();
-    vi.doMock('@/stores/app-store', () => ({
-      useHouseholdId: () => null,
-      useSelectedMonth: () => new Date('2026-02-01'),
-    }));
+    // Set householdId to null to disable the query
+    mockHouseholdId = null;
 
     const { result } = renderHook(() => useFreeBalance(), {
       wrapper: createWrapper(),
