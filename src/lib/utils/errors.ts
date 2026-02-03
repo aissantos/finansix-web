@@ -1,4 +1,5 @@
 // Custom error classes for better error handling
+import { log } from '@/lib/logger';
 
 export class AppError extends Error {
   public readonly code: string;
@@ -146,7 +147,7 @@ export function logError(error: unknown, context?: Record<string, unknown>): voi
 
   // Log to console in development
   if (process.env.NODE_ENV === 'development') {
-    console.error('[Error]', errorData);
+    log.error('Application error', errorData);
   }
 
   // Send to Sentry in production

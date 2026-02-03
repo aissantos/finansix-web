@@ -24,6 +24,7 @@ import type { CategoryPredictor } from '../../lib/ml/category-model';
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/useToast';
+import { log } from '@/lib/logger';
 import { useCreditCard, useUpdateCreditCard, useCategories, useRecentTransactions, useHousehold } from '@/hooks';
 import { predictCategory } from '@/lib/category-predictor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -273,7 +274,7 @@ export function InvoiceImportModal({
            setError('A senha salva não funcionou. Por favor, digite a senha.');
         }
       } else {
-        console.error(err);
+        log.error('Error processing invoice file', { error: err, fileType: pdfFile.type, fileName: pdfFile.name });
         setError('Erro ao processar o arquivo. Tente novamente.');
       }
     } finally {
@@ -303,7 +304,9 @@ export function InvoiceImportModal({
     if (predictor) {
         const description = transactions[index].description;
         // Don't await to avoid UI lag
-        predictor.learnFromCorrection(description, categoryId).catch(console.error);
+        predictor.learnFromCorrection(description, categoryId).catch((err) =>
+          log.error('ML model learning failed', { error: err, description, categoryId })
+        );
     }
   };
 
@@ -417,7 +420,7 @@ export function InvoiceImportModal({
       handleClose();
 
     } catch (err) {
-      console.error(err);
+      log.error('Invoice import failed', { error: err, creditCardId, transactionCount: transactions.length });
       toast({
         title: 'Erro na importação',
         description: 'Ocorreu um erro ao salvar as transações.',

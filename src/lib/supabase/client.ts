@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
+import { log } from '@/lib/logger';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -26,7 +27,7 @@ export async function getCurrentHouseholdId(): Promise<string | null> {
     .rpc('get_user_household_id');
 
   if (error) {
-    console.error('[Supabase] Error getting household_id:', error);
+    log.error('[Supabase] Error getting household_id', { error });
     return null;
   }
 
@@ -50,7 +51,7 @@ export async function getOrCreateHousehold(userId: string, userName?: string): P
     .rpc('setup_user_household', { user_name: userName });
 
   if (error) {
-    console.error('[Supabase] Error setting up household:', error);
+    log.error('[Supabase] Error setting up household', { error, userId });
     
     // Fallback: try direct insert if RPC fails (for backwards compatibility)
     const { data: household, error: insertError } = await supabase
@@ -74,7 +75,7 @@ export async function getOrCreateHousehold(userId: string, userName?: string): P
       });
 
     if (memberError) {
-      console.error('[Supabase] Error adding member:', memberError);
+      log.error('[Supabase] Error adding member', { error: memberError, householdId: household.id, userId });
       // Don't throw - household was created, membership might work on retry
     }
 

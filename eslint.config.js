@@ -35,7 +35,7 @@ export default tseslint.config(
         'error',
         { prefer: 'type-imports' },
       ],
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
       'prefer-const': 'error',
       'no-var': 'error',
     },

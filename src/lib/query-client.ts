@@ -3,14 +3,15 @@ import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
 import { captureError } from '@/lib/sentry';
+import { log } from '@/lib/logger';
 
 // Custom error handler for global query errors
 const handleQueryError = (error: unknown) => {
   // Log to console in development
   if (process.env.NODE_ENV === 'development') {
-    console.error('[Query Error]', error);
+    log.error('[Query Error]', { error });
   }
-  
+
   // Send to Sentry in production using standardized helper
   captureError(error, { tags: { type: 'query-error' } });
 };
@@ -86,7 +87,7 @@ if (typeof window !== 'undefined' && 'localStorage' in window) {
     });
   } catch (error) {
     // localStorage might not be available in some contexts
-    console.warn('Query persistence disabled:', error);
+    log.warn('Query persistence disabled', { error });
   }
 }
 

@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { log } from '@/lib/logger';
 
 export type ExportFormat = 'csv' | 'excel' | 'json';
 
@@ -103,7 +104,7 @@ export function useExport() {
       // Generate file
       XLSX.writeFile(workbook, filename);
     } catch (error) {
-      console.error('Excel export error:', error);
+      log.error('Excel export failed', { error, filename, rowCount: data.length });
       throw new Error('Failed to export to Excel. Make sure xlsx library is installed.');
     }
   }, []);
@@ -122,7 +123,7 @@ export function useExport() {
       await navigator.clipboard.writeText(jsonContent);
       return true;
     } catch (error) {
-      console.error('Clipboard copy error:', error);
+      log.error('Clipboard copy failed', { error, rowCount: data.length });
       throw new Error('Failed to copy to clipboard');
     }
   }, []);

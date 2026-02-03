@@ -1,77 +1,78 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import HomePage from '@/pages/HomePage';
 import { renderWithProviders } from '@/test/test-utils';
 
-// Mock de todos os hooks
-vi.mock('@/hooks/useFreeBalance', () => ({
-  useFreeBalance: () => ({
-    data: { freeBalance: 1000, currentBalance: 1500, breakdown: [] },
-    isLoading: false,
-  }),
-}));
-
-vi.mock('@/hooks/useRecentTransactions', () => ({
-  useRecentTransactions: () => ({
-    data: [
-      {
-        id: '1',
-        description: 'Compra teste',
-        amount: -50,
-        type: 'expense',
-        transaction_date: new Date().toISOString(),
-        category: { name: 'Alimentação', icon: '🍔' }
-      },
-      {
-        id: '2',
-        description: 'Receita teste',
-        amount: 100,
-        type: 'income',
-        transaction_date: new Date().toISOString(),
-        category: { name: 'Salário', icon: '💰' }
-      },
-    ],
-    isLoading: false,
-  }),
-}));
-
-vi.mock('@/hooks/useCreditCards', () => ({
-  useCreditCards: () => ({
-    data: [{ id: '1', name: 'Nubank', available_limit: 5000, used_limit: 2000 }],
-    isLoading: false,
-  }),
-}));
-
-vi.mock('@/hooks/useSubscriptions', () => ({
-  useSubscriptionTotal: () => ({
-    data: { total: 150 },
-    isLoading: false,
-  }),
-}));
-
-vi.mock('@/hooks/useTransactions', () => ({
-  useTransactions: () => ({
-    data: [],
-    isLoading: false,
-  }),
-}));
-
-vi.mock('@/hooks/useCategories', () => ({
-  useCategories: () => ({
-    data: [],
-    isLoading: false,
-  }),
-}));
-
-vi.mock('@/hooks/useDeleteTransaction', () => ({
-  useDeleteTransaction: () => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  }),
-}));
+// Mock centralizado de todos os hooks importados de '@/hooks'
+vi.mock('@/hooks', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    useFreeBalance: () => ({
+      data: { freeBalance: 1000, currentBalance: 1500, breakdown: [] },
+      isLoading: false,
+    }),
+    useRecentTransactions: () => ({
+      data: [
+        {
+          id: '1',
+          description: 'Compra teste',
+          amount: -50,
+          type: 'expense',
+          transaction_date: new Date().toISOString(),
+          category: { name: 'Alimentação', icon: '🍔' }
+        },
+        {
+          id: '2',
+          description: 'Receita teste',
+          amount: 100,
+          type: 'income',
+          transaction_date: new Date().toISOString(),
+          category: { name: 'Salário', icon: '💰' }
+        },
+      ],
+      isLoading: false,
+    }),
+    useCreditCards: () => ({
+      data: [{ id: '1', name: 'Nubank', available_limit: 5000, used_limit: 2000 }],
+      isLoading: false,
+    }),
+    useSubscriptionTotal: () => ({
+      data: { total: 150 },
+      isLoading: false,
+    }),
+    useTransactions: () => ({
+      data: [],
+      isLoading: false,
+    }),
+    useDeleteTransaction: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
+    useCategories: () => ({
+      data: [
+        { id: '1', name: 'Alimentação', icon: '🍔', type: 'expense' },
+        { id: '2', name: 'Salário', icon: '💰', type: 'income' },
+      ],
+      isLoading: false,
+    }),
+    useOnlineStatus: () => true,
+  };
+});
 
 vi.mock('@/stores/app-store', () => ({
   useSelectedMonth: () => new Date('2026-02-01'),
+  useAppStore: () => ({
+    user: { id: 'test-user', email: 'test@example.com' },
+    isSidebarOpen: true,
+    toggleSidebar: vi.fn(),
+    isOnline: true,
+    setIsOnline: vi.fn(),
+  }),
+  useHouseholdId: () => 'test-household-id',
+  useIsOnline: () => true,
+  useShowFAB: () => true,
 }));
 
 describe('HomePage', () => {
@@ -103,18 +104,6 @@ describe('HomePage', () => {
   });
 
   it('should show loading state initially when all data is loading', () => {
-    vi.mock('@/hooks/useFreeBalance', () => ({
-      useFreeBalance: () => ({ data: null, isLoading: true }),
-    }));
-
-    vi.mock('@/hooks/useRecentTransactions', () => ({
-      useRecentTransactions: () => ({ data: null, isLoading: true }),
-    }));
-
-    vi.mock('@/hooks/useCreditCards', () => ({
-      useCreditCards: () => ({ data: null, isLoading: true }),
-    }));
-
     renderWithProviders(<HomePage />);
 
     // Should show skeleton or loading state

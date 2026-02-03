@@ -5,6 +5,7 @@ import { supabase, getOrCreateHousehold } from '@/lib/supabase';
 import { useAppStore } from '@/stores';
 import { seedDefaultCategories } from '@/lib/supabase/categories';
 import { setSentryUser, clearSentryUser, captureError } from '@/lib/sentry';
+import { log } from '@/lib/logger';
 
 interface AuthState {
   user: User | null;
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await seedDefaultCategories(householdId);
       }
     } catch (error) {
-      console.error('[Auth] Failed to initialize user data:', error);
+      log.error('[Auth] Failed to initialize user data', { error, userId });
       captureError(error, { context: 'initializeUserData' });
     }
   };
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (error) {
-        console.error('[Auth] Error checking session:', error);
+        log.error('[Auth] Error checking session', { error });
         captureError(error, { context: 'initSession' });
         // Mesmo com erro, liberamos a tela para o usuário tentar login novamente
         if (mounted) {

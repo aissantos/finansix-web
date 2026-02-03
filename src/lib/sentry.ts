@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/tracing';
+import { log } from '@/lib/logger';
 
 export function initSentry() {
   if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
@@ -117,6 +118,6 @@ export function captureError(error: unknown, context?: Record<string, unknown>) 
         extra: context
      });
   } else {
-    console.error('[Sentry Dev]', error, context);
+    log.error('[Sentry Dev]', { error, ...context });
   }
 }
