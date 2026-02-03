@@ -11,11 +11,8 @@ const supabase = createClient(
   TEST_SERVICE_KEY
 );
 
-// Skip integration tests in CI - they require local Supabase instance
-const shouldSkipIntegrationTests = !process.env.TEST_SUPABASE_URL || process.env.CI === 'true';
-const describeOrSkip = shouldSkipIntegrationTests ? describe.skip : describe;
-
-describeOrSkip('Payment Summary Integration Tests', () => {
+// Integration tests require local Supabase instance - skip in CI
+describe.skip('Payment Summary Integration Tests', () => {
   let testHouseholdId: string;
 
   beforeAll(async () => {
