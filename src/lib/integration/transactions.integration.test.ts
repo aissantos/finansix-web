@@ -113,8 +113,14 @@ describe('Transactions Integration Tests', () => {
 
   // Note: RLS tests are skipped when using service role key
   // Service role bypasses all RLS policies by design
+  // To test RLS properly, we would need to create a separate test suite using anon key
   it.skip('should enforce RLS - cannot access other household transactions', async () => {
-    // This test would fail with service role key because it bypasses RLS
-    // To test RLS, use anon key instead
+    // This test would require:
+    // 1. Using TEST_SUPABASE_ANON_KEY instead of SERVICE_KEY
+    // 2. Authenticating as a specific user with household membership
+    // 3. Creating test data in a different household
+    // 4. Verifying cross-household access is blocked by RLS
+    //
+    // Skipped for now as service role key bypasses all RLS policies
   });
 });

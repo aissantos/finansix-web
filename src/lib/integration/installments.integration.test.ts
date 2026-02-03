@@ -46,21 +46,81 @@ describe('Installments Integration Tests', () => {
     expect(household?.name).toBe('Test Household');
   });
 
-  // Skipped: requires custom schema with installments column and trigger
-  it.skip('should create installments via trigger when transaction has installments > 1', async () => {
+  it('should create installments via trigger when transaction has installments > 1', async () => {
     // This test requires migrations to be applied to local Supabase
     // Column 'installments' and trigger need to exist in the database schema
+
+    // Create a transaction with 3 installments
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        household_id: testHouseholdId,
+        description: 'Compra Parcelada 3x',
+        amount: -300,
+        type: 'expense',
+        installments: 3,
+        transaction_date: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    expect(txError).toBeNull();
+    expect(transaction).toBeDefined();
+
+    // Check if installments were created by the trigger
+    const { data: installments, error: instError } = await supabase
+      .from('installments')
+      .select('*')
+      .eq('transaction_id', transaction!.id)
+      .order('installment_number');
+
+    expect(instError).toBeNull();
+    expect(installments).toHaveLength(3);
+
+    // Verify installment amounts are correct (300 / 3 = 100 each)
+    expect(installments![0].amount).toBe(100);
+    expect(installments![0].installment_number).toBe(1);
+    expect(installments![2].installment_number).toBe(3);
   });
 
-  // Skipped: requires custom schema with installments column and trigger
-  it.skip('should not create installments for single payment transaction', async () => {
-    // This test requires migrations to be applied to local Supabase
+  it('should not create installments for single payment transaction', async () => {
+    // Create a transaction without installments (single payment)
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        household_id: testHouseholdId,
+        description: 'Compra à Vista',
+        amount: -100,
+        type: 'expense',
+        installments: 1, // Single payment
+        transaction_date: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    expect(txError).toBeNull();
+    expect(transaction).toBeDefined();
+
+    // Verify NO installments were created
+    const { data: installments, error: instError } = await supabase
+      .from('installments')
+      .select('*')
+      .eq('transaction_id', transaction!.id);
+
+    expect(instError).toBeNull();
+    expect(installments).toHaveLength(0);
   });
 
   // Note: RLS tests are skipped when using service role key
   // Service role bypasses all RLS policies by design
+  // To test RLS properly, we would need to create a separate test suite using anon key
   it.skip('should respect RLS policies - user can only see own household installments', async () => {
-    // This test would fail with service role key because it bypasses RLS
-    // To test RLS, use anon key instead
+    // This test would require:
+    // 1. Using TEST_SUPABASE_ANON_KEY instead of SERVICE_KEY
+    // 2. Authenticating as a specific user
+    // 3. Creating test data in different households
+    // 4. Verifying cross-household access is blocked
+    //
+    // Skipped for now as service role key bypasses all RLS
   });
 });
