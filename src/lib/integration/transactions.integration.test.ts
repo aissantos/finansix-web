@@ -2,13 +2,14 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
-// Default anon key is the standard Supabase local development key
-const TEST_ANON_KEY = process.env.TEST_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+// Use service role key to bypass RLS policies during integration tests
+// Default service role key is the standard Supabase local development service key
+const TEST_SERVICE_KEY = process.env.TEST_SUPABASE_SERVICE_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 
 const supabase = createClient<Database>(
   process.env.TEST_SUPABASE_URL || 'http://localhost:54321',
-  TEST_ANON_KEY
+  TEST_SERVICE_KEY
 );
 
 describe('Transactions Integration Tests', () => {
