@@ -39,6 +39,7 @@ describe('Payment Summary Integration Tests', () => {
       .insert({
         household_id: testHouseholdId,
         name: 'Test Account',
+        type: 'checking',
         current_balance: 1000,
         is_active: true,
       })
@@ -82,8 +83,8 @@ describe('Payment Summary Integration Tests', () => {
 
     // Criar 2 contas
     const { error: accountsError } = await supabase.from('accounts').insert([
-      { household_id: householdId, name: 'Account 1', current_balance: 500, is_active: true },
-      { household_id: householdId, name: 'Account 2', current_balance: 300, is_active: true },
+      { household_id: householdId, name: 'Account 1', type: 'checking', current_balance: 500, is_active: true },
+      { household_id: householdId, name: 'Account 2', type: 'savings', current_balance: 300, is_active: true },
     ]);
 
     if (accountsError) {
