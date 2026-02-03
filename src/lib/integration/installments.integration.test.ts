@@ -3,9 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
 // Setup Supabase client para testes (URL e KEY vem do .env.test)
+// Default anon key is the standard Supabase local development key
+const TEST_ANON_KEY = process.env.TEST_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+
 const supabase = createClient<Database>(
   process.env.TEST_SUPABASE_URL || 'http://localhost:54321',
-  process.env.TEST_SUPABASE_ANON_KEY || ''
+  TEST_ANON_KEY
 );
 
 describe('Installments Integration Tests', () => {
